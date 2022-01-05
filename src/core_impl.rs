@@ -1,5 +1,5 @@
 use crate::*;
-use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
+use near_contract_standards::non_fungible_token::{Token, core::NonFungibleTokenCore};
 
 #[near_bindgen]
 impl NonFungibleTokenCore for Market {
@@ -24,7 +24,7 @@ impl NonFungibleTokenCore for Market {
         self.tokens.nft_transfer_call(receiver_id, token_id, approval_id, memo, msg)
     }
 
-    fn nft_token(&self, token_id: near_contract_standards::non_fungible_token::TokenId) -> Option<near_contract_standards::non_fungible_token::Token> {
+    fn nft_token(&self, token_id: near_contract_standards::non_fungible_token::TokenId) -> Option<Token> {
         self.tokens.nft_token(token_id)
     }
 }
