@@ -1,14 +1,19 @@
 mod core_impl;
+mod sale;
 mod token;
 
-use near_sdk::{AccountId, require};
-use near_contract_standards::non_fungible_token::metadata::{NFTContractMetadata, NFT_METADATA_SPEC};
+use near_contract_standards::non_fungible_token::metadata::{
+    NFTContractMetadata, NFT_METADATA_SPEC,
+};
+use near_sdk::{require, AccountId};
 
-use near_contract_standards::non_fungible_token::{TokenId, metadata::TokenMetadata};
+use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, TokenId};
 use near_contract_standards::non_fungible_token::{NonFungibleToken, Token};
+use near_sdk::json_types::U128;
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
-use near_sdk::{env, init, near_bindgen, BorshStorageKey};
+use near_sdk::{env, near_bindgen, BorshStorageKey};
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -43,7 +48,7 @@ impl Market {
             },
         )
     }
-    
+
     #[init]
     pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
         require!(!env::state_exists(), "Already initialized");
@@ -68,7 +73,12 @@ impl Market {
         token_owner_id: AccountId,
         token_metadata: TokenMetadata,
     ) -> Token {
-        assert_eq!(env::predecessor_account_id(), self.tokens.owner_id, "Unauthorized");
-        self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
+        assert_eq!(
+            env::predecessor_account_id(),
+            self.tokens.owner_id,
+            "Unauthorized"
+        );
+        self.tokens
+            .internal_mint(token_id, token_owner_id, Some(token_metadata))
     }
 }
