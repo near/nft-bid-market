@@ -1,0 +1,1 @@
+use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
