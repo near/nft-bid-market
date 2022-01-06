@@ -2,7 +2,7 @@ use crate::*;
 use near_contract_standards::non_fungible_token::{Token, core::NonFungibleTokenCore};
 
 #[near_bindgen]
-impl NonFungibleTokenCore for Market {
+impl NonFungibleTokenCore for Nft {
     fn nft_transfer(
         &mut self,
         receiver_id: near_sdk::AccountId,

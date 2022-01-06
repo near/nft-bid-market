@@ -1,11 +1,10 @@
-mod core_impl;
-mod sale;
+mod nft_core;
 mod token;
 
 use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, NFT_METADATA_SPEC,
 };
-use near_sdk::{require, AccountId};
+use near_sdk::{require, AccountId, PanicOnDefault};
 
 use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, TokenId};
 use near_contract_standards::non_fungible_token::{NonFungibleToken, Token};
@@ -16,8 +15,8 @@ use near_sdk::collections::LazyOption;
 use near_sdk::{env, near_bindgen, BorshStorageKey};
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct Market {
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct Nft {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
 }
@@ -32,7 +31,7 @@ enum StorageKey {
 }
 
 #[near_bindgen]
-impl Market {
+impl Nft {
     #[init]
     pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(

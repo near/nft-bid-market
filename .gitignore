@@ -2,6 +2,6 @@
 .DS_Store
 
 # Rust build files
-target/**
+**/target
 
 Cargo.lock
