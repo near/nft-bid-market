@@ -6,7 +6,6 @@ use near_sdk::json_types::{ValidAccountId, U128, U64};
 use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
 
 use crate::*;
-//use crate::payouts::Payout;
 
 const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
 const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
