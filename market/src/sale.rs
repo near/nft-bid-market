@@ -64,7 +64,7 @@ pub struct MarketSales {
 
 
 #[near_bindgen]
-impl MarketSales {
+impl Market {
     /// for add sale see: nft_callbacks.rs
 
     /// TODO remove without redirect to wallet? panic reverts
@@ -88,24 +88,24 @@ impl MarketSales {
         assert_one_yocto();
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
-        let mut sale = self.sales.get(&contract_and_token_id).expect("No sale");
+        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         assert_eq!(
             env::predecessor_account_id(),
             sale.owner_id,
             "Must be sale owner"
         );
-        if !self.ft_token_ids.contains(&ft_token_id.clone().try_into().unwrap()) {
+        if !self.market.ft_token_ids.contains(&ft_token_id.clone().try_into().unwrap()) {
             env::panic(format!("Token {} not supported by this market", ft_token_id).as_bytes());
         }
         sale.sale_conditions.insert(ft_token_id.into(), price);
-        self.sales.insert(&contract_and_token_id, &sale);
+        self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
     #[payable]
     pub fn offer(&mut self, nft_contract_id: ValidAccountId, token_id: String) {
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
-        let mut sale = self.sales.get(&contract_and_token_id).expect("No sale");
+        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
         let ft_token_id = "near".to_string();
@@ -179,11 +179,11 @@ impl MarketSales {
         }
         
         bids_for_token_id.push(new_bid);
-        if bids_for_token_id.len() > self.bid_history_length as usize {
+        if bids_for_token_id.len() > self.market.bid_history_length as usize {
             bids_for_token_id.remove(0);
         }
         
-        self.sales.insert(&contract_and_token_id, &sale);
+        self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
     pub fn accept_offer(
@@ -195,10 +195,10 @@ impl MarketSales {
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id.clone(), DELIMETER, token_id.clone());
         // remove bid before proceeding to process purchase
-        let mut sale = self.sales.get(&contract_and_token_id).expect("No sale");
+        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         let bids_for_token_id = sale.bids.remove(&ft_token_id.clone().try_into().unwrap()).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
-        self.sales.insert(&contract_and_token_id, &sale);
+        self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
             contract_id,
@@ -315,7 +315,7 @@ impl MarketSales {
     }
 }
 
-impl MarketSales {
+impl Market {
     pub(crate) fn refund_all_bids(
         &mut self,
         bids: &Bids,
@@ -343,36 +343,37 @@ impl MarketSales {
         token_id: TokenId,
     ) -> Sale {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let sale = self.sales.remove(&contract_and_token_id).expect("No sale");
+        let sale = self.market.sales.remove(&contract_and_token_id).expect("No sale");
 
-        let mut by_owner_id = self.by_owner_id.get(&sale.owner_id).expect("No sale by_owner_id");
+        let mut by_owner_id = self.market.by_owner_id.get(&sale.owner_id).expect("No sale by_owner_id");
         by_owner_id.remove(&contract_and_token_id);
         if by_owner_id.is_empty() {
-            self.by_owner_id.remove(&sale.owner_id);
+            self.market.by_owner_id.remove(&sale.owner_id);
         } else {
-            self.by_owner_id.insert(&sale.owner_id, &by_owner_id);
+            self.market.by_owner_id.insert(&sale.owner_id, &by_owner_id);
         }
 
         let mut by_nft_contract_id = self
+            .market
             .by_nft_contract_id
             .get(&nft_contract_id)
             .expect("No sale by nft_contract_id");
         by_nft_contract_id.remove(&token_id);
         if by_nft_contract_id.is_empty() {
-            self.by_nft_contract_id.remove(&nft_contract_id);
+            self.market.by_nft_contract_id.remove(&nft_contract_id);
         } else {
-            self.by_nft_contract_id
+            self.market.by_nft_contract_id
                 .insert(&nft_contract_id, &by_nft_contract_id);
         }
 
         let token_type = sale.token_type.clone();
         if let Some(token_type) = token_type {
-            let mut by_nft_token_type = self.by_nft_token_type.get(&token_type.clone().try_into().unwrap()).expect("No sale by nft_token_type");
+            let mut by_nft_token_type = self.market.by_nft_token_type.get(&token_type.clone().try_into().unwrap()).expect("No sale by nft_token_type");
             by_nft_token_type.remove(&contract_and_token_id);
             if by_nft_token_type.is_empty() {
-                self.by_nft_token_type.remove(&token_type.try_into().unwrap());
+                self.market.by_nft_token_type.remove(&token_type.try_into().unwrap());
             } else {
-                self.by_nft_token_type.insert(&token_type.try_into().unwrap(), &by_nft_token_type);
+                self.market.by_nft_token_type.insert(&token_type.try_into().unwrap(), &by_nft_token_type);
             }
         }
 
