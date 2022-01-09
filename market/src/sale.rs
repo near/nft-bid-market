@@ -4,6 +4,7 @@ use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
 use near_sdk::{assert_one_yocto, promise_result_as_success, Promise, Balance, Gas};
 use near_sdk::json_types::{ValidAccountId, U128, U64};
 use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
+use near_sdk::ext_contract;
 
 use crate::*;
 
@@ -25,6 +26,7 @@ pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 pub type SaleConditions = HashMap<FungibleTokenId, U128>;
+pub type Payout = HashMap<AccountId, U128>;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -60,7 +62,7 @@ pub struct MarketSales {
     pub bid_history_length: u8,
 }
 
-/*
+
 #[near_bindgen]
 impl MarketSales {
     /// for add sale see: nft_callbacks.rs
@@ -92,7 +94,7 @@ impl MarketSales {
             sale.owner_id,
             "Must be sale owner"
         );
-        if !self.ft_token_ids.contains(ft_token_id.as_ref()) {
+        if !self.ft_token_ids.contains(&ft_token_id.clone().try_into().unwrap()) {
             env::panic(format!("Token {} not supported by this market", ft_token_id).as_bytes());
         }
         sale.sale_conditions.insert(ft_token_id.into(), price);
@@ -109,7 +111,7 @@ impl MarketSales {
         let ft_token_id = "near".to_string();
         let price = sale
             .sale_conditions
-            .get(&ft_token_id)
+            .get(&ft_token_id.clone().try_into().unwrap())
             .expect("Not for sale in NEAR")
             .0;
 
@@ -120,7 +122,7 @@ impl MarketSales {
             self.process_purchase(
                 contract_id,
                 token_id,
-                ft_token_id,
+                ft_token_id.try_into().unwrap(),
                 U128(deposit),
                 buyer_id,
             );
@@ -131,7 +133,7 @@ impl MarketSales {
             self.add_bid(
                 contract_and_token_id,
                 deposit,
-                ft_token_id,
+                ft_token_id.try_into().unwrap(),
                 buyer_id,
                 &mut sale,
             );
@@ -162,14 +164,14 @@ impl MarketSales {
                 "Can't pay less than or equal to current bid price: {}",
                 current_bid.price.0
             );
-            if ft_token_id.into() == "near" {
+            if ft_token_id == "near".to_string().try_into().unwrap() {
                 Promise::new(current_bid.owner_id.clone()).transfer(u128::from(current_bid.price));
             } else {
                 ext_contract::ft_transfer(
                     current_bid.owner_id.clone(),
                     current_bid.price,
                     None,
-                    &ft_token_id,
+                    ft_token_id,
                     1,
                     GAS_FOR_FT_TRANSFER,
                 );
@@ -194,7 +196,7 @@ impl MarketSales {
         let contract_and_token_id = format!("{}{}{}", contract_id.clone(), DELIMETER, token_id.clone());
         // remove bid before proceeding to process purchase
         let mut sale = self.sales.get(&contract_and_token_id).expect("No sale");
-        let bids_for_token_id = sale.bids.remove(ft_token_id.as_ref()).expect("No bids");
+        let bids_for_token_id = sale.bids.remove(&ft_token_id.clone().try_into().unwrap()).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
         self.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
@@ -225,7 +227,7 @@ impl MarketSales {
             "payout from market".to_string(),
             price,
 			10,
-            &nft_contract_id,
+            nft_contract_id,
             1,
             GAS_FOR_NFT_TRANSFER,
         )
@@ -234,7 +236,7 @@ impl MarketSales {
             buyer_id,
             sale,
             price,
-            &env::current_account_id(),
+            env::current_account_id(),
             NO_DEPOSIT,
             GAS_FOR_ROYALTIES,
         ))
@@ -279,7 +281,7 @@ impl MarketSales {
         let payout = if let Some(payout_option) = payout_option {
             payout_option
         } else {
-            if ft_token_id.into() == "near" {
+            if ft_token_id == "near".to_string().try_into().unwrap() {
                 Promise::new(buyer_id).transfer(u128::from(price));
             }
             // leave function and return all FTs in ft_resolve_transfer
@@ -289,7 +291,7 @@ impl MarketSales {
         self.refund_all_bids(&sale.bids);
 
         // NEAR payouts
-        if ft_token_id.into() == "near" {
+        if ft_token_id == "near".to_string().try_into().unwrap() {
             for (receiver_id, amount) in payout {
                 Promise::new(receiver_id).transfer(amount.0);
             }
@@ -302,7 +304,7 @@ impl MarketSales {
                     receiver_id,
                     amount,
                     None,
-                    &ft_token_id,
+                    ft_token_id.clone(),
                     1,
                     GAS_FOR_FT_TRANSFER,
                 );
@@ -320,14 +322,14 @@ impl MarketSales {
     ) {
         for (bid_ft, bid_vec) in bids {
             let bid = &bid_vec[bid_vec.len()-1];
-            if bid_ft.into() == "near" {
+            if bid_ft.to_string() == "near".to_string() {
                     Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
             } else {
                 ext_contract::ft_transfer(
                     bid.owner_id.clone(),
                     bid.price,
                     None,
-                    bid_ft,
+                    (*bid_ft).clone(),
                     1,
                     GAS_FOR_FT_TRANSFER,
                 );
@@ -365,12 +367,12 @@ impl MarketSales {
 
         let token_type = sale.token_type.clone();
         if let Some(token_type) = token_type {
-            let mut by_nft_token_type = self.by_nft_token_type.get(&token_type).expect("No sale by nft_token_type");
+            let mut by_nft_token_type = self.by_nft_token_type.get(&token_type.clone().try_into().unwrap()).expect("No sale by nft_token_type");
             by_nft_token_type.remove(&contract_and_token_id);
             if by_nft_token_type.is_empty() {
-                self.by_nft_token_type.remove(&token_type);
+                self.by_nft_token_type.remove(&token_type.try_into().unwrap());
             } else {
-                self.by_nft_token_type.insert(&token_type, &by_nft_token_type);
+                self.by_nft_token_type.insert(&token_type.try_into().unwrap(), &by_nft_token_type);
             }
         }
 
@@ -391,4 +393,24 @@ trait ExtSelf {
         price: U128,
     ) -> Promise;
 }
-*/
+
+/// external contract calls
+
+#[ext_contract(ext_contract)]
+trait ExtContract {
+    fn nft_transfer_payout(
+        &mut self,
+        receiver_id: AccountId,
+        token_id: TokenId,
+        approval_id: u64,
+        memo: String,
+        balance: U128,
+		max_len_payout: u32,
+    );
+    fn ft_transfer(
+        &mut self,
+        receiver_id: AccountId,
+        amount: U128,
+        memo: Option<String>
+    );
+}

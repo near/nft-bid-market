@@ -33,7 +33,6 @@ impl Market {
         let mut non_fungible_token_account_ids = LookupSet::new(b"n");
         non_fungible_token_account_ids.extend(nft_ids);
         let market = MarketSales {
-            //owner_id: "owner".from_str(),
             owner_id: String::new().try_into().unwrap(),
             sales: UnorderedMap::new(b"s"),
             by_owner_id: LookupMap::new(b"o"),
@@ -41,7 +40,7 @@ impl Market {
             by_nft_token_type: LookupMap::new(b"t"),
             ft_token_ids: UnorderedSet::new(b"f"),
             storage_deposits: LookupMap::new(b"d"),
-            bid_history_length: 0,
+            bid_history_length: 1,
         };
         Self {
             non_fungible_token_account_ids, 
