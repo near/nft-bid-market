@@ -1,45 +1,21 @@
 mod nft_core;
-mod payouts;
 mod token;
 
-use std::collections::HashMap;
+mod common;
+use common::*;
 
-use near_contract_standards::non_fungible_token::metadata::{
-    NFTContractMetadata, NFT_METADATA_SPEC,
-};
-use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, TokenId};
-use near_contract_standards::non_fungible_token::{NonFungibleToken, Token, refund_deposit};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupSet, UnorderedMap, UnorderedSet};
-use near_sdk::json_types::U128;
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, BorshStorageKey};
-use near_sdk::{require, AccountId, Balance, PanicOnDefault};
+mod token_series;
+use token_series::{TokenSeries, TokenSeriesId, TokenSeriesJson, TOKEN_DELIMETER};
 
+mod payouts;
 use crate::payouts::MAXIMUM_ROYALTY;
 
-type TokenSeriesId = String;
-pub const TOKEN_DELIMETER: char = ':';
+use near_contract_standards::non_fungible_token::{
+    metadata::{NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC},
+    refund_deposit, NonFungibleToken, Token, TokenId,
+};
 
-
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct TokenSeries {
-    metadata: TokenMetadata,
-    creator_id: AccountId,
-    tokens: UnorderedSet<TokenId>,
-    price: Option<Balance>,
-    is_mintable: bool,
-    royalty: HashMap<AccountId, u32>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct TokenSeriesJson {
-    token_series_id: TokenSeriesId,
-    metadata: TokenMetadata,
-    creator_id: AccountId,
-    royalty: HashMap<AccountId, u32>,
-}
+use std::collections::HashMap;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -139,30 +115,36 @@ impl Nft {
         } else {
             HashMap::new()
         };
-        require!(total_payouts <= MAXIMUM_ROYALTY, format!("exceeds maximum royalty {}", MAXIMUM_ROYALTY));
+        require!(
+            total_payouts <= MAXIMUM_ROYALTY,
+            format!("exceeds maximum royalty {}", MAXIMUM_ROYALTY)
+        );
         let price: Option<u128> = if price.is_some() {
             Some(price.unwrap().0)
         } else {
             None
         };
 
-        self.token_series_by_id.insert(&token_series_id, &TokenSeries{
-            metadata: token_metadata.clone(),
-            creator_id: env::predecessor_account_id(),
-            tokens: UnorderedSet::new(
-                StorageKey::TokensBySeriesInner {
-                    token_series: token_series_id.clone(),
-                }
-                .try_to_vec()
-                .unwrap(),
-            ),
-            price,
-            is_mintable: true,
-            royalty: royalty_res.clone(),
-        });
+        self.token_series_by_id.insert(
+            &token_series_id,
+            &TokenSeries {
+                metadata: token_metadata.clone(),
+                creator_id: env::predecessor_account_id(),
+                tokens: UnorderedSet::new(
+                    StorageKey::TokensBySeriesInner {
+                        token_series: token_series_id.clone(),
+                    }
+                    .try_to_vec()
+                    .unwrap(),
+                ),
+                price,
+                is_mintable: true,
+                royalty: royalty_res.clone(),
+            },
+        );
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
-        
+
         TokenSeriesJson {
             token_series_id,
             metadata: token_metadata,
