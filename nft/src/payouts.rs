@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
-use near_sdk::{assert_one_yocto, promise_result_as_success};
-use near_sdk::json_types::{U128, U64};
+use near_sdk::assert_one_yocto;
+use near_sdk::json_types::U128;
 
 use crate::*;
 
 const ROYALTY_TOTAL_VALUE:u128 = 10_000;
-
+pub const MAXIMUM_ROYALTY:u32 = 5_000;
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Payout {
@@ -37,9 +37,8 @@ impl Payouts for Nft {
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout {
         let token_owner = self.tokens.owner_by_id.get(&token_id).expect("no token id");
 
-
         let mut token_id_iter = token_id.split(TOKEN_DELIMETER);
-        let token_series_id = token_id_iter.next().unwrap().parse().unwrap();
+        let token_series_id = token_id_iter.next().unwrap().to_owned();
         let royalty = self.token_series_by_id.get(&token_series_id).expect("no type").royalty;
         require!(royalty.len() as u32 <= max_len_payout, "Too many recievers");
         let mut total_payout = 0;

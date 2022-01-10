@@ -266,15 +266,14 @@ impl Market {
                 .and_then(|payout| {
                     // gas to do 10 FT transfers (and definitely 10 NEAR transfers)
                     if payout.payout.len() + sale.bids.len() > 10 || payout.payout.is_empty() {
-                        env::log(format!("Cannot have more than 10 royalties and sale.bids refunds").as_bytes());
+                        env::log_str("Cannot have more than 10 royalties and sale.bids refunds");
                         None
                     } else {
-                        // TODO off by 1 e.g. payouts are fractions of 3333 + 3333 + 3333
                         let mut remainder = price.0;
                         for &value in payout.payout.values() {
                             remainder = remainder.checked_sub(value.0)?;
                         }
-                        if remainder == 0 || remainder == 1 {
+                        if remainder <= 1 {
                             Some(payout)
                         } else {
                             None
@@ -286,7 +285,7 @@ impl Market {
         let payout = if let Some(payout_option) = payout_option {
             payout_option
         } else {
-            if ft_token_id == "near".to_string().try_into().unwrap() {
+            if ft_token_id == "near".parse().unwrap() {
                 Promise::new(buyer_id).transfer(u128::from(price));
             }
             // leave function and return all FTs in ft_resolve_transfer
@@ -296,7 +295,7 @@ impl Market {
         self.refund_all_bids(&sale.bids);
 
         // NEAR payouts
-        if ft_token_id == AccountId::new_unchecked("near".to_string()) {
+        if ft_token_id == "near".parse().unwrap() {
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
             }
