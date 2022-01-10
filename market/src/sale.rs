@@ -26,7 +26,12 @@ pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 pub type SaleConditions = HashMap<FungibleTokenId, U128>;
-pub type Payout = HashMap<AccountId, U128>;
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Payout {
+    pub payout: HashMap<AccountId, U128>,
+}
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -260,13 +265,13 @@ impl Market {
                 .ok()
                 .and_then(|payout| {
                     // gas to do 10 FT transfers (and definitely 10 NEAR transfers)
-                    if payout.len() + sale.bids.len() > 10 || payout.is_empty() {
+                    if payout.payout.len() + sale.bids.len() > 10 || payout.payout.is_empty() {
                         env::log(format!("Cannot have more than 10 royalties and sale.bids refunds").as_bytes());
                         None
                     } else {
                         // TODO off by 1 e.g. payouts are fractions of 3333 + 3333 + 3333
                         let mut remainder = price.0;
-                        for &value in payout.values() {
+                        for &value in payout.payout.values() {
                             remainder = remainder.checked_sub(value.0)?;
                         }
                         if remainder == 0 || remainder == 1 {
@@ -291,15 +296,15 @@ impl Market {
         self.refund_all_bids(&sale.bids);
 
         // NEAR payouts
-        if ft_token_id == "near".to_string().try_into().unwrap() {
-            for (receiver_id, amount) in payout {
+        if ft_token_id == AccountId::new_unchecked("near".to_string()) {
+            for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
             }
             // refund all FTs (won't be any)
             price
         } else {
             // FT payouts
-            for (receiver_id, amount) in payout {
+            for (receiver_id, amount) in payout.payout {
                 ext_contract::ft_transfer(
                     receiver_id,
                     amount,

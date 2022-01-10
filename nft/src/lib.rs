@@ -11,7 +11,7 @@ use near_contract_standards::non_fungible_token::{NonFungibleToken, Token};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::LazyOption;
+use near_sdk::collections::{LazyOption, LookupSet};
 use near_sdk::{env, near_bindgen, BorshStorageKey};
 
 #[near_bindgen]
@@ -19,6 +19,7 @@ use near_sdk::{env, near_bindgen, BorshStorageKey};
 pub struct Nft {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
+    private_minters: LookupSet<AccountId>,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -45,13 +46,15 @@ impl Nft {
                 reference: None,
                 reference_hash: None,
             },
+            Default::default(),
         )
     }
 
     #[init]
-    pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
+    pub fn new(owner_id: AccountId, metadata: NFTContractMetadata, private_minters: Vec<AccountId>) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
+        let private_minters = LookupSet::new(b"m").extend(private_minters);
         Self {
             tokens: NonFungibleToken::new(
                 StorageKey::NonFungibleToken,
@@ -61,6 +64,7 @@ impl Nft {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
+            private_minters,
         }
     }
 
