@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
 use near_sdk::{assert_one_yocto, promise_result_as_success};
-use near_sdk::json_types::{ValidAccountId, U128, U64};
+use near_sdk::json_types::{U128, U64};
 
 use crate::*;
+
+const ROYALTY_TOTAL_VALUE:u128 = 10_000;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -31,9 +33,27 @@ pub trait Payouts {
 }
 
 #[near_bindgen]
-impl Payouts for Market {
+impl Payouts for Nft {
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout {
-        todo!()
+        let token_owner = self.tokens.owner_by_id.get(&token_id).expect("no token id");
+
+
+        let mut token_id_iter = token_id.split(TOKEN_DELIMETER);
+        let token_series_id = token_id_iter.next().unwrap().parse().unwrap();
+        let royalty = self.token_series_by_id.get(&token_series_id).expect("no type").royalty;
+        require!(royalty.len() as u32 <= max_len_payout, "Too many recievers");
+        let mut total_payout = 0;
+        let balance = Balance::from(balance);
+        let mut payout: Payout = Payout { payout: HashMap::new() };
+        for (k, v) in royalty.iter() {
+            if *k != token_owner {
+                payout.payout.insert(k.clone(), royalty_to_payout(*v, balance));
+                total_payout += v;
+            }
+        }
+        require!(total_payout <= ROYALTY_TOTAL_VALUE as u32, "Royalty total value should be < 10000");
+        payout.payout.insert(token_owner, royalty_to_payout(ROYALTY_TOTAL_VALUE as u32 - total_payout, balance));
+        payout
     }
     #[payable]
     fn nft_transfer_payout(
@@ -49,4 +69,8 @@ impl Payouts for Market {
         self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         payout
     }
+}
+
+fn royalty_to_payout(a: u32, b: Balance) -> U128 {
+    U128(a as u128 * b / ROYALTY_TOTAL_VALUE)
 }
