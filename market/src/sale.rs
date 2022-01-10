@@ -20,10 +20,11 @@ static DELIMETER: &str = "||";
 pub struct Bid {
     pub owner_id: AccountId,
     pub price: U128,
+
+    pub start: Option<u64>,
+    pub end: Option<u64>,
 }
 
-pub type ContractAndTokenId = String;
-pub type FungibleTokenId = AccountId;
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 pub type SaleConditions = HashMap<FungibleTokenId, U128>;
 
@@ -32,6 +33,9 @@ pub type SaleConditions = HashMap<FungibleTokenId, U128>;
 pub struct Payout {
     pub payout: HashMap<AccountId, U128>,
 }
+
+pub type ContractAndTokenId = String;
+pub type FungibleTokenId = AccountId;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -70,7 +74,6 @@ pub struct MarketSales {
 
 #[near_bindgen]
 impl Market {
-    /// for add sale see: nft_callbacks.rs
 
     /// TODO remove without redirect to wallet? panic reverts
     #[payable]
@@ -107,7 +110,13 @@ impl Market {
     }
 
     #[payable]
-    pub fn offer(&mut self, nft_contract_id: ValidAccountId, token_id: String) {
+    pub fn offer(
+        &mut self,
+        nft_contract_id: ValidAccountId,
+        token_id: String,
+        start: Option<u64>,
+        end: Option<u64>
+    ) {
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
@@ -141,6 +150,8 @@ impl Market {
                 ft_token_id.try_into().unwrap(),
                 buyer_id,
                 &mut sale,
+                start,
+                end
             );
         }
     }
@@ -153,11 +164,15 @@ impl Market {
         ft_token_id: AccountId,
         buyer_id: AccountId,
         sale: &mut Sale,
+        start: Option<u64>,
+        end: Option<u64>
     ) {
         // store a bid and refund any current bid lower
         let new_bid = Bid {
             owner_id: buyer_id,
             price: U128(amount),
+            start,
+            end
         };
         
         let bids_for_token_id = sale.bids.entry(ft_token_id.clone()).or_insert_with(Vec::new);
@@ -203,6 +218,12 @@ impl Market {
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         let bids_for_token_id = sale.bids.remove(&ft_token_id.clone().try_into().unwrap()).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
+        if let Some(start) = bid.start {
+            assert!(
+                start < env::block_timestamp() && env::block_timestamp() < bid.end.unwrap(),
+                "Out of time limit of the bid"
+            );
+        }
         self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
