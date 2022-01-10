@@ -13,7 +13,7 @@ const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
 const GAS_FOR_NFT_TRANSFER: Gas = Gas(15_000_000_000_000);
 //const BID_HISTORY_LENGTH_DEFAULT: u8 = 1;
 const NO_DEPOSIT: Balance = 0;
-static DELIMETER: &str = "||";
+pub static DELIMETER: &str = "||";
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -36,6 +36,7 @@ pub struct Payout {
 
 pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
+pub type TokenType = Option<String>;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
