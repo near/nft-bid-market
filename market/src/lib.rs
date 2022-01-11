@@ -4,25 +4,10 @@ mod market_core;
 mod common;
 mod inner;
 
+use common::*;
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
-
-use near_contract_standards::non_fungible_token::metadata::{
-    NFTContractMetadata, NFT_METADATA_SPEC,
-};
-use near_sdk::{require, AccountId, PanicOnDefault};
-
-use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, TokenId};
-use near_contract_standards::non_fungible_token::{NonFungibleToken, Token, self};
-use near_sdk::json_types::{U64, U128};
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap, LookupSet, UnorderedMap, UnorderedSet};
-use near_sdk::{env, near_bindgen, BorshStorageKey, CryptoHash};
-use near_sdk::env::STORAGE_PRICE_PER_BYTE;
-use near_sdk::json_types::ValidAccountId;
 use std::collections::HashMap;
-use std::convert::TryInto;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
@@ -55,7 +40,7 @@ impl Market {
         let mut non_fungible_token_account_ids = LookupSet::new(b"n");
         non_fungible_token_account_ids.extend(nft_ids);
         let market = MarketSales {
-            owner_id: String::new().try_into().unwrap(),
+            owner_id: String::new().parse().unwrap(),
             sales: UnorderedMap::new(StorageKey::Sales),
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),
