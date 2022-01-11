@@ -10,11 +10,6 @@ use token_series::{TokenSeries, TokenSeriesId, TokenSeriesJson, TOKEN_DELIMETER}
 mod payouts;
 use crate::payouts::MAXIMUM_ROYALTY;
 
-use near_contract_standards::non_fungible_token::{
-    metadata::{NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC},
-    refund_deposit, NonFungibleToken, Token, TokenId,
-};
-
 use std::collections::HashMap;
 
 #[near_bindgen]

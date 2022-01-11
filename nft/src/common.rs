@@ -7,3 +7,8 @@ pub use near_sdk::{
     serde::{Deserialize, Serialize},
     AccountId, Balance, BorshStorageKey, PanicOnDefault,
 };
+
+pub use near_contract_standards::non_fungible_token::{
+    metadata::{NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC},
+    refund_deposit, NonFungibleToken, Token, TokenId,
+};
