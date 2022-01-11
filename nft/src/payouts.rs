@@ -6,8 +6,9 @@ use near_sdk::json_types::U128;
 
 use crate::*;
 
-const ROYALTY_TOTAL_VALUE:u128 = 10_000;
+pub const ROYALTY_TOTAL_VALUE:u128 = 10_000;
 pub const MAXIMUM_ROYALTY:u32 = 5_000;
+pub const MARKET_FEE:u32 = 250;
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Payout {
