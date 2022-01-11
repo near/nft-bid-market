@@ -1,7 +1,7 @@
 mod nft_core;
 mod token;
 
-mod common;
+pub mod common;
 use common::*;
 
 mod token_series;
