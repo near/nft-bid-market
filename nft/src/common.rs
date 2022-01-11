@@ -1,8 +1,8 @@
 pub use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::{LazyOption, LookupSet, UnorderedMap, UnorderedSet},
+    collections::{LazyOption, LookupSet, LookupMap, UnorderedMap, UnorderedSet},
     env,
-    json_types::U128,
+    json_types::{U128, U64},
     near_bindgen, require,
     serde::{Deserialize, Serialize},
     AccountId, Balance, BorshStorageKey, PanicOnDefault,

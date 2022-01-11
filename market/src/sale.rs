@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 
-use near_contract_standards::non_fungible_token::core::NonFungibleTokenCore;
 use near_sdk::{assert_one_yocto, promise_result_as_success, Promise, Balance, Gas};
-use near_sdk::json_types::{ValidAccountId, U128, U64};
-use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
 use near_sdk::ext_contract;
 
 use crate::*;
+use common::*;
 
 const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
 const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
@@ -68,7 +66,7 @@ impl Sale  {
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct PurchaseArgs {
-    pub nft_contract_id: ValidAccountId,
+    pub nft_contract_id: AccountId,
     pub token_id: TokenId,
 }
 
@@ -91,9 +89,9 @@ impl Market {
 
     /// TODO remove without redirect to wallet? panic reverts
     #[payable]
-    pub fn remove_sale(&mut self, nft_contract_id: ValidAccountId, token_id: String) {
+    pub fn remove_sale(&mut self, nft_contract_id: AccountId, token_id: String) {
         assert_one_yocto();
-        let sale = self.internal_remove_sale(nft_contract_id.into(), token_id);
+        let sale = self.internal_remove_sale(nft_contract_id, token_id);
         let owner_id = env::predecessor_account_id();
         assert_eq!(owner_id, sale.owner_id, "Must be sale owner");
         self.refund_all_bids(&sale.bids);
@@ -102,13 +100,13 @@ impl Market {
     #[payable]
     pub fn update_price(
         &mut self,
-        nft_contract_id: ValidAccountId,
+        nft_contract_id: AccountId,
         token_id: String,
-        ft_token_id: ValidAccountId,
+        ft_token_id: AccountId,
         price: U128,
     ) {
         assert_one_yocto();
-        let contract_id: AccountId = nft_contract_id.into();
+        let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         assert_eq!(
@@ -116,26 +114,26 @@ impl Market {
             sale.owner_id,
             "Must be sale owner"
         );
-        if !self.market.ft_token_ids.contains(&ft_token_id.clone().try_into().unwrap()) {
-            env::panic(format!("Token {} not supported by this market", ft_token_id).as_bytes());
+        if !self.market.ft_token_ids.contains(&ft_token_id) {
+            env::panic_str(&format!("Token {} not supported by this market", ft_token_id));
         }
-        sale.sale_conditions.insert(ft_token_id.into(), price);
+        sale.sale_conditions.insert(ft_token_id, price);
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
     #[payable]
     pub fn offer(
         &mut self,
-        nft_contract_id: ValidAccountId,
+        nft_contract_id: AccountId,
         token_id: String,
         start: Option<u64>,
         end: Option<u64>
     ) {
-        let contract_id: AccountId = nft_contract_id.into();
+        let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
-        ///Check that the sale is in progress
-        assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
+        // Check that the sale is in progress
+        require!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
 
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
@@ -173,6 +171,7 @@ impl Market {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[private]
     pub fn add_bid(
         &mut self,
@@ -220,21 +219,21 @@ impl Market {
             bids_for_token_id.remove(0);
         }
         
-        self.market.sales.insert(&contract_and_token_id, &sale);
+        self.market.sales.insert(&contract_and_token_id, sale);
     }
 
     pub fn accept_offer(
         &mut self,
-        nft_contract_id: ValidAccountId,
+        nft_contract_id: AccountId,
         token_id: String,
-        ft_token_id: ValidAccountId,
+        ft_token_id: AccountId,
     ) {
-        let contract_id: AccountId = nft_contract_id.into();
-        let contract_and_token_id = format!("{}{}{}", contract_id.clone(), DELIMETER, token_id.clone());
+        let contract_id: AccountId = nft_contract_id;
+        let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         // Check that the sale is in progress and remove bid before proceeding to process purchase
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
         assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
-        let bids_for_token_id = sale.bids.remove(&ft_token_id.clone().try_into().unwrap()).expect("No bids");
+        let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
         if let Some(start) = bid.start {
             assert!(
@@ -247,7 +246,7 @@ impl Market {
         self.process_purchase(
             contract_id,
             token_id,
-            ft_token_id.into(),
+            ft_token_id,
             bid.price,
             bid.owner_id.clone(),
         );
@@ -365,7 +364,7 @@ impl Market {
     ) {
         for (bid_ft, bid_vec) in bids {
             let bid = &bid_vec[bid_vec.len()-1];
-            if bid_ft.to_string() == "near".to_string() {
+            if bid_ft.as_str() == "near" {
                     Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
             } else {
                 ext_contract::ft_transfer(
