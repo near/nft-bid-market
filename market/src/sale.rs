@@ -140,7 +140,7 @@ impl Market {
         let ft_token_id = "near".to_string();
         let price = sale
             .sale_conditions
-            .get(&ft_token_id.clone().try_into().unwrap())
+            .get(&ft_token_id.parse().unwrap())
             .expect("Not for sale in NEAR")
             .0;
 
@@ -151,7 +151,7 @@ impl Market {
             self.process_purchase(
                 contract_id,
                 token_id,
-                ft_token_id.try_into().unwrap(),
+                ft_token_id.parse().unwrap(),
                 U128(deposit),
                 buyer_id,
             );
@@ -162,7 +162,7 @@ impl Market {
             self.add_bid(
                 contract_and_token_id,
                 deposit,
-                ft_token_id.try_into().unwrap(),
+                ft_token_id.parse().unwrap(),
                 buyer_id,
                 &mut sale,
                 start,
@@ -200,7 +200,7 @@ impl Market {
                 "Can't pay less than or equal to current bid price: {}",
                 current_bid.price.0
             );
-            if ft_token_id == "near".to_string().try_into().unwrap() {
+            if ft_token_id == "near".to_string().parse().unwrap() {
                 Promise::new(current_bid.owner_id.clone()).transfer(u128::from(current_bid.price));
             } else {
                 ext_contract::ft_transfer(
