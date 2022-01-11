@@ -1,6 +1,9 @@
 mod sale;
 mod token;
 mod market_core;
+mod common;
+mod inner;
+
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
 
@@ -53,12 +56,12 @@ impl Market {
         non_fungible_token_account_ids.extend(nft_ids);
         let market = MarketSales {
             owner_id: String::new().try_into().unwrap(),
-            sales: UnorderedMap::new(b"s"),
-            by_owner_id: LookupMap::new(b"o"),
-            by_nft_contract_id: LookupMap::new(b"c"),
-            by_nft_token_type: LookupMap::new(b"t"),
-            ft_token_ids: UnorderedSet::new(b"f"),
-            storage_deposits: LookupMap::new(b"d"),
+            sales: UnorderedMap::new(StorageKey::Sales),
+            by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
+            by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),
+            by_nft_token_type: LookupMap::new(StorageKey::ByNFTTokenType),
+            ft_token_ids: UnorderedSet::new(StorageKey::FTTokenIds),
+            storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
             bid_history_length: 1,
         };
         Self {
