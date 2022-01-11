@@ -1,7 +1,6 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::sale::DELIMETER;
-use near_sdk::PromiseOrValue;
 use crate::*;
 
 pub trait NonFungibleTokenApprovalReceiver {
@@ -76,8 +75,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
         
         for (ft_token_id, _price) in sale_conditions.clone() {
             if !self.market.ft_token_ids.contains(&ft_token_id) {
-                env::panic(
-                    format!("Token {} not supported by this market", ft_token_id).as_bytes(),
+                env::panic_str(
+                    &format!("Token {} not supported by this market", ft_token_id),
                 );
             }
         }
@@ -90,9 +89,9 @@ impl NonFungibleTokenApprovalReceiver for Market {
         self.market.sales.insert(
             &contract_and_token_id,
             &Sale {
-                owner_id: owner_id.clone().into(),
+                owner_id: owner_id.clone(),
                 approval_id,
-                nft_contract_id: nft_contract_id.to_string().clone(),
+                nft_contract_id: nft_contract_id.to_string(),
                 token_id: token_id.clone(),
                 sale_conditions,
                 bids,
@@ -107,10 +106,10 @@ impl NonFungibleTokenApprovalReceiver for Market {
 
         // extra for views
 
-        let mut by_owner_id = self.market.by_owner_id.get(&owner_id.clone().try_into().unwrap()).unwrap_or_else(|| {
+        let mut by_owner_id = self.market.by_owner_id.get(&owner_id).unwrap_or_else(|| {
             UnorderedSet::new(
                 StorageKey::ByOwnerIdInner {
-                    account_id_hash: hash_account_id(&owner_id.clone().try_into().unwrap()),
+                    account_id_hash: hash_account_id(&owner_id),
                 }
                 .try_to_vec()
                 .unwrap(),
@@ -123,7 +122,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
             "User has more sales than storage paid"
         );
         by_owner_id.insert(&contract_and_token_id);
-        self.market.by_owner_id.insert(&owner_id.clone().try_into().unwrap(), &by_owner_id);
+        self.market.by_owner_id.insert(&owner_id, &by_owner_id);
 
         let mut by_nft_contract_id = self
             .market
@@ -147,11 +146,11 @@ impl NonFungibleTokenApprovalReceiver for Market {
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type
-                .get(&token_type.clone().try_into().unwrap())
+                .get(&token_type.parse().unwrap())
                 .unwrap_or_else(|| {
                     UnorderedSet::new(
                         StorageKey::ByNFTTokenTypeInner {
-                            token_type_hash: hash_account_id(&token_type.clone().try_into().unwrap()),
+                            token_type_hash: hash_account_id(&token_type.parse().unwrap()),
                         }
                         .try_to_vec()
                         .unwrap(),
@@ -160,7 +159,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 by_nft_token_type.insert(&contract_and_token_id);
             self.market
                 .by_nft_token_type
-                .insert(&token_type.try_into().unwrap(), &by_nft_token_type);
+                .insert(&token_type.parse().unwrap(), &by_nft_token_type);
         }
     }
 }
