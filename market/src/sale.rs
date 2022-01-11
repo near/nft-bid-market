@@ -50,6 +50,19 @@ pub struct Sale {
     pub created_at: U64,
     pub is_auction: bool,
     pub token_type: Option<String>,
+
+    pub start: Option<u64>,
+    pub end: Option<u64>,
+}
+
+impl Sale  {
+    pub fn in_limits(&self) -> bool {
+        if let Some(start) = self.start {
+            start < env::block_timestamp() && env::block_timestamp() < self.end.unwrap()
+        } else {
+            true
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -121,6 +134,9 @@ impl Market {
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
+        ///Check that the sale is in progress
+        assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
+
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
         let ft_token_id = "near".to_string();
@@ -215,8 +231,9 @@ impl Market {
     ) {
         let contract_id: AccountId = nft_contract_id.into();
         let contract_and_token_id = format!("{}{}{}", contract_id.clone(), DELIMETER, token_id.clone());
-        // remove bid before proceeding to process purchase
+        // Check that the sale is in progress and remove bid before proceeding to process purchase
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
+        assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
         let bids_for_token_id = sale.bids.remove(&ft_token_id.clone().try_into().unwrap()).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
         if let Some(start) = bid.start {
