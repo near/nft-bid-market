@@ -48,7 +48,7 @@ impl Market{
         sale
     }
 
-    /*pub(crate) fn internal_remove_bid(
+    pub(crate) fn internal_remove_bid(
         &mut self,
         nft_contract_id: AccountId,
         token_id: TokenId,
@@ -72,12 +72,12 @@ impl Market{
                     .get(&contract_and_token_id)
                     .expect("No sale")
                     .bids
-                    .get(&token_id.parse().unwrap())
+                    .get_mut(&token_id.parse().unwrap())
                     .expect("No token")
                     .remove(index);
             };
         }
 
         self.market.sales.get(&contract_and_token_id).unwrap()
-    }*/
+    }
 }
