@@ -3,6 +3,7 @@ mod token;
 mod market_core;
 mod common;
 mod inner;
+mod sale_views;
 
 use common::*;
 
