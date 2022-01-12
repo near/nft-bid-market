@@ -6,7 +6,6 @@ use common::*;
 
 mod token_series;
 use near_sdk::Promise;
-use payouts::MARKET_FEE;
 use token_series::{TokenSeries, TokenSeriesId, TOKEN_DELIMETER};
 
 mod payouts;
@@ -103,10 +102,10 @@ impl Nft {
                 } else {
                     false
                 },
-            "Only creator can mint his own tokens"
+            "permission denied"
         );
         require!(
-            token_series.tokens.len() < token_series.metadata.copies.unwrap(),
+            token_series.tokens.len() < token_series.metadata.copies.unwrap_or(1),
             "Max token minted"
         );
         let token_id = format!(
