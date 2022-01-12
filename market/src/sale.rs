@@ -78,7 +78,7 @@ pub struct MarketSales {
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
     pub by_nft_token_type: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
-    pub ft_token_ids: UnorderedSet<AccountId>,
+    pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
     pub bid_history_length: u8,
 }
@@ -115,7 +115,7 @@ impl Market {
             "Must be sale owner"
         );
         if !self.market.ft_token_ids.contains(&ft_token_id) {
-            env::panic_str(&format!("Token {} not supported by this market", ft_token_id));
+            env::panic_str(&format!("Token '{}' is not supported by this market", ft_token_id));
         }
         sale.sale_conditions.insert(ft_token_id, price);
         self.market.sales.insert(&contract_and_token_id, &sale);
