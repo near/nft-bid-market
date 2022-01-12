@@ -97,7 +97,7 @@ impl Market {
         &mut self,
         nft_contract_id: AccountId,
         token_id: String,
-        ft_token_id: AccountId,
+        ft_token_id: FungibleTokenId,
         price: U128,
     ) {
         assert_one_yocto();
