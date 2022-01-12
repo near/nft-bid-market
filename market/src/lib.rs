@@ -1,3 +1,4 @@
+mod bid;
 mod sale;
 mod token;
 mod market_core;

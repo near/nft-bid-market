@@ -1,5 +1,6 @@
 use crate::common::*;
-use crate::sale::{Bid, Sale, DELIMETER};
+use crate::bid::Bid;
+use crate::sale::{Sale, DELIMETER};
 use crate::Market;
 
 impl Market {
