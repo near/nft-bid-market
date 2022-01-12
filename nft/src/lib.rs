@@ -121,7 +121,7 @@ impl Nft {
             reference_hash: None, // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
         };
 
-        // from NonFungibleToken::internal_mint_with_refund(), renamed owner_id to reciever_id
+        // implementation from NonFungibleToken::internal_mint_with_refund()
         // Core behavior: every token must have an owner
         self.tokens.owner_by_id.insert(&token_id, &reciever_id);
         // Metadata extension: Save metadata, keep variable around to return later.
@@ -173,11 +173,7 @@ impl Nft {
         reciever_id: AccountId,
     ) -> Token {
         let initial_storage_usage = env::storage_usage();
-        /*require!(
-            self.private_minters
-                .contains(&env::predecessor_account_id()),
-            "Unauthorized"
-        );*/
+
         let mut token_series = self
             .token_series_by_id
             .get(&token_series_id)
@@ -209,7 +205,7 @@ impl Nft {
             reference_hash: None, // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
         };
 
-        // from NonFungibleToken::internal_mint_with_refund(), renamed owner_id to reciever_id
+        // implementation from NonFungibleToken::internal_mint_with_refund()
         // Core behavior: every token must have an owner
         self.tokens.owner_by_id.insert(&token_id, &reciever_id);
         // Metadata extension: Save metadata, keep variable around to return later.
@@ -240,12 +236,6 @@ impl Nft {
             None
         };
 
-        /*let token = self
-            .tokens
-            .internal_mint_with_refund(token_id, token_owner_id, Some(metadata), None);
-        token_series.tokens.insert(&token_id);*/
-
-
         let market_fee = price * MARKET_FEE as u128 / ROYALTY_TOTAL_VALUE;
         Promise::new(token_series.creator_id).transfer(price - market_fee);
         Promise::new(self.market_id.clone()).transfer(market_fee);
@@ -265,10 +255,10 @@ impl Nft {
         token_metadata: TokenMetadata,
         price: Option<U128>,
         royalty: Option<HashMap<AccountId, u32>>,
-    ) -> TokenSeriesJson {
+    ) -> TokenSeriesId {
         let initial_storage_usage = env::storage_usage();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
-        require!(token_metadata.title.is_some());
+        require!(token_metadata.title.is_some(), "title is missing from token metadata");
         let mut total_payouts = 0;
         let royalty_res: HashMap<AccountId, u32> = if let Some(royalty) = royalty {
             total_payouts = royalty.values().sum();
@@ -278,14 +268,14 @@ impl Nft {
         };
         require!(
             total_payouts <= MAXIMUM_ROYALTY,
-            format!("exceeds maximum royalty {}", MAXIMUM_ROYALTY)
+            format!("maximum royalty cap exceeded {}", MAXIMUM_ROYALTY)
         );
-        let price: Option<u128> = price.map(|price| price.0);
+        let price: Option<u128> = price.map(|p| p.0);
 
         self.token_series_by_id.insert(
             &token_series_id,
             &TokenSeries {
-                metadata: token_metadata.clone(),
+                metadata: token_metadata,
                 creator_id: env::predecessor_account_id(),
                 tokens: UnorderedSet::new(
                     StorageKey::TokensBySeriesInner {
@@ -296,21 +286,27 @@ impl Nft {
                 ),
                 price,
                 is_mintable: true,
-                royalty: royalty_res.clone(),
+                royalty: royalty_res,
             },
         );
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
 
-        TokenSeriesJson {
-            token_series_id,
-            metadata: token_metadata,
-            creator_id: env::predecessor_account_id(),
-            royalty: royalty_res,
-        }
+        token_series_id
     }
 
-    // fn mint_token(&mut self) -> Token {}
+    pub fn add_private_minter(&mut self, account_id: AccountId) {
+        require!(env::predecessor_account_id().eq(&self.tokens.owner_id));
+        self.private_minters.insert(&account_id);
+    }
+
+    // TODO: 
+
+    // private minting
+    // pub fn private_mint()
+    
+    // refactor nft_buy_mint and nft_mint with
+    // fn mint_token(&mut self) -> Token {} 
 }
 
 fn refund_deposit_extra(storage_used: u64, extra: Balance) {
