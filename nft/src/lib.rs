@@ -7,7 +7,7 @@ use common::*;
 mod token_series;
 use near_sdk::Promise;
 use payouts::MARKET_FEE;
-use token_series::{TokenSeries, TokenSeriesId, TokenSeriesJson, TOKEN_DELIMETER};
+use token_series::{TokenSeries, TokenSeriesId, TOKEN_DELIMETER};
 
 mod payouts;
 use crate::payouts::{MAXIMUM_ROYALTY, ROYALTY_TOTAL_VALUE};
