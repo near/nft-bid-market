@@ -22,8 +22,8 @@ pub struct SaleArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_auction: Option<bool>,
 
-    pub start: Option<u64>,
-    pub end: Option<u64>,
+    pub start: Option<U64>,
+    pub end: Option<U64>,
 }
 
 #[near_bindgen]
