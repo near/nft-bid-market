@@ -37,11 +37,11 @@ pub struct Market {
 #[near_bindgen]
 impl Market {
     #[init]
-    pub fn new(nft_ids: Vec<AccountId>) -> Self {
+    pub fn new(nft_ids: Vec<AccountId>, owner_id: AccountId) -> Self {
         let mut non_fungible_token_account_ids = LookupSet::new(b"n");
         non_fungible_token_account_ids.extend(nft_ids);
         let market = MarketSales {
-            owner_id: String::new().parse().unwrap(),
+            owner_id,
             sales: UnorderedMap::new(StorageKey::Sales),
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),

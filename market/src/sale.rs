@@ -19,12 +19,26 @@ pub struct Bid {
     pub owner_id: AccountId,
     pub price: U128,
 
-    pub start: Option<u64>,
-    pub end: Option<u64>,
+    pub start: Option<U64>,
+    pub end: Option<U64>,
+}
+
+impl Bid{
+    pub fn in_limits(&self) -> bool {
+        let mut res = true;
+        let now = env::block_timestamp();
+        if let Some(start) = self.start{
+            res &= start.0 < now;
+        }
+        if let Some(end) = self.end{
+            res &= now < end.0;
+        }
+        res
+    }
 }
 
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
-pub type SaleConditions = HashMap<FungibleTokenId, U128>;
+pub type SaleConditions = HashMap<FungibleTokenId, u128>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -49,17 +63,21 @@ pub struct Sale {
     pub is_auction: bool,
     pub token_type: Option<String>,
 
-    pub start: Option<u64>,
-    pub end: Option<u64>,
+    pub start: Option<U64>,
+    pub end: Option<U64>,
 }
 
 impl Sale  {
     pub fn in_limits(&self) -> bool {
-        if let Some(start) = self.start {
-            start < env::block_timestamp() && env::block_timestamp() < self.end.unwrap()
-        } else {
-            true
+        let mut res = true;
+        let now = env::block_timestamp();
+        if let Some(start) = self.start{
+            res &= start.0 < now;
         }
+        if let Some(end) = self.end{
+            res &= now < end.0;
+        }
+        res
     }
 }
 
@@ -70,7 +88,6 @@ pub struct PurchaseArgs {
     pub token_id: TokenId,
 }
 
-#[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct MarketSales {
     pub owner_id: AccountId,
@@ -78,7 +95,7 @@ pub struct MarketSales {
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
     pub by_nft_token_type: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
-    pub ft_token_ids: UnorderedSet<AccountId>,
+    pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
     pub bid_history_length: u8,
 }
@@ -123,9 +140,9 @@ impl Market {
             "Must be sale owner"
         );
         if !self.market.ft_token_ids.contains(&ft_token_id) {
-            env::panic_str(&format!("Token {} not supported by this market", ft_token_id));
+            env::panic_str(&format!("Token '{}' is not supported by this market", ft_token_id));
         }
-        sale.sale_conditions.insert(ft_token_id, price);
+        sale.sale_conditions.insert(ft_token_id, price.0);
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
@@ -134,8 +151,8 @@ impl Market {
         &mut self,
         nft_contract_id: AccountId,
         token_id: String,
-        start: Option<u64>,
-        end: Option<u64>
+        start: Option<U64>,
+        end: Option<U64>
     ) {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
@@ -146,11 +163,10 @@ impl Market {
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
         let ft_token_id = "near".to_string();
-        let price = sale
+        let price = *sale
             .sale_conditions
             .get(&ft_token_id.parse().unwrap())
-            .expect("Not for sale in NEAR")
-            .0;
+            .expect("Not for sale in NEAR");
 
         let deposit = env::attached_deposit();
         assert!(deposit > 0, "Attached deposit must be greater than 0");
@@ -188,8 +204,8 @@ impl Market {
         ft_token_id: AccountId,
         buyer_id: AccountId,
         sale: &mut Sale,
-        start: Option<u64>,
-        end: Option<u64>
+        start: Option<U64>,
+        end: Option<U64>
     ) {
         // store a bid and refund any current bid lower
         let new_bid = Bid {
@@ -240,15 +256,13 @@ impl Market {
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         // Check that the sale is in progress and remove bid before proceeding to process purchase
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
-        assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
+        require!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
         let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
-        if let Some(start) = bid.start {
-            assert!(
-                start < env::block_timestamp() && env::block_timestamp() < bid.end.unwrap(),
-                "Out of time limit of the bid"
-            );
-        }
+        require!(
+            bid.in_limits(),
+            "Out of time limit of the bid"
+        );
         self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
