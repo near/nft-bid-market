@@ -56,7 +56,12 @@ pub struct Sale {
 impl Sale  {
     pub fn in_limits(&self) -> bool {
         if let Some(start) = self.start {
-            start < env::block_timestamp() && env::block_timestamp() < self.end.unwrap()
+            let now = env::block_timestamp();
+            if let Some(end) = self.end{
+                start < now && now < end
+            } else {
+                start < now
+            }
         } else {
             true
         }
