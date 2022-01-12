@@ -160,7 +160,6 @@ impl Nft {
         } else {
             None
         };
-
         /*let token = self
             .tokens
             .internal_mint_with_refund(token_id, token_owner_id, Some(metadata), None);
@@ -318,6 +317,8 @@ impl Nft {
     // refactor nft_buy_mint and nft_mint with
     // fn mint_token(&mut self) -> Token {}
 }
+near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
+near_contract_standards::impl_non_fungible_token_enumeration!(Nft, tokens);
 
 // fn refund_deposit_extra(storage_used: u64, extra: Balance) {
 //     let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
