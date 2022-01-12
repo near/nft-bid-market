@@ -23,6 +23,20 @@ pub struct Bid {
     pub end: Option<U64>,
 }
 
+impl Bid{
+    pub fn in_limits(&self) -> bool {
+        let mut res = true;
+        let now = env::block_timestamp();
+        if let Some(start) = self.start{
+            res &= start.0 < now;
+        }
+        if let Some(end) = self.end{
+            res &= now < end.0;
+        }
+        res
+    }
+}
+
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 pub type SaleConditions = HashMap<FungibleTokenId, u128>;
 
@@ -55,16 +69,15 @@ pub struct Sale {
 
 impl Sale  {
     pub fn in_limits(&self) -> bool {
-        if let Some(start) = self.start {
-            let now = env::block_timestamp();
-            if let Some(end) = self.end{
-                start.0 < now && now < end.0
-            } else {
-                start.0 < now
-            }
-        } else {
-            true
+        let mut res = true;
+        let now = env::block_timestamp();
+        if let Some(start) = self.start{
+            res &= start.0 < now;
         }
+        if let Some(end) = self.end{
+            res &= now < end.0;
+        }
+        res
     }
 }
 
@@ -235,16 +248,13 @@ impl Market {
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         // Check that the sale is in progress and remove bid before proceeding to process purchase
         let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
-        assert!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
+        require!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
         let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len()-1];
-        if let Some(start) = bid.start {
-            let now = env::block_timestamp();
-            require!(
-                start.0 < now && now < bid.end.unwrap().0,
-                "Out of time limit of the bid"
-            );
-        }
+        require!(
+            bid.in_limits(),
+            "Out of time limit of the bid"
+        );
         self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
