@@ -100,8 +100,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_type: token_type.clone(),
                 is_auction: is_auction.unwrap_or(false),
 
-                start: start,
-                end: end,
+                start,
+                end,
             },
         );
 

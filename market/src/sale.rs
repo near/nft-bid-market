@@ -70,7 +70,6 @@ pub struct PurchaseArgs {
     pub token_id: TokenId,
 }
 
-#[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct MarketSales {
     pub owner_id: AccountId,
