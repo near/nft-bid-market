@@ -255,10 +255,10 @@ impl Nft {
         token_metadata: TokenMetadata,
         price: Option<U128>,
         royalty: Option<HashMap<AccountId, u32>>,
-    ) -> TokenSeriesJson {
+    ) -> TokenSeriesId {
         let initial_storage_usage = env::storage_usage();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
-        require!(token_metadata.title.is_some());
+        require!(token_metadata.title.is_some(), "title is missing from token metadata");
         let mut total_payouts = 0;
         let royalty_res: HashMap<AccountId, u32> = if let Some(royalty) = royalty {
             total_payouts = royalty.values().sum();
@@ -268,14 +268,14 @@ impl Nft {
         };
         require!(
             total_payouts <= MAXIMUM_ROYALTY,
-            format!("exceeds maximum royalty {}", MAXIMUM_ROYALTY)
+            format!("maximum royalty cap exceeded {}", MAXIMUM_ROYALTY)
         );
-        let price: Option<u128> = price.map(|price| price.0);
+        let price: Option<u128> = price.map(|p| p.0);
 
         self.token_series_by_id.insert(
             &token_series_id,
             &TokenSeries {
-                metadata: token_metadata.clone(),
+                metadata: token_metadata,
                 creator_id: env::predecessor_account_id(),
                 tokens: UnorderedSet::new(
                     StorageKey::TokensBySeriesInner {
@@ -286,18 +286,13 @@ impl Nft {
                 ),
                 price,
                 is_mintable: true,
-                royalty: royalty_res.clone(),
+                royalty: royalty_res,
             },
         );
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
 
-        TokenSeriesJson {
-            token_series_id,
-            metadata: token_metadata,
-            creator_id: env::predecessor_account_id(),
-            royalty: royalty_res,
-        }
+        token_series_id
     }
 
     pub fn add_private_minter(&mut self, account_id: AccountId) {
