@@ -1,6 +1,7 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::sale::DELIMETER;
+//use crate::sale_views;
 use crate::*;
 
 pub trait NonFungibleTokenApprovalReceiver {
@@ -166,19 +167,9 @@ impl NonFungibleTokenApprovalReceiver for Market {
 
 #[near_bindgen]
 impl Market {
+    
     pub fn storage_amount(&self) -> U128 {
         U128(STORAGE_PER_SALE)
     }
 
-    pub fn get_supply_by_owner_id(
-        &self,
-        account_id: AccountId,
-    ) -> U64 {
-        let by_owner_id = self.market.by_owner_id.get(&account_id);
-        if let Some(by_owner_id) = by_owner_id {
-            U64(by_owner_id.len())
-        } else {
-            U64(0)
-        }
-    }
 }
