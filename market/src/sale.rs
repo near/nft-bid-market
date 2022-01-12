@@ -97,6 +97,14 @@ impl Market {
         self.refund_all_bids(&sale.bids);
     }
 
+    /*#[payable]
+    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
+        assert_one_yocto();
+        assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
+        self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
+        self.refund_bid(token_id.parse().unwrap(), &bid);
+    }*/
+
     #[payable]
     pub fn update_price(
         &mut self,
@@ -379,7 +387,24 @@ impl Market {
         }
     }
 
-    
+    pub(crate) fn refund_bid(
+        &mut self,
+        bid_ft: FungibleTokenId,
+        bid: &Bid,
+    ) {
+        if bid_ft.as_str() == "near" {
+            Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
+        } else {
+            ext_contract::ft_transfer(
+                bid.owner_id.clone(),
+                bid.price,
+                None,
+                bid_ft,
+                1,
+                GAS_FOR_FT_TRANSFER,
+            );
+        }
+    }    
 }
 
 

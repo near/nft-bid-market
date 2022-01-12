@@ -1,7 +1,6 @@
 use crate::Market;
 use crate::common::*;
-use crate::sale::DELIMETER;
-use crate::sale::Sale;
+use crate::sale::{Sale, Bid, DELIMETER};
 
 impl Market{
 
@@ -49,4 +48,36 @@ impl Market{
         sale
     }
 
+    /*pub(crate) fn internal_remove_bid(
+        &mut self,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
+        bid: &Bid,
+    ) -> Sale {
+        let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
+        let sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
+        let bid_vec = sale
+            .bids
+            .get(&token_id.parse().unwrap())
+            .expect("No token");
+
+        for (index, bid_from_vec) in bid_vec.iter().enumerate() {
+            if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
+                self.market
+                    .sales
+                    .get(&contract_and_token_id)
+                    .expect("No sale")
+                    .bids
+                    .get(&token_id.parse().unwrap())
+                    .expect("No token")
+                    .remove(index);
+            };
+        }
+
+        self.market.sales.get(&contract_and_token_id).unwrap()
+    }*/
 }
