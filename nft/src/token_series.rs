@@ -16,8 +16,8 @@ pub struct TokenSeries {
     pub metadata: TokenMetadata,
     pub creator_id: AccountId,
     pub tokens: UnorderedSet<TokenId>,
-    pub price: Option<Balance>,
-    pub is_mintable: bool,
+    pub market_id: Option<AccountId>, // market allowed to mint as well
+//    pub is_mintable: bool,
     pub royalty: HashMap<AccountId, u32>,
 }
 
