@@ -22,8 +22,8 @@ pub struct SaleArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_auction: Option<bool>,
 
-    pub start: Option<U64>,
-    pub end: Option<U64>,
+    pub start: Option<u64>,
+    pub end: Option<u64>,
 }
 
 #[near_bindgen]
@@ -96,10 +96,9 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_id: token_id.clone(),
                 sale_conditions,
                 bids,
-                created_at: U64(env::block_timestamp()/1000000),
+                created_at: env::block_timestamp()/1000000,
                 token_type: token_type.clone(),
-                is_auction: is_auction.unwrap_or(false),
-
+                is_auction: is_auction,
                 start,
                 end,
             },

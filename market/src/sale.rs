@@ -37,12 +37,12 @@ pub struct Sale {
     pub token_id: String,
     pub sale_conditions: SaleConditions,
     pub bids: Bids,
-    pub created_at: U64,
-    pub is_auction: bool,
+    pub created_at: u64,
+    pub is_auction: Option<bool>,
     pub token_type: Option<String>,
 
-    pub start: Option<U64>,
-    pub end: Option<U64>,
+    pub start: Option<u64>,
+    pub end: Option<u64>,
 }
 
 impl Sale  {
@@ -50,10 +50,10 @@ impl Sale  {
         let mut res = true;
         let now = env::block_timestamp();
         if let Some(start) = self.start{
-            res &= start.0 < now;
+            res &= start < now;
         }
         if let Some(end) = self.end{
-            res &= now < end.0;
+            res &= now < end;
         }
         res
     }
@@ -149,7 +149,7 @@ impl Market {
         let deposit = env::attached_deposit();
         assert!(deposit > 0, "Attached deposit must be greater than 0");
 
-        if !sale.is_auction && deposit == price {
+        if !sale.is_auction.unwrap_or(false) && deposit == price {
             self.process_purchase(
                 contract_id,
                 token_id,
@@ -158,7 +158,7 @@ impl Market {
                 buyer_id,
             );
         } else {
-            if sale.is_auction && price > 0 {
+            if sale.is_auction.unwrap() && price > 0 {
                 assert!(deposit >= price, "Attached deposit must be greater than reserve price");
             }
             self.add_bid(
