@@ -2,6 +2,7 @@ mod nft_core;
 mod token;
 
 pub mod common;
+mod series_views;
 use common::*;
 
 mod token_series;
@@ -9,7 +10,7 @@ use near_sdk::Promise;
 use token_series::{TokenSeries, TokenSeriesId, TOKEN_DELIMETER};
 
 mod payouts;
-use crate::payouts::{MAXIMUM_ROYALTY, ROYALTY_TOTAL_VALUE};
+use crate::payouts::MAXIMUM_ROYALTY;
 
 use std::collections::HashMap;
 
@@ -21,7 +22,6 @@ pub struct Nft {
 
     private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
-    market_id: AccountId,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -39,7 +39,7 @@ enum StorageKey {
 #[near_bindgen]
 impl Nft {
     #[init]
-    pub fn new_default_meta(owner_id: AccountId, market_id: AccountId) -> Self {
+    pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
             owner_id,
             NFTContractMetadata {
@@ -52,7 +52,6 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
-            market_id,
         )
     }
 
@@ -61,7 +60,6 @@ impl Nft {
         owner_id: AccountId,
         metadata: NFTContractMetadata,
         private_minters: Vec<AccountId>,
-        market_id: AccountId,
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
@@ -78,13 +76,12 @@ impl Nft {
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
-            market_id,
         }
     }
 
     // public mints
     #[payable]
-    pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId) -> Token {
+    pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId) -> TokenId {
         let initial_storage_usage = env::storage_usage();
         /*require!(
             self.private_minters
@@ -153,24 +150,10 @@ impl Nft {
         token_series.tokens.insert(&token_id);
         self.token_series_by_id
             .insert(&token_series_id, &token_series);
-        // Approval Management extension: return empty HashMap as part of Token
-        let approved_account_ids = if self.tokens.approvals_by_id.is_some() {
-            Some(HashMap::new())
-        } else {
-            None
-        };
-        /*let token = self
-            .tokens
-            .internal_mint_with_refund(token_id, token_owner_id, Some(metadata), None);
-        token_series.tokens.insert(&token_id);*/
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
-        Token {
-            token_id,
-            owner_id: reciever_id,
-            metadata: Some(metadata),
-            approved_account_ids,
-        }
+
+        token_id
     }
 
     // #[payable]
@@ -312,24 +295,6 @@ impl Nft {
 
     // private minting
     // pub fn private_mint()
-
-    // refactor nft_buy_mint and nft_mint with
-    // fn mint_token(&mut self) -> Token {}
 }
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
 near_contract_standards::impl_non_fungible_token_enumeration!(Nft, tokens);
-
-// fn refund_deposit_extra(storage_used: u64, extra: Balance) {
-//     let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
-//     let attached_deposit = env::attached_deposit() - extra;
-
-//     require!(
-//         required_cost <= attached_deposit,
-//         format!("Must attach {} yoctoNEAR to cover storage", required_cost)
-//     );
-
-//     let refund = attached_deposit - required_cost;
-//     if refund > 1 {
-//         Promise::new(env::predecessor_account_id()).transfer(refund);
-//     }
-// }

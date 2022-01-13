@@ -82,7 +82,7 @@ impl Market {
         let mut sale = self
             .market
             .sales
-            .get(&contract_and_token_id) //тут мы по сути достаём значение из хранилища
+            .get(&contract_and_token_id)
             .expect("No sale");
 
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
@@ -90,9 +90,8 @@ impl Market {
                 sale.bids
                     .get_mut(&token_id.parse().unwrap())
                     .expect("No token")
-                    .remove(index); // что-то с ним делаем
+                    .remove(index); 
 
-                // но его ещё надо записать обратно
                 self.market.sales.insert(&contract_and_token_id, &sale);
             };
         }

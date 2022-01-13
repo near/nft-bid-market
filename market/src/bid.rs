@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{common::*, Market, MarketContract};
+use near_sdk::assert_one_yocto;
+
+use crate::*;
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -13,7 +15,7 @@ pub struct Bid {
     pub end: Option<U64>,
 }
 
-impl Bid{
+impl Bid {
     pub fn in_limits(&self) -> bool {
         let mut res = true;
         let now = env::block_timestamp();
@@ -81,4 +83,57 @@ impl Market{
         
         self.market.sales.insert(&contract_and_token_id, sale);
     }
+
+    #[payable]
+    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
+        assert_one_yocto();
+        assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
+        self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
+        self.refund_bid(token_id.parse().unwrap(), &bid);
+    }
+}
+
+
+impl Market {
+    pub(crate) fn refund_all_bids(
+        &mut self,
+        bids_map: &Bids,
+    ) {
+        for (ft, bids) in bids_map {
+            if let Some(bid) = bids.last()
+            {
+                if ft.as_str() == "near" {
+                        Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
+                } else {
+                    ext_contract::ft_transfer(
+                        bid.owner_id.clone(),
+                        bid.price,
+                        None,
+                        ft.clone(),
+                        1,
+                        GAS_FOR_FT_TRANSFER,
+                    );
+                }
+            }
+        }
+    }
+
+    pub(crate) fn refund_bid(
+        &mut self,
+        bid_ft: FungibleTokenId,
+        bid: &Bid,
+    ) {
+        if bid_ft.as_str() == "near" {
+            Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
+        } else {
+            ext_contract::ft_transfer(
+                bid.owner_id.clone(),
+                bid.price,
+                None,
+                bid_ft,
+                1,
+                GAS_FOR_FT_TRANSFER,
+            );
+        }
+    }    
 }
