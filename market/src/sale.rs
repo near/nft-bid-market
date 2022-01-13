@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use near_sdk::{assert_one_yocto, promise_result_as_success, Promise, Balance, Gas, PromiseResult};
 use near_sdk::ext_contract;
+use near_sdk::{assert_one_yocto, promise_result_as_success, Balance, Gas, Promise, PromiseResult};
 
 use crate::*;
 use common::*;
@@ -16,7 +16,6 @@ pub const GAS_FOR_MINT: Gas = Gas(20_000_000_000_000);
 //const BID_HISTORY_LENGTH_DEFAULT: u8 = 1;
 const NO_DEPOSIT: Balance = 0;
 pub static DELIMETER: &str = "||";
-
 
 pub type SaleConditions = HashMap<FungibleTokenId, u128>;
 
@@ -52,10 +51,10 @@ impl Sale {
     pub fn in_limits(&self) -> bool {
         let mut res = true;
         let now = env::block_timestamp();
-        if let Some(start) = self.start{
+        if let Some(start) = self.start {
             res &= start < now;
         }
-        if let Some(end) = self.end{
+        if let Some(end) = self.end {
             res &= now < end;
         }
         res
@@ -82,10 +81,8 @@ pub struct MarketSales {
     pub bid_history_length: u8,
 }
 
-
 #[near_bindgen]
 impl Market {
-
     /// TODO remove without redirect to wallet? panic reverts
     #[payable]
     pub fn remove_sale(&mut self, nft_contract_id: AccountId, token_id: String) {
@@ -107,14 +104,21 @@ impl Market {
         assert_one_yocto();
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
-        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
+        let mut sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
         assert_eq!(
             env::predecessor_account_id(),
             sale.owner_id,
             "Must be sale owner"
         );
         if !self.market.ft_token_ids.contains(&ft_token_id) {
-            env::panic_str(&format!("Token '{}' is not supported by this market", ft_token_id));
+            env::panic_str(&format!(
+                "Token '{}' is not supported by this market",
+                ft_token_id
+            ));
         }
         sale.sale_conditions.insert(ft_token_id, price.0);
         self.market.sales.insert(&contract_and_token_id, &sale);
@@ -126,13 +130,20 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: String,
         start: Option<U64>,
-        end: Option<U64>
+        end: Option<U64>,
     ) {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
-        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
+        let mut sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
         // Check that the sale is in progress
-        require!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
+        require!(
+            sale.in_limits(),
+            "Either the sale is finished or it hasn't started yet"
+        );
 
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
@@ -155,7 +166,10 @@ impl Market {
             );
         } else {
             if sale.is_auction.unwrap() && price > 0 {
-                assert!(deposit >= price, "Attached deposit must be greater than reserve price");
+                assert!(
+                    deposit >= price,
+                    "Attached deposit must be greater than reserve price"
+                );
             }
             self.add_bid(
                 contract_and_token_id,
@@ -164,7 +178,7 @@ impl Market {
                 buyer_id,
                 &mut sale,
                 start,
-                end
+                end,
             );
         }
     }
@@ -178,14 +192,18 @@ impl Market {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         // Check that the sale is in progress and remove bid before proceeding to process purchase
-        let mut sale = self.market.sales.get(&contract_and_token_id).expect("No sale");
-        require!(sale.in_limits(), "Either the sale is finished or it hasn't started yet");
-        let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
-        let bid = &bids_for_token_id[bids_for_token_id.len()-1];
+        let mut sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
         require!(
-            bid.in_limits(),
-            "Out of time limit of the bid"
+            sale.in_limits(),
+            "Either the sale is finished or it hasn't started yet"
         );
+        let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
+        let bid = &bids_for_token_id[bids_for_token_id.len() - 1];
+        require!(bid.in_limits(), "Out of time limit of the bid");
         self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
@@ -214,7 +232,7 @@ impl Market {
             sale.approval_id,
             "payout from market".to_string(),
             price,
-			10,
+            10,
             nft_contract_id,
             1,
             GAS_FOR_NFT_TRANSFER,
@@ -240,7 +258,6 @@ impl Market {
         sale: Sale,
         price: U128,
     ) -> U128 {
-
         // checking for payout information
         let payout_option = promise_result_as_success().and_then(|value| {
             // None means a bad payout from bad NFT contract
@@ -306,39 +323,58 @@ impl Market {
         &mut self,
         nft_contract_id: AccountId,
         series_id: TokenSeriesId,
-        reciever_id: AccountId
-    ) -> Promise{
-        let contract_and_series: ContractAndSeriesId = format!("{}{}{}", nft_contract_id, DELIMETER, series_id);
-        let price = self.market.token_series.get(&contract_and_series).expect("Token series not found");
+        reciever_id: AccountId,
+    ) -> Promise {
+        let contract_and_series: ContractAndSeriesId =
+            format!("{}{}{}", nft_contract_id, DELIMETER, series_id);
+        let price = self
+            .market
+            .token_series
+            .get(&contract_and_series)
+            .expect("Token series not found");
         let balance = env::attached_deposit() - price;
-        let payout = ext_contract::nft_payout(series_id.clone(), price.into(), 10, nft_contract_id.clone(), 0, GAS_FOR_NFT_TRANSFER);
         ext_contract::nft_mint(
-            series_id.clone(),
-            reciever_id, 
-            nft_contract_id, 
+            series_id,
+            reciever_id,
+            nft_contract_id.clone(),
             balance,
-            GAS_FOR_MINT).
-            then(ext_self::resolve_mint(
-                    env::predecessor_account_id(), 
-                    series_id, 
-                 env::attached_deposit().into(), 
-env::current_account_id(), 
-0,
-GAS_FOR_MINT))
+            GAS_FOR_MINT,
+        )
+        .then(ext_self::resolve_mint(
+            nft_contract_id,
+            env::predecessor_account_id(),
+            env::attached_deposit().into(),
+            price.into(),
+            env::current_account_id(),
+            0,
+            GAS_FOR_MINT,
+        ))
     }
 
     #[private]
     pub fn resolve_mint(
         &mut self,
+        nft_contract_id: AccountId,
         buyer_id: AccountId,
-        token_series: TokenSeriesId,
-        deposit: U128
-    ) -> bool {
-        require!(env::promise_results_count() == 1, "Contract expected a result on the callback");
+        deposit: U128,
+        price: U128,
+    ) {
+        require!(
+            env::promise_results_count() == 1,
+            "Contract expected a result on the callback"
+        );
         match env::promise_result(0) {
-            PromiseResult::Successful(_) => true,
-            _ => {Promise::new(buyer_id).transfer(deposit.into()); false},
-        }
+            PromiseResult::Successful(token_id) => ext_contract::nft_payout(
+                near_sdk::serde_json::from_slice::<TokenId>(&token_id)
+                    .unwrap_or_else(|_| env::panic_str("Should be unreachable")),
+                price,
+                10,
+                nft_contract_id,
+                0,
+                GAS_FOR_NFT_TRANSFER,
+            ),
+            _ => Promise::new(buyer_id).transfer(deposit.into()),
+        };
     }
 }
 
@@ -356,9 +392,10 @@ trait ExtSelf {
 
     fn resolve_mint(
         &mut self,
+        nft_contract_id: AccountId,
         buyer_id: AccountId,
-        token_series: TokenSeriesId,
-        price: U128
+        deposit: U128,
+        price: U128,
     ) -> Promise;
 }
 
@@ -373,23 +410,9 @@ trait ExtContract {
         approval_id: u64,
         memo: String,
         balance: U128,
-		max_len_payout: u32,
+        max_len_payout: u32,
     );
-    fn ft_transfer(
-        &mut self,
-        receiver_id: AccountId,
-        amount: U128,
-        memo: Option<String>
-    );
-    fn nft_mint(
-        &mut self,
-        token_series_id: TokenSeriesId, 
-        reciever_id: AccountId
-    );
-    fn nft_payout(
-        &self, 
-        token_id: String, 
-        balance: U128,
-        max_len_payout: u32
-    ) -> Payout;
+    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
+    fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId);
+    fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout;
 }
