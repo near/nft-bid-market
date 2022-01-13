@@ -7,6 +7,7 @@ mod inner;
 mod sale_views;
 
 use common::*;
+use sale::{TokenSeriesId, ContractAndSeriesId};
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
 use std::collections::HashMap;
@@ -18,6 +19,7 @@ const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 pub enum StorageKey {
     Sales,
     ByOwnerId,
+    TokenSeries,
     ByOwnerIdInner { account_id_hash: CryptoHash },
     ByNFTContractId,
     ByNFTContractIdInner { account_id_hash: CryptoHash },
@@ -43,6 +45,7 @@ impl Market {
         non_fungible_token_account_ids.extend(nft_ids);
         let market = MarketSales {
             owner_id,
+            token_series: UnorderedMap::new(StorageKey::TokenSeries),
             sales: UnorderedMap::new(StorageKey::Sales),
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),

@@ -81,7 +81,7 @@ impl Nft {
 
     // public mints
     #[payable]
-    pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId) -> Token {
+    pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId) -> TokenId {
         let initial_storage_usage = env::storage_usage();
         /*require!(
             self.private_minters
@@ -150,24 +150,11 @@ impl Nft {
         token_series.tokens.insert(&token_id);
         self.token_series_by_id
             .insert(&token_series_id, &token_series);
-        // Approval Management extension: return empty HashMap as part of Token
-        let approved_account_ids = if self.tokens.approvals_by_id.is_some() {
-            Some(HashMap::new())
-        } else {
-            None
-        };
-        /*let token = self
-            .tokens
-            .internal_mint_with_refund(token_id, token_owner_id, Some(metadata), None);
-        token_series.tokens.insert(&token_id);*/
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
-        Token {
-            token_id,
-            owner_id: reciever_id,
-            metadata: Some(metadata),
-            approved_account_ids,
-        }
+
+            token_id
+
     }
 
     // #[payable]
