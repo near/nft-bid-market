@@ -98,7 +98,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 bids,
                 created_at: env::block_timestamp()/1000000,
                 token_type: token_type.clone(),
-                is_auction: is_auction,
+                is_auction,
                 start,
                 end,
             },

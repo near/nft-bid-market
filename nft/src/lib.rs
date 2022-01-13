@@ -10,7 +10,7 @@ use near_sdk::Promise;
 use token_series::{TokenSeries, TokenSeriesId, TOKEN_DELIMETER};
 
 mod payouts;
-use crate::payouts::{MAXIMUM_ROYALTY, ROYALTY_TOTAL_VALUE};
+use crate::payouts::MAXIMUM_ROYALTY;
 
 use std::collections::HashMap;
 
@@ -153,8 +153,7 @@ impl Nft {
 
         refund_deposit(env::storage_usage() - initial_storage_usage);
 
-            token_id
-
+        token_id
     }
 
     // #[payable]
@@ -296,7 +295,6 @@ impl Nft {
 
     // private minting
     // pub fn private_mint()
-
 }
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
 near_contract_standards::impl_non_fungible_token_enumeration!(Nft, tokens);
