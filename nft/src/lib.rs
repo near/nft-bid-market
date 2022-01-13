@@ -2,6 +2,7 @@ mod nft_core;
 mod token;
 
 pub mod common;
+mod series_views;
 use common::*;
 
 mod token_series;
@@ -21,7 +22,6 @@ pub struct Nft {
 
     private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
-    market_id: AccountId,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -39,7 +39,7 @@ enum StorageKey {
 #[near_bindgen]
 impl Nft {
     #[init]
-    pub fn new_default_meta(owner_id: AccountId, market_id: AccountId) -> Self {
+    pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
             owner_id,
             NFTContractMetadata {
@@ -52,7 +52,6 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
-            market_id,
         )
     }
 
@@ -61,7 +60,6 @@ impl Nft {
         owner_id: AccountId,
         metadata: NFTContractMetadata,
         private_minters: Vec<AccountId>,
-        market_id: AccountId,
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
@@ -78,7 +76,6 @@ impl Nft {
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
-            market_id,
         }
     }
 
@@ -313,23 +310,6 @@ impl Nft {
     // private minting
     // pub fn private_mint()
 
-    // refactor nft_buy_mint and nft_mint with
-    // fn mint_token(&mut self) -> Token {}
 }
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
 near_contract_standards::impl_non_fungible_token_enumeration!(Nft, tokens);
-
-// fn refund_deposit_extra(storage_used: u64, extra: Balance) {
-//     let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
-//     let attached_deposit = env::attached_deposit() - extra;
-
-//     require!(
-//         required_cost <= attached_deposit,
-//         format!("Must attach {} yoctoNEAR to cover storage", required_cost)
-//     );
-
-//     let refund = attached_deposit - required_cost;
-//     if refund > 1 {
-//         Promise::new(env::predecessor_account_id()).transfer(refund);
-//     }
-// }
