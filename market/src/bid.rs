@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use near_sdk::assert_one_yocto;
+
 use crate::{common::*, Market};
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
@@ -80,5 +82,13 @@ impl Market{
         }
         
         self.market.sales.insert(&contract_and_token_id, sale);
+    }
+
+    #[payable]
+    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
+        assert_one_yocto();
+        assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
+        self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
+        self.refund_bid(token_id.parse().unwrap(), &bid);
     }
 }

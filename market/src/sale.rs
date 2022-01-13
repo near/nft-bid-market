@@ -93,14 +93,6 @@ impl Market {
     }
 
     #[payable]
-    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
-        assert_one_yocto();
-        assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
-        self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
-        self.refund_bid(token_id.parse().unwrap(), &bid);
-    }
-
-    #[payable]
     pub fn update_price(
         &mut self,
         nft_contract_id: AccountId,
