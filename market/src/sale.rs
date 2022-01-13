@@ -369,12 +369,50 @@ impl Market {
                     .unwrap_or_else(|_| env::panic_str("Should be unreachable")),
                 price,
                 10,
-                nft_contract_id,
+                nft_contract_id.clone(),
                 0,
                 GAS_FOR_NFT_TRANSFER,
-            ),
+            )
+            .then(ext_self::resolve_token_buy(
+                buyer_id,
+                deposit,
+                price,
+                nft_contract_id,
+                0,
+                GAS_FOR_ROYALTIES,
+            )),
             _ => Promise::new(buyer_id).transfer(deposit.into()),
         };
+    }
+
+    #[private]
+    pub fn resolve_token_buy(&mut self, buyer_id: AccountId, deposit: U128, price: U128) -> U128 {
+        let payout_option = promise_result_as_success().and_then(|value| {
+            // None means a bad payout from bad NFT contract
+            near_sdk::serde_json::from_slice::<Payout>(&value)
+                .ok()
+                .and_then(|payout| {
+                    let mut remainder = price.0;
+                    for &value in payout.payout.values() {
+                        remainder = remainder.checked_sub(value.0)?;
+                    }
+                    if remainder <= 1 {
+                        Some(payout)
+                    } else {
+                        None
+                    }
+                })
+        });
+        let payout = if let Some(payout_option) = payout_option {
+            payout_option
+        } else {
+            Promise::new(buyer_id).transfer(u128::from(deposit));
+            return price;
+        };
+        for (receiver_id, amount) in payout.payout {
+            Promise::new(receiver_id).transfer(amount.0);
+        }
+        price
     }
 }
 
@@ -397,6 +435,8 @@ trait ExtSelf {
         deposit: U128,
         price: U128,
     ) -> Promise;
+
+    fn resolve_token_buy(&mut self, buyer_id: AccountId, deposit: U128, price: U128) -> Promise;
 }
 
 /// external contract calls
