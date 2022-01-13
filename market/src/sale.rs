@@ -45,7 +45,7 @@ pub struct Sale {
     pub end: Option<u64>,
 }
 
-impl Sale  {
+impl Sale {
     pub fn in_limits(&self) -> bool {
         let mut res = true;
         let now = env::block_timestamp();
@@ -92,13 +92,13 @@ impl Market {
         self.refund_all_bids(&sale.bids);
     }
 
-    /*#[payable]
+    #[payable]
     pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
         assert_one_yocto();
         assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
         self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
         self.refund_bid(token_id.parse().unwrap(), &bid);
-    }*/
+    }
 
     #[payable]
     pub fn update_price(

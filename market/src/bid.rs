@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{common::*, Market, MarketContract};
+use crate::{common::*, Market, MarketSales};
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -13,7 +13,7 @@ pub struct Bid {
     pub end: Option<U64>,
 }
 
-impl Bid{
+impl Bid {
     pub fn in_limits(&self) -> bool {
         let mut res = true;
         let now = env::block_timestamp();
