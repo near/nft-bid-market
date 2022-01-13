@@ -16,7 +16,6 @@ pub struct TokenSeries {
     pub metadata: TokenMetadata,
     pub creator_id: AccountId,
     pub tokens: UnorderedSet<TokenId>,
-    pub market_id: Option<AccountId>, // contract allowed to mint series as well, does it makes sense?
     pub royalty: HashMap<AccountId, u32>,
 }
 

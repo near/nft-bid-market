@@ -17,7 +17,7 @@ pub const GAS_FOR_MINT: Gas = Gas(20_000_000_000_000);
 const NO_DEPOSIT: Balance = 0;
 pub static DELIMETER: &str = "||";
 
-pub type SaleConditions = HashMap<FungibleTokenId, u128>;
+pub type SaleConditions = HashMap<FungibleTokenId, U128>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -120,7 +120,7 @@ impl Market {
                 ft_token_id
             ));
         }
-        sale.sale_conditions.insert(ft_token_id, price.0);
+        sale.sale_conditions.insert(ft_token_id, price);
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
@@ -156,7 +156,7 @@ impl Market {
         let deposit = env::attached_deposit();
         assert!(deposit > 0, "Attached deposit must be greater than 0");
 
-        if !sale.is_auction.unwrap_or(false) && deposit == price {
+        if !sale.is_auction.unwrap_or(false) && deposit == price.0 {
             self.process_purchase(
                 contract_id,
                 token_id,
@@ -165,9 +165,9 @@ impl Market {
                 buyer_id,
             );
         } else {
-            if sale.is_auction.unwrap() && price > 0 {
+            if sale.is_auction.unwrap() && price.0 > 0 {
                 assert!(
-                    deposit >= price,
+                    deposit >= price.0,
                     "Attached deposit must be greater than reserve price"
                 );
             }

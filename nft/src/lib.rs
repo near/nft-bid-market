@@ -22,6 +22,7 @@ pub struct Nft {
 
     private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
+    market_id: AccountId,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -39,7 +40,7 @@ enum StorageKey {
 #[near_bindgen]
 impl Nft {
     #[init]
-    pub fn new_default_meta(owner_id: AccountId) -> Self {
+    pub fn new_default_meta(owner_id: AccountId, market_id: AccountId) -> Self {
         Self::new(
             owner_id,
             NFTContractMetadata {
@@ -52,6 +53,7 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
+            market_id,
         )
     }
 
@@ -60,6 +62,7 @@ impl Nft {
         owner_id: AccountId,
         metadata: NFTContractMetadata,
         private_minters: Vec<AccountId>,
+        market_id: AccountId
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
@@ -76,6 +79,7 @@ impl Nft {
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
+            market_id
         }
     }
 
@@ -93,12 +97,7 @@ impl Nft {
             .get(&token_series_id)
             .expect("Token series does not exist");
         require!(
-            env::predecessor_account_id().eq(&token_series.creator_id)
-                || if let Some(ref market_id) = token_series.market_id {
-                    env::predecessor_account_id().eq(market_id)
-                } else {
-                    false
-                },
+            env::predecessor_account_id().eq(&token_series.creator_id),
             "permission denied"
         );
         require!(
@@ -244,7 +243,6 @@ impl Nft {
         &mut self,
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
-        market_id: Option<AccountId>,
     ) -> TokenSeriesId {
         let initial_storage_usage = env::storage_usage();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
@@ -276,7 +274,6 @@ impl Nft {
                     .try_to_vec()
                     .unwrap(),
                 ),
-                market_id,
                 royalty: royalty_res,
             },
         );
