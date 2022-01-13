@@ -6,12 +6,11 @@ use near_sdk::ext_contract;
 use crate::*;
 use common::*;
 
-use bid::{Bid, Bids};
+use bid::Bids;
 
 pub const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
 pub const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
 pub const GAS_FOR_NFT_TRANSFER: Gas = Gas(15_000_000_000_000);
-//const BID_HISTORY_LENGTH_DEFAULT: u8 = 1;
 const NO_DEPOSIT: Balance = 0;
 pub static DELIMETER: &str = "||";
 
