@@ -97,21 +97,23 @@ impl Market{
 impl Market {
     pub(crate) fn refund_all_bids(
         &mut self,
-        bids: &Bids,
+        bids_map: &Bids,
     ) {
-        for (bid_ft, bid_vec) in bids {
-            let bid = &bid_vec[bid_vec.len()-1];
-            if bid_ft.as_str() == "near" {
-                    Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
-            } else {
-                ext_contract::ft_transfer(
-                    bid.owner_id.clone(),
-                    bid.price,
-                    None,
-                    (*bid_ft).clone(),
-                    1,
-                    GAS_FOR_FT_TRANSFER,
-                );
+        for (ft, bids) in bids_map {
+            if let Some(bid) = bids.last()
+            {
+                if ft.as_str() == "near" {
+                        Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
+                } else {
+                    ext_contract::ft_transfer(
+                        bid.owner_id.clone(),
+                        bid.price,
+                        None,
+                        ft.clone(),
+                        1,
+                        GAS_FOR_FT_TRANSFER,
+                    );
+                }
             }
         }
     }
