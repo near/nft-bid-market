@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{common::*, Market, MarketSales};
+use crate::{common::*, Market};
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
