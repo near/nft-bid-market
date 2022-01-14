@@ -163,12 +163,3 @@ impl NonFungibleTokenApprovalReceiver for Market {
         }
     }
 }
-
-#[near_bindgen]
-impl Market {
-    
-    pub fn storage_amount(&self) -> U128 {
-        U128(STORAGE_PER_SALE)
-    }
-
-}

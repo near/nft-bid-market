@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use near_sdk::{assert_one_yocto, promise_result_as_success, Promise, Balance, Gas, PromiseResult};
+use near_sdk::{promise_result_as_success, Gas, PromiseResult};
 use near_sdk::ext_contract;
 
 use crate::*;
 use common::*;
 
-use bid::{Bid, Bids};
+use bid::Bids;
 pub type TokenSeriesId = String;
 
 pub const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);

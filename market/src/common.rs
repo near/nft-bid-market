@@ -6,7 +6,8 @@ pub use near_sdk::{
     near_bindgen, require,
     serde::{Deserialize, Serialize},
     AccountId, Balance, BorshStorageKey, PanicOnDefault,
-    CryptoHash, Promise
+    CryptoHash, Promise,
+    assert_one_yocto,
 };
 
 pub use near_contract_standards::non_fungible_token::{
