@@ -52,7 +52,7 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 
 To create a sale the user needs to cover the storage:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.5
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
 ```
 
 `CONTRACT_PARENT` puts one of the minted tokens of sale:
