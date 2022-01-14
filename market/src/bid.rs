@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
 
-use crate::{common::*, Market};
+use crate::*;
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]

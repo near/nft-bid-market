@@ -7,7 +7,6 @@ mod inner;
 mod sale_views;
 
 use common::*;
-use sale::{TokenSeriesId, ContractAndSeriesId};
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
 use std::collections::HashMap;
