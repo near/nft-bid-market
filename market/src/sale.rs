@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 use std::collections::HashMap;
 
 use near_sdk::{promise_result_as_success, Gas, PromiseResult};

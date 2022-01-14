@@ -9,7 +9,7 @@ mod sale_views;
 use common::*;
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
-use std::{collections::HashMap, convert::TryFrom};
+use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
