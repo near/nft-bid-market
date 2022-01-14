@@ -52,21 +52,31 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 
 To create a sale the user needs to cover the storage:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
 ```
 
 `CONTRACT_PARENT` puts one of the minted tokens of sale:
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", "msg": "{\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"is_auction\": false, \"start\": null, \"end\": null }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-Now any other account (in our case `ALICE`) can offer to buy the token:
+Now any other account (in our case `ALICE`) can offer or buy the token:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 ```
-A new bid has been added.
+Alice attached exact amount, so she did buy token
+
+`CONTRACT_PARENT` puts second one of the minted tokens of sale:
+```bash
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MARKET_CONTRACT_ID'", "msg": "{\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"is_auction\": false, \"start\": null, \"end\": null }"}' --accountId $CONTRACT_PARENT --deposit 1
+```
+
+This time alice offers less, then exact amount:
+```bash
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2"}' --accountId $ALICE --depositYocto 8000 --gas 200000000000000
+```
 
 `ALICE` will get the token if `CONTRACT_PARENT` accepts the offer. To do so is runs:
 ```bash
-near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT
+near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 ```
-After that command `ALICE` receives a token. 
+After that command `ALICE` receives a token.
