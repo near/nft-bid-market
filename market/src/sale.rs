@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use near_sdk::{promise_result_as_success, Gas, PromiseResult};
 use near_sdk::ext_contract;
-use near_sdk::{assert_one_yocto, promise_result_as_success, Balance, Gas, Promise, PromiseResult};
 
 use crate::*;
 use common::*;
