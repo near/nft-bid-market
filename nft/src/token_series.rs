@@ -27,3 +27,10 @@ pub struct TokenSeriesJson {
     pub creator_id: AccountId,
     pub royalty: HashMap<AccountId, u32>,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct SeriesMintArgs {
+	pub token_series_id: TokenSeriesId,
+	pub receiver_id: AccountId,
+}
