@@ -43,8 +43,7 @@ impl Market {
         }
 
         // here AccountId is used as "token type", idk why so (adsick)
-        let token_type = sale.token_type.clone();
-        if let Some(token_type) = token_type {
+        if let Some(token_type) = sale.token_type.to_owned() {
             let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
