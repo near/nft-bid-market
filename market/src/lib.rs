@@ -9,7 +9,7 @@ mod sale_views;
 use common::*;
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryFrom};
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
@@ -42,6 +42,8 @@ impl Market {
     pub fn new(nft_ids: Vec<AccountId>, owner_id: AccountId) -> Self {
         let mut non_fungible_token_account_ids = LookupSet::new(b"n");
         non_fungible_token_account_ids.extend(nft_ids);
+        let mut tokens = UnorderedSet::new(StorageKey::FTTokenIds);
+        tokens.insert(&AccountId::new_unchecked("near".to_owned()));
         let market = MarketSales {
             owner_id,
             token_series: UnorderedMap::new(StorageKey::TokenSeries),
@@ -49,7 +51,7 @@ impl Market {
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),
             by_nft_token_type: LookupMap::new(StorageKey::ByNFTTokenType),
-            ft_token_ids: UnorderedSet::new(StorageKey::FTTokenIds),
+            ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
             bid_history_length: 1,
         };

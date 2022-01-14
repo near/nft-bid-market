@@ -45,20 +45,21 @@ impl Market {
         // here AccountId is used as "token type", idk why so (adsick)
         let token_type = sale.token_type.clone();
         if let Some(token_type) = token_type {
+            let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type
-                .get(&token_type.parse().unwrap())
+                .get(&token_type)
                 .expect("No sale by nft_token_type");
             by_nft_token_type.remove(&contract_and_token_id);
             if by_nft_token_type.is_empty() {
                 self.market
                     .by_nft_token_type
-                    .remove(&token_type.parse().unwrap());
+                    .remove(&token_type);
             } else {
                 self.market
                     .by_nft_token_type
-                    .insert(&token_type.parse().unwrap(), &by_nft_token_type);
+                    .insert(&token_type, &by_nft_token_type);
             }
         }
 

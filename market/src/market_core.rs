@@ -143,14 +143,15 @@ impl NonFungibleTokenApprovalReceiver for Market {
 
         if let Some(token_type) = token_type {
             assert!(token_id.contains(&token_type), "TokenType should be substr of TokenId");
+            let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type
-                .get(&token_type.parse().unwrap())
+                .get(&token_type)
                 .unwrap_or_else(|| {
                     UnorderedSet::new(
                         StorageKey::ByNFTTokenTypeInner {
-                            token_type_hash: hash_account_id(&token_type.parse().unwrap()),
+                            token_type_hash: hash_account_id(&token_type),
                         }
                         .try_to_vec()
                         .unwrap(),
@@ -159,7 +160,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 by_nft_token_type.insert(&contract_and_token_id);
             self.market
                 .by_nft_token_type
-                .insert(&token_type.parse().unwrap(), &by_nft_token_type);
+                .insert(&token_type, &by_nft_token_type);
         }
     }
 }
