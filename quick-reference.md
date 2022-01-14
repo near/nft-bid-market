@@ -9,15 +9,14 @@ export CONTRACT_PARENT=YOUR_ACCOUNT.testnet
 ```bash
 export NFT_CONTRACT_ID=nft.$CONTRACT_PARENT
 export MARKET_CONTRACT_ID=market.$CONTRACT_PARENT
+export ALICE=alice.$CONTRACT_PARENT
 ```
 
 If you are running this script at least for the second time and have already created these accounts, 
 you should delete them:
 ```bash
-set +e
 near delete $NFT_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null
 near delete $MARKET_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null
-set -e
 ```
 If you are running this script for the first time, the commands above should be omitted.
 
@@ -25,6 +24,7 @@ Create subaccounts `NFT_CONTRACT_ID` and `MARKET_CONTRACT_ID`:
 ```bash
 near create-account $NFT_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
 near create-account $MARKET_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
+near create-account $MARKET_CONTRACT_ID --masterAccount $ALICE --initialBalance 50
 ```
 
 Deploy the contracts:
@@ -37,4 +37,27 @@ Initialize contracts:
 ```bash
 near call $NFT_CONTRACT_ID new_default_meta '{"owner_id": "'$CONTRACT_PARENT'", "market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $NFT_CONTRACT_ID
 near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID
+```
+
+`CONTRACT_PARENT` creates the series of maximum three tokens:
+```bash
+near call $NFT_CONTRACT_ID nft_create_series '{"token_metadata": {"title": "some title", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 3}, "royalty": {"'$CONTRACT_PARENT'": 500}}' --accountId $CONTRACT_PARENT --deposit 0.005
+```
+It can mint two of them:
+```bash
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
+```
+
+```bash
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.5
+```
+
+`CONTRACT_PARENT` puts one of the minted tokens of sale:
+```bash
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", "msg": "{\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"is_auction\": false, \"start\": null, \"end\": null }"}' --accountId $CONTRACT_PARENT --deposit 1
+```
+Now any other account can offer to buy the token:
+```bash
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 ```
