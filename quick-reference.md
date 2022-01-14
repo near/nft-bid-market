@@ -1,15 +1,15 @@
 # NFT bid market
 
-Change YOUR_ACCOUNT.testnet to your account:
+Change YOUR_ACCOUNT to your account(alice.testnet for example):
 ```bash
-export CONTRACT_PARENT=YOUR_ACCOUNT.testnet
+CONTRACT_PARENT=YOUR_ACCOUNT
 ```
 
 `NFT_CONTRACT_ID` and `MARKET_CONTRACT_ID` will be used to deploy contracts:
 ```bash
-export NFT_CONTRACT_ID=nft.$CONTRACT_PARENT
-export MARKET_CONTRACT_ID=market.$CONTRACT_PARENT
-export ALICE=alice.$CONTRACT_PARENT
+NFT_CONTRACT_ID=nft.$CONTRACT_PARENT
+MARKET_CONTRACT_ID=market.$CONTRACT_PARENT
+ALICE=alice.$CONTRACT_PARENT
 ```
 
 If you are running this script at least for the second time and have already created these accounts, 
@@ -17,6 +17,7 @@ you should delete them:
 ```bash
 near delete $NFT_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null
 near delete $MARKET_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null
+near delete $ALICE $CONTRACT_PARENT 2> /dev/null
 ```
 If you are running this script for the first time, the commands above should be omitted.
 
@@ -24,7 +25,7 @@ Create subaccounts `NFT_CONTRACT_ID` and `MARKET_CONTRACT_ID`:
 ```bash
 near create-account $NFT_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
 near create-account $MARKET_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
-near create-account $MARKET_CONTRACT_ID --masterAccount $ALICE --initialBalance 50
+near create-account $ALICE --masterAccount $CONTRACT_PARENT --initialBalance 20
 ```
 
 Deploy the contracts:
@@ -43,7 +44,7 @@ near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id
 ```bash
 near call $NFT_CONTRACT_ID nft_create_series '{"token_metadata": {"title": "some title", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 3}, "royalty": {"'$CONTRACT_PARENT'": 500}}' --accountId $CONTRACT_PARENT --deposit 0.005
 ```
-It can mint two of them:
+And we mint two of them:
 ```bash
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
