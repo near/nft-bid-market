@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 sh build-all.sh # building all
-# Change these to your account ids
-export CONTRACT_PARENT=md4ire.testnet 
-export NFT_CONTRACT_ID=nft.$CONTRACT_PARENT
-export MARKET_CONTRACT_ID=market.$CONTRACT_PARENT
 
-set +e
-near delete $NFT_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null # Ignore errors
-near delete $MARKET_CONTRACT_ID $CONTRACT_PARENT 2> /dev/null # Ignore errors
+near dev-deploy res/nft_bid_market.wasm
+source neardev/dev-account.env
+cat neardev/dev-account.env > .env
+
+CONTRACT_PARENT=$CONTRACT_NAME
+
+MARKET_CONTRACT_ID=$CONTRACT_PARENT
+NFT_CONTRACT_ID=nft.$CONTRACT_PARENT
+
 set -e
-near create-account $NFT_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
-near create-account $MARKET_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance 50
+near create-account $NFT_CONTRACT_ID --masterAccount $CONTRACT_PARENT --initialBalance "27"
 # Set up
 near deploy $NFT_CONTRACT_ID --wasmFile res/nft_contract.wasm
-near deploy $MARKET_CONTRACT_ID --wasmFile res/nft_bid_market.wasm
+
 # inits
 near call $NFT_CONTRACT_ID new_default_meta '{"owner_id": "'$CONTRACT_PARENT'", "market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $NFT_CONTRACT_ID
 near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID
