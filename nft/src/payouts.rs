@@ -15,7 +15,10 @@ pub struct Payout {
 }
 
 fn assert_at_least_one_yocto() {
-    require!(env::attached_deposit() >= 1, "Requires attached deposit of at least 1 yoctoNEAR")
+    require!(
+        env::attached_deposit() >= 1,
+        "Requires attached deposit of at least 1 yoctoNEAR"
+    )
 }
 
 pub trait Payouts {
@@ -85,6 +88,7 @@ impl Payouts for Nft {
     ) -> Payout {
         assert_at_least_one_yocto();
 
+        let payout = self.nft_payout(token_id.clone(), balance, max_len_payout);
         if let Some(series_mint_args) = memo {
             let SeriesMintArgs {
                 token_series_id,
@@ -92,9 +96,9 @@ impl Payouts for Nft {
             } = near_sdk::serde_json::from_str(&series_mint_args).expect("invalid SeriesMintArgs");
             self.nft_mint(token_series_id, receiver_id);
         } else {
-            self.nft_transfer(receiver_id, token_id.clone(), Some(approval_id), None);
+            self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         }
-        self.nft_payout(token_id, balance, max_len_payout)
+        payout
     }
 }
 
