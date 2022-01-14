@@ -59,6 +59,15 @@ impl Sale {
         }
         res
     }
+
+    pub fn extend(&mut self, time: u64) -> bool {
+        if let Some(end) = self.end {
+            self.end = Some(end + time);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

@@ -5,6 +5,9 @@ use near_sdk::assert_one_yocto;
 use crate::*;
 use crate::sale::{Sale, FungibleTokenId, ext_contract, ContractAndTokenId, GAS_FOR_FT_TRANSFER};
 
+pub const BEFORE_AUCTION_END: u64 = 1_000_000_000 * 60 * 15;
+pub const AUCTION_EXTEND: u64 = 1_000_000_000 * 60 * 15;
+
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Bid {
@@ -79,6 +82,11 @@ impl Market{
         bids_for_token_id.push(new_bid);
         if bids_for_token_id.len() > self.market.bid_history_length as usize {
             bids_for_token_id.remove(0);
+        }
+
+        //Extend the time if the bid is sent less than 15 minutes before auction end
+        if sale.is_auction.unwrap() && env::block_timestamp() + BEFORE_AUCTION_END < sale.end.unwrap() {
+            sale.extend(AUCTION_EXTEND);
         }
         
         self.market.sales.insert(&contract_and_token_id, sale);
