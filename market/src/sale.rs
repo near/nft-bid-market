@@ -239,7 +239,7 @@ impl Market {
             buyer_id.clone(),
             token_id,
             sale.approval_id,
-            "payout from market".to_string(),
+            None, // need to check here if series
             price,
             10,
             nft_contract_id,
@@ -457,7 +457,7 @@ trait ExtContract {
         receiver_id: AccountId,
         token_id: TokenId,
         approval_id: u64,
-        memo: String,
+        memo: Option<String>,
         balance: U128,
         max_len_payout: u32,
     );
