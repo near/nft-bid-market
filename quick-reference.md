@@ -59,7 +59,14 @@ near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --dep
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", "msg": "{\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"is_auction\": false, \"start\": null, \"end\": null }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-Now any other account can offer to buy the token:
+Now any other account (in our case `ALICE`) can offer to buy the token:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 ```
+A new bid has been added.
+
+`ALICE` will get the token if `CONTRACT_PARENT` accepts the offer. To do so is runs:
+```bash
+near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT
+```
+After that command `ALICE` receives a token. 
