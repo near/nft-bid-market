@@ -7,6 +7,7 @@ use common::*;
 
 mod token_series;
 use near_sdk::Promise;
+use payouts::assert_at_least_one_yocto;
 use token_series::{TokenSeries, TokenSeriesId, TOKEN_DELIMETER};
 
 mod payouts;
@@ -165,7 +166,6 @@ impl Nft {
         &mut self,
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
-        approved_market_id: Option<AccountId>,
     ) -> TokenSeriesId {
         let initial_storage_usage = env::storage_usage();
         let owner_id = env::predecessor_account_id();
@@ -199,7 +199,7 @@ impl Nft {
                     .unwrap(),
                 ),
                 royalty: royalty_res,
-                approved_market_id,
+                approved_market_id: None,
             },
         );
 
@@ -213,10 +213,28 @@ impl Nft {
         self.private_minters.insert(&account_id);
     }
 
+    #[payable]
+    pub fn nft_series_market_approve(&mut self, token_id: TokenId, approved_market_id: AccountId) {
+        assert_at_least_one_yocto();
+        let initial_storage_usage = env::storage_usage();
+        let mut token_series = self
+            .token_series_by_id
+            .get(&token_id)
+            .expect("Series not found");
+        require!(
+            env::predecessor_account_id().eq(&token_series.owner_id),
+            "Not token owner"
+        );
+        token_series.approved_market_id = Some(approved_market_id);
+        self.token_series_by_id.insert(&token_id, &token_series);
+        refund_deposit(env::storage_usage() - initial_storage_usage);
+        // TODO: call market here
+    }
     // TODO:
 
     // private minting
     // pub fn private_mint()
 }
+
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
 near_contract_standards::impl_non_fungible_token_enumeration!(Nft, tokens);

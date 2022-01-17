@@ -14,7 +14,7 @@ pub struct Payout {
     pub payout: HashMap<AccountId, U128>,
 }
 
-fn assert_at_least_one_yocto() {
+pub fn assert_at_least_one_yocto() {
     require!(
         env::attached_deposit() >= 1,
         "Requires attached deposit of at least 1 yoctoNEAR"
