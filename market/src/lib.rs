@@ -5,6 +5,7 @@ mod market_core;
 mod common;
 mod inner;
 mod sale_views;
+mod fee;
 
 use common::*;
 
