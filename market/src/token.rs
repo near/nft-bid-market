@@ -21,10 +21,9 @@ pub struct Token {
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
-pub struct TokenSeries {
+pub struct TokenSeriesSale {
     pub sale_conditions: SaleConditions,
     pub series_id: TokenSeriesId,
     pub owner_id: AccountId,
     pub copies: u64,
-    pub current_id: u64,
 }

@@ -1,7 +1,7 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use crate::{
     sale::{SeriesSale, DELIMETER},
-    token::TokenSeries,
+    token::TokenSeriesSale,
 };
 use near_contract_standards::non_fungible_token::hash_account_id;
 //use crate::sale_views;
@@ -15,7 +15,7 @@ pub trait NonFungibleTokenApprovalReceiver {
         approval_id: u64,
         msg: String,
     );
-    fn nft_on_series_approve(&mut self, token_series: TokenSeries);
+    fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale);
 }
 
 #[derive(Serialize, Deserialize)]
@@ -179,7 +179,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
         }
     }
 
-    fn nft_on_series_approve(&mut self, token_series: TokenSeries) {
+    fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale) {
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
         assert_ne!(

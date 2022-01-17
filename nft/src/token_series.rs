@@ -9,7 +9,7 @@ use crate::token::TokenId;
 pub type TokenSeriesId = String;
 pub const TOKEN_DELIMETER: char = ':';
 
-// note, keep it all pub for now, but later switch to all private fields. 
+// note, keep it all pub for now, but later switch to all private fields.
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct TokenSeries {
@@ -31,6 +31,17 @@ pub struct TokenSeriesJson {
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct SeriesMintArgs {
-	pub token_series_id: TokenSeriesId,
-	pub receiver_id: AccountId,
+    pub token_series_id: TokenSeriesId,
+    pub receiver_id: AccountId,
+}
+
+pub type SaleConditions = HashMap<AccountId, U128>;
+
+#[derive(Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct TokenSeriesSale {
+    pub sale_conditions: SaleConditions,
+    pub series_id: TokenSeriesId,
+    pub owner_id: AccountId,
+    pub copies: u64,
 }
