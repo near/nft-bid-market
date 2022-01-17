@@ -2,6 +2,15 @@ use crate::token_series::TokenSeriesJson;
 use crate::*;
 
 impl Nft {
+    pub fn nft_get_series_json(&self, token_id: TokenId) -> TokenSeriesJson {
+        let token_series = self.token_series_by_id.get(&token_id).expect("no series");
+        TokenSeriesJson {
+            metadata: token_series.metadata,
+            owner_id: token_series.owner_id,
+            royalty: token_series.royalty,
+        }
+    }
+
     pub fn nft_series(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<TokenSeriesJson> {
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         assert!(
@@ -15,10 +24,10 @@ impl Nft {
             .iter()
             .skip(start_index as usize)
             .take(limit)
-            .map(|(token_series_id, token_series)| TokenSeriesJson {
-                token_series_id,
+            .map(|(_token_series_id, token_series)| TokenSeriesJson {
+                // token_series_id, do we need it?
                 metadata: token_series.metadata,
-                creator_id: token_series.creator_id,
+                owner_id: token_series.owner_id,
                 royalty: token_series.royalty,
             })
             .collect()

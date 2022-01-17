@@ -97,7 +97,7 @@ impl Nft {
             .get(&token_series_id)
             .expect("Token series does not exist");
         require!(
-            env::predecessor_account_id().eq(&token_series.creator_id),
+            env::predecessor_account_id().eq(&token_series.owner_id),
             "permission denied"
         );
         require!(
@@ -243,8 +243,10 @@ impl Nft {
         &mut self,
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
+        owner_id: Option<AccountId>,
     ) -> TokenSeriesId {
         let initial_storage_usage = env::storage_usage();
+        let owner_id = owner_id.unwrap_or_else(env::predecessor_account_id);
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
         require!(
             token_metadata.title.is_some(),
@@ -266,7 +268,7 @@ impl Nft {
             &token_series_id,
             &TokenSeries {
                 metadata: token_metadata,
-                creator_id: env::predecessor_account_id(),
+                owner_id,
                 tokens: UnorderedSet::new(
                     StorageKey::TokensBySeriesInner {
                         token_series: token_series_id.clone(),
