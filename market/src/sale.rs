@@ -48,6 +48,16 @@ pub struct Sale {
     pub end: Option<u64>,
 }
 
+pub struct SeriesSale {
+    pub owner_id: AccountId,
+    pub nft_contract_id: AccountId,
+    pub series_id: String,
+    pub sale_conditions: SaleConditions,
+    pub created_at: u64,
+    pub copies: u64,
+    pub current_id: u64,
+}
+
 impl Sale {
     pub fn in_limits(&self) -> bool {
         let mut res = true;
@@ -82,7 +92,7 @@ pub struct PurchaseArgs {
 pub struct MarketSales {
     pub owner_id: AccountId,
     pub sales: UnorderedMap<ContractAndTokenId, Sale>,
-    pub token_series: UnorderedMap<ContractAndSeriesId, Balance>,
+    pub token_series: UnorderedMap<ContractAndSeriesId, SeriesSale>,
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
     pub by_nft_token_type: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
@@ -328,72 +338,72 @@ impl Market {
         }
     }
 
-    #[payable]
-    pub fn buy_token_copy(
-        &mut self,
-        nft_contract_id: AccountId,
-        series_id: TokenSeriesId,
-        reciever_id: AccountId,
-    ) -> Promise {
-        let contract_and_series: ContractAndSeriesId =
-            format!("{}{}{}", nft_contract_id, DELIMETER, series_id);
-        let price = self
-            .market
-            .token_series
-            .get(&contract_and_series)
-            .expect("Token series not found");
-        let balance = env::attached_deposit() - price;
-        ext_contract::nft_mint(
-            series_id,
-            reciever_id,
-            nft_contract_id.clone(),
-            balance,
-            GAS_FOR_MINT,
-        )
-        .then(ext_self::resolve_mint(
-            nft_contract_id,
-            env::predecessor_account_id(),
-            env::attached_deposit().into(),
-            price.into(),
-            env::current_account_id(),
-            0,
-            GAS_FOR_MINT,
-        ))
-    }
+    // #[payable]
+    // pub fn buy_token_copy(
+    //     &mut self,
+    //     nft_contract_id: AccountId,
+    //     series_id: TokenSeriesId,
+    //     reciever_id: AccountId,
+    // ) -> Promise {
+    //     let contract_and_series: ContractAndSeriesId =
+    //         format!("{}{}{}", nft_contract_id, DELIMETER, series_id);
+    //     let price = self
+    //         .market
+    //         .token_series
+    //         .get(&contract_and_series)
+    //         .expect("Token series not found");
+    //     let balance = env::attached_deposit() - price;
+    //     ext_contract::nft_mint(
+    //         series_id,
+    //         reciever_id,
+    //         nft_contract_id.clone(),
+    //         balance,
+    //         GAS_FOR_MINT,
+    //     )
+    //     .then(ext_self::resolve_mint(
+    //         nft_contract_id,
+    //         env::predecessor_account_id(),
+    //         env::attached_deposit().into(),
+    //         price.into(),
+    //         env::current_account_id(),
+    //         0,
+    //         GAS_FOR_MINT,
+    //     ))
+    // }
 
-    #[private]
-    pub fn resolve_mint(
-        &mut self,
-        nft_contract_id: AccountId,
-        buyer_id: AccountId,
-        deposit: U128,
-        price: U128,
-    ) {
-        require!(
-            env::promise_results_count() == 1,
-            "Contract expected a result on the callback"
-        );
-        match env::promise_result(0) {
-            PromiseResult::Successful(token_id) => ext_contract::nft_payout(
-                near_sdk::serde_json::from_slice::<TokenId>(&token_id)
-                    .unwrap_or_else(|_| env::panic_str("Should be unreachable")),
-                price,
-                10,
-                nft_contract_id.clone(),
-                0,
-                GAS_FOR_NFT_TRANSFER,
-            )
-            .then(ext_self::resolve_token_buy(
-                buyer_id,
-                deposit,
-                price,
-                nft_contract_id,
-                0,
-                GAS_FOR_ROYALTIES,
-            )),
-            _ => Promise::new(buyer_id).transfer(deposit.into()),
-        };
-    }
+    // #[private]
+    // pub fn resolve_mint(
+    //     &mut self,
+    //     nft_contract_id: AccountId,
+    //     buyer_id: AccountId,
+    //     deposit: U128,
+    //     price: U128,
+    // ) {
+    //     require!(
+    //         env::promise_results_count() == 1,
+    //         "Contract expected a result on the callback"
+    //     );
+    //     match env::promise_result(0) {
+    //         PromiseResult::Successful(token_id) => ext_contract::nft_payout(
+    //             near_sdk::serde_json::from_slice::<TokenId>(&token_id)
+    //                 .unwrap_or_else(|_| env::panic_str("Should be unreachable")),
+    //             price,
+    //             10,
+    //             nft_contract_id.clone(),
+    //             0,
+    //             GAS_FOR_NFT_TRANSFER,
+    //         )
+    //         .then(ext_self::resolve_token_buy(
+    //             buyer_id,
+    //             deposit,
+    //             price,
+    //             nft_contract_id,
+    //             0,
+    //             GAS_FOR_ROYALTIES,
+    //         )),
+    //         _ => Promise::new(buyer_id).transfer(deposit.into()),
+    //     };
+    // }
 
     #[private]
     pub fn resolve_token_buy(&mut self, buyer_id: AccountId, deposit: U128, price: U128) -> U128 {

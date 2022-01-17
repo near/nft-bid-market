@@ -4,6 +4,8 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
 use std::collections::HashMap;
 
+use crate::sale::SaleConditions;
+
 /// Note that token IDs for NFTs are strings on NEAR. It's still fine to use autoincrementing numbers as unique IDs if desired, but they should be stringified. This is to make IDs more future-proof as chain-agnostic conventions and standards arise, and allows for more flexibility with considerations like bridging NFTs across chains, etc.
 pub type TokenId = String;
 
@@ -15,4 +17,14 @@ pub struct Token {
     pub owner_id: AccountId,
     pub metadata: Option<TokenMetadata>,
     pub approved_account_ids: Option<HashMap<AccountId, u64>>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct TokenSeries {
+    pub sale_condition: SaleConditions,
+    pub token_id: TokenId,
+    pub owner_id: AccountId,
+    pub copies: u64,
+    pub current_id: u64,
 }

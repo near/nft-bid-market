@@ -1,17 +1,18 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
+use crate::{sale::DELIMETER, token::TokenSeries};
 use near_contract_standards::non_fungible_token::hash_account_id;
-use crate::sale::DELIMETER;
 //use crate::sale_views;
 use crate::*;
 
 pub trait NonFungibleTokenApprovalReceiver {
     fn nft_on_approve(
-        &mut self, 
-        token_id: TokenId, 
-        owner_id: AccountId, 
-        approval_id: u64, 
-        msg: String
+        &mut self,
+        token_id: TokenId,
+        owner_id: AccountId,
+        approval_id: u64,
+        msg: String,
     );
+    fn nft_on_series_approve(&mut self, token_series: TokenSeries);
 }
 
 #[derive(Serialize, Deserialize)]
@@ -49,8 +50,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
         assert_ne!(
-            nft_contract_id,
-            signer_id,
+            nft_contract_id, signer_id,
             "nft_on_approve should only be called via cross-contract call"
         );
         assert_eq!(
@@ -59,26 +59,34 @@ impl NonFungibleTokenApprovalReceiver for Market {
             "owner_id should be signer_id"
         );
 
-        // enforce signer's storage is enough to cover + 1 more sale 
+        // enforce signer's storage is enough to cover + 1 more sale
 
         let storage_amount = self.storage_amount().0;
         let owner_paid_storage = self.market.storage_deposits.get(&signer_id).unwrap_or(0);
-        let signer_storage_required = (self.get_supply_by_owner_id(signer_id).0 + 1) as u128 * storage_amount;
+        let signer_storage_required =
+            (self.get_supply_by_owner_id(signer_id).0 + 1) as u128 * storage_amount;
         assert!(
             owner_paid_storage >= signer_storage_required,
             "Insufficient storage paid: {}, for {} sales at {} rate of per sale",
-            owner_paid_storage, signer_storage_required / STORAGE_PER_SALE, STORAGE_PER_SALE
+            owner_paid_storage,
+            signer_storage_required / STORAGE_PER_SALE,
+            STORAGE_PER_SALE
         );
 
-        let SaleArgs { sale_conditions, token_type, is_auction, start, end } =
-            near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs");
+        let SaleArgs {
+            sale_conditions,
+            token_type,
+            is_auction,
+            start,
+            end,
+        } = near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs");
 
-        
         for (ft_token_id, _price) in sale_conditions.clone() {
             if !self.market.ft_token_ids.contains(&ft_token_id) {
-                env::panic_str(
-                    &format!("Token {} not supported by this market", ft_token_id),
-                );
+                env::panic_str(&format!(
+                    "Token {} not supported by this market",
+                    ft_token_id
+                ));
             }
         }
 
@@ -96,7 +104,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_id: token_id.clone(),
                 sale_conditions,
                 bids,
-                created_at: env::block_timestamp()/1000000,
+                created_at: env::block_timestamp() / 1000000,
                 token_type: token_type.clone(),
                 is_auction,
                 start,
@@ -138,11 +146,15 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 )
             });
         by_nft_contract_id.insert(&token_id);
-        self.market.by_nft_contract_id
+        self.market
+            .by_nft_contract_id
             .insert(&nft_contract_id, &by_nft_contract_id);
 
         if let Some(token_type) = token_type {
-            assert!(token_id.contains(&token_type), "TokenType should be substr of TokenId");
+            assert!(
+                token_id.contains(&token_type),
+                "TokenType should be substr of TokenId"
+            );
             let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
@@ -157,10 +169,35 @@ impl NonFungibleTokenApprovalReceiver for Market {
                         .unwrap(),
                     )
                 });
-                by_nft_token_type.insert(&contract_and_token_id);
+            by_nft_token_type.insert(&contract_and_token_id);
             self.market
                 .by_nft_token_type
                 .insert(&token_type, &by_nft_token_type);
         }
+    }
+
+    fn nft_on_series_approve(&mut self, token_series: TokenSeries) {
+        let nft_contract_id = env::predecessor_account_id();
+        let signer_id = env::signer_account_id();
+        assert_ne!(
+            nft_contract_id, signer_id,
+            "nft_on_approve should only be called via cross-contract call"
+        );
+        require!(
+            token_series.owner_id.clone() == signer_id,
+            "owner_id should be signer_id"
+        );
+
+        let storage_amount = self.storage_amount().0;
+        let owner_paid_storage = self.market.storage_deposits.get(&signer_id).unwrap_or(0);
+        let signer_storage_required =
+            (self.get_supply_by_owner_id(signer_id).0 + 1) as u128 * storage_amount;
+        assert!(
+            owner_paid_storage >= signer_storage_required,
+            "Insufficient storage paid: {}, for {} sales at {} rate of per sale",
+            owner_paid_storage,
+            signer_storage_required / STORAGE_PER_SALE,
+            STORAGE_PER_SALE
+        );
     }
 }
