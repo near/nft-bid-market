@@ -216,6 +216,7 @@ impl Nft {
         &mut self,
         token_series_id: TokenId,
         sale_conditions: token_series::SaleConditions,
+        copies: u64,
         approved_market_id: AccountId,
     ) -> Promise {
         let initial_storage_usage = env::storage_usage();
@@ -227,6 +228,9 @@ impl Nft {
             env::predecessor_account_id().eq(&token_series.owner_id),
             "Not token owner"
         );
+        require!(
+            token_series.metadata.copies.unwrap_or(1) - token_series.tokens.len() >= copies
+        );
         token_series.approved_market_id = Some(approved_market_id.clone());
         self.token_series_by_id
             .insert(&token_series_id, &token_series);
@@ -236,7 +240,7 @@ impl Nft {
                 sale_conditions,
                 series_id: token_series_id,
                 owner_id: token_series.owner_id,
-                copies: token_series.metadata.copies.unwrap_or(1),
+                copies,
             },
             approved_market_id,
             0,

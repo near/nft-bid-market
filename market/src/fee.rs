@@ -6,7 +6,7 @@ pub type FeeAccountAndAmount = UnorderedMap<AccountId, FeeAmount>;
 
 pub struct Fees {
     pub protocol_fee: FeeAmount,
-    pub origins: LookupMap<TokenId, FeeAccountAndAmount>,
+    pub origins: UnorderedMap<TokenId, FeeAccountAndAmount>,
     pub royalty: FeeAmount,
 }
 
