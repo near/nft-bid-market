@@ -88,11 +88,7 @@ impl Nft {
     #[payable]
     pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId) -> TokenId {
         let initial_storage_usage = env::storage_usage();
-        /*require!(
-            self.private_minters
-                .contains(&env::predecessor_account_id()),
-            "Unauthorized"
-        );*/
+
         let mut token_series = self
             .token_series_by_id
             .get(&token_series_id)
@@ -215,7 +211,6 @@ impl Nft {
 
     #[payable]
     pub fn nft_series_market_approve(&mut self, token_id: TokenId, approved_market_id: AccountId) {
-        assert_at_least_one_yocto();
         let initial_storage_usage = env::storage_usage();
         let mut token_series = self
             .token_series_by_id

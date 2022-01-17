@@ -48,6 +48,8 @@ pub struct Sale {
     pub end: Option<u64>,
 }
 
+
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SeriesSale {
     pub owner_id: AccountId,
     pub nft_contract_id: AccountId,
@@ -55,7 +57,6 @@ pub struct SeriesSale {
     pub sale_conditions: SaleConditions,
     pub created_at: u64,
     pub copies: u64,
-    pub current_id: u64,
 }
 
 impl Sale {
@@ -92,7 +93,7 @@ pub struct PurchaseArgs {
 pub struct MarketSales {
     pub owner_id: AccountId,
     pub sales: UnorderedMap<ContractAndTokenId, Sale>,
-    pub token_series: UnorderedMap<ContractAndSeriesId, SeriesSale>,
+    pub series_sales: UnorderedMap<ContractAndSeriesId, SeriesSale>,
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
     pub by_nft_token_type: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,

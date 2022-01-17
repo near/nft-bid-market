@@ -46,7 +46,7 @@ impl Market {
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
         let market = MarketSales {
             owner_id,
-            token_series: UnorderedMap::new(StorageKey::TokenSeries),
+            series_sales: UnorderedMap::new(StorageKey::TokenSeries),
             sales: UnorderedMap::new(StorageKey::Sales),
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),
