@@ -72,12 +72,13 @@ impl Market {
         bid: &Bid,
     ) -> Sale {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
+        let token_id = AccountId::new_unchecked(token_id);
         let sale = self
             .market
             .sales
             .get(&contract_and_token_id)
             .expect("No sale");
-        let bid_vec = sale.bids.get(&token_id.parse().unwrap()).expect("No token");
+        let bid_vec = sale.bids.get(&token_id).expect("No token");
 
         let mut sale = self
             .market
@@ -88,7 +89,7 @@ impl Market {
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
                 sale.bids
-                    .get_mut(&token_id.parse().unwrap())
+                    .get_mut(&token_id)
                     .expect("No token")
                     .remove(index); 
 
