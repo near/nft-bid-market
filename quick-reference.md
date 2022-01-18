@@ -73,15 +73,12 @@ If `CONTRACT_PARENT` wants to increase or decrease the price of `1:3`, he can ru
 ```bash
 near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "price": "12000"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
-
-
 Now the price is 12000 yoctoNEAR, so if `ALICE` tries to buy it at a price 10000 yoctoNEAR, she won't get it automatically and will need to wait for `CONTRACT_PARENT` to accept the offer.
+
+If `ALICE` adds a bid and then decides to remove it she could spend 1 yoctoNEAR calling `remove_bid`: //doesn't work
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
-```
 
-If `ALICE` decides to remove her bid she could spend 1 yoctoNEAR calling `remove_bid`: //doesn't work
-```bash
 near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "bid": {"owner_id": "'$ALICE'", "price": "10000"}}' --accountId $ALICE --depositYocto 1
 ```
 This would remove her bid and return her money.
