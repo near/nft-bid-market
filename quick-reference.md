@@ -9,7 +9,6 @@ Market contract handles sales, bids and auctions.
 
 To build both contracts and deploy it on dev account:
 ```bash
-sh build-all.sh
 sh deploy-testnet.sh
 source .env
 ```
