@@ -1,5 +1,27 @@
 # NFT bid market
 
+NFT bid market consists of two contracts: NFT and Market.
+
+NFT contract allows to create and manage a token or token series. 
+It supports Metadata, Approval Management and Royalties.
+
+Market contract handles sales, bids and auctions.
+
+To build both contracts:
+```bash
+sh build-all.sh
+```
+
+To deploy it on dev account on testnet and export all the necessary variables:
+```bash
+sh deploy-testnet.sh
+source .env
+```
+
+Now we have `CONTRACT_PARENT` and three subaccounts: `MARKET_CONTRACT_ID`, `NFT_CONTRACT_ID`, `ALICE`.
+NFT contract is deployed on `NFT_CONTRACT_ID`.
+Market contract is deployed on `CONTRACT_PARENT`.
+
 Initialize contracts:
 ```bash
 near call $NFT_CONTRACT_ID new_default_meta '{"owner_id": "'$CONTRACT_PARENT'", "market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $NFT_CONTRACT_ID
