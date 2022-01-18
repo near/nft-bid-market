@@ -38,7 +38,15 @@ Now `NFT_CONTRACT_ID` has three tokens with ids `1:1`, `1:2` and `1:3`.
 
 Before creating a sale the user needs to cover the storage:
 ```bash
+<<<<<<< HEAD
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1 # 0.01 per sale
+=======
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.05
+```
+After selling his tokens he would be able to withdraw it:
+```bash
+near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
+>>>>>>> 68865c6 (view methods)
 ```
 
 `CONTRACT_PARENT` puts all three tokens on sale:
@@ -89,6 +97,22 @@ The sale also can be removed by `CONTRACT_PARENT` (and he would also need to pay
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
 This removes the sale and corresponding bids and returns money.
+
+### View methods for market
+To find number of sales:
+```bash
+near view $MARKET_CONTRACT_ID get_supply_sales
+```
+
+To find number of sales for given owner:
+```bash
+near view $MARKET_CONTRACT_ID get_supply_by_owner_id '{"account_id": "'$CONTRACT_PARENT'"}'
+```
+
+To get sales for the given owner:
+```bash
+near view $MARKET_CONTRACT_ID get_sales_by_owner_id '{"account_id": "'$CONTRACT_PARENT'", "from_index": "0", "limit": 10}'
+```
 
 ## NFT contract
 
