@@ -38,15 +38,7 @@ Now `NFT_CONTRACT_ID` has three tokens with ids `1:1`, `1:2` and `1:3`.
 
 Before creating a sale the user needs to cover the storage:
 ```bash
-<<<<<<< HEAD
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1 # 0.01 per sale
-=======
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.05
-```
-After selling his tokens he would be able to withdraw it:
-```bash
-near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
->>>>>>> 68865c6 (view methods)
 ```
 
 `CONTRACT_PARENT` puts all three tokens on sale:
@@ -84,7 +76,7 @@ near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_
 ```
 Now the price is 12000 yoctoNEAR, so if `ALICE` tries to buy it at a price 10000 yoctoNEAR, she won't get it automatically and will need to wait for `CONTRACT_PARENT` to accept the offer.
 
-If `ALICE` adds a bid and then decides to remove it she could spend 1 yoctoNEAR calling `remove_bid`: //doesn't work
+If `ALICE` adds a bid and then decides to remove it she could spend 1 yoctoNEAR calling `remove_bid`:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 
