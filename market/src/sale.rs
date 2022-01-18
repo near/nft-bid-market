@@ -168,7 +168,7 @@ impl Market {
 
         let buyer_id = env::predecessor_account_id();
         assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
-        let ft_token_id = "near".to_string();
+        let ft_token_id = "near".to_string(); // Should be argument, if support of ft needed
         let price = *sale
             .sale_conditions
             .get(&ft_token_id.parse().unwrap())

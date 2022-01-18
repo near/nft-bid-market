@@ -93,7 +93,7 @@ impl Market{
     }
 
     #[payable]
-    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
+    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: TokenId, bid: Bid) {
         assert_one_yocto();
         assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
         let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed

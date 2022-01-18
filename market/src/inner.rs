@@ -1,5 +1,5 @@
-use crate::common::*;
 use crate::bid::Bid;
+use crate::common::*;
 use crate::sale::{Sale, DELIMETER};
 use crate::Market;
 
@@ -52,9 +52,7 @@ impl Market {
                 .expect("No sale by nft_token_type");
             by_nft_token_type.remove(&contract_and_token_id);
             if by_nft_token_type.is_empty() {
-                self.market
-                    .by_nft_token_type
-                    .remove(&token_type);
+                self.market.by_nft_token_type.remove(&token_type);
             } else {
                 self.market
                     .by_nft_token_type
@@ -85,15 +83,15 @@ impl Market {
             .sales
             .get(&contract_and_token_id)
             .expect("No sale");
-
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
                 sale.bids
                     .get_mut(ft_token_id)
                     .expect("No token")
-                    .remove(index); 
+                    .remove(index);
 
                 self.market.sales.insert(&contract_and_token_id, &sale);
+                break; // shouldn't allow same bids by same user
             };
         }
 
