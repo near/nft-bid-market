@@ -38,11 +38,7 @@ Now `NFT_CONTRACT_ID` has three tokens with ids `1:1`, `1:2` and `1:3`.
 
 Before creating a sale the user needs to cover the storage:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
-```
-After selling his tokens he would be able to withdraw it:
-```bash
-near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1 # 0.01 per sale
 ```
 
 `CONTRACT_PARENT` puts all three tokens on sale:
@@ -52,6 +48,11 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", "msg": "{\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"is_auction\": false, \"start\": null, \"end\": null }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
 He sets the price of 10000 yoctoNEAR for each token.
+
+Seller can withdraw any extra storage deposits (will return 0.07 in this case)
+```bash
+near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
+```
 
 Now any other account (in our case it is `ALICE`) can buy or offer to buy any of these tokens. 
 The difference is in the deposit which she attaches to `offer`. 

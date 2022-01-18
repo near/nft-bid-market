@@ -96,8 +96,9 @@ impl Market{
     pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: String, bid: Bid) {
         assert_one_yocto();
         assert_eq!(env::predecessor_account_id(), bid.owner_id, "Must be bid owner");
-        self.internal_remove_bid(nft_contract_id, token_id.clone(), &bid);
-        self.refund_bid(token_id.parse().unwrap(), &bid);
+        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
+        self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
+        self.refund_bid(ft_token_id, &bid);
     }
 }
 
