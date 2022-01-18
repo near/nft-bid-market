@@ -4,6 +4,8 @@ use common::*;
 pub type FeeAmount = u128; //should be f64
 pub type FeeAccountAndAmount = UnorderedMap<AccountId, FeeAmount>;
 
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+//#[serde(crate = "near_sdk::serde")]
 pub struct Fees {
     pub protocol_fee: FeeAmount,
     pub origins: LookupMap<TokenId, FeeAccountAndAmount>,

@@ -10,9 +10,12 @@ mod fee;
 use common::*;
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
+use crate::fee::Fees;
 use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
+const PROTOCOL_FEE: u128 = 3;
+const ORIGIN: u128 = 3;
 
 /// Helper structure to for keys of the persistent collections.
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -27,6 +30,7 @@ pub enum StorageKey {
     ByNFTTokenTypeInner { token_type_hash: CryptoHash },
     FTTokenIds,
     StorageDeposits,
+    OriginFees,
 }
 
 #[near_bindgen]
@@ -34,6 +38,7 @@ pub enum StorageKey {
 pub struct Market {
     non_fungible_token_account_ids: LookupSet<AccountId>,
     market: MarketSales,
+    //fees: Fees,
 }
 
 
@@ -56,9 +61,17 @@ impl Market {
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
             bid_history_length: 1,
         };
+        //let mut origins = LookupMap::new(StorageKey::OriginFees);
+        //let mut origin = UnorderedMap::new(b'o').insert(&AccountId::new_unchecked("near".to_owned()), &ORIGIN);
+        //origins.insert("near", &origin);
+        //let fees = Fees {
+        //    protocol_fee: PROTOCOL_FEE, 
+        //    origins
+        //};
         Self {
             non_fungible_token_account_ids, 
-            market
+            market, 
+        //    fees
         }
     }
 
