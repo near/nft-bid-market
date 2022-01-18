@@ -99,3 +99,40 @@ near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
+
+# Nft series
+
+Owner can assign private minters
+```
+near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
+```
+
+Owner of series can approve market, for minting tokenes in this series
+```
+near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT
+```
+This method will call **approved_market_id**'s method **nft_on_series_approve** with arguments 
+```
+'{"token_series": {"sale_conditions": {"near": "1200"}, "series_id": "1", "owner_id": "'$CONTRACT_PARENT'", "copies": 1}}'
+```
+
+## View methods on nft token series
+
+Get metadata, owner_id and royalty of specific token series
+```
+near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
+```
+
+Get how many tokens of specific token series already minted
+```
+near view $NFT_CONTRACT_ID nft_supply_for_series '{"token_series_id": "1"}'
+```
+
+Get a list of all series
+```
+near view $NFT_CONTRACT_ID nft_series
+```
+or if needed pagination
+```
+near view $NFT_CONTRACT_ID nft_series '{"from_index": "0", "limit": 10}'
+```

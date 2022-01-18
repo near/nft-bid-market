@@ -9,3 +9,5 @@ Cargo.lock
 **/neardev
 res/*.wasm
 res
+
+.env
