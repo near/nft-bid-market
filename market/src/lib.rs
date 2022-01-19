@@ -14,8 +14,8 @@ use crate::fee::Fees;
 use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
-const PROTOCOL_FEE: u128 = 3;
-const ORIGIN: u128 = 3;
+const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
+const ORIGIN: u128 = 300;
 
 /// Helper structure to for keys of the persistent collections.
 #[derive(BorshStorageKey, BorshSerialize)]

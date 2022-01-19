@@ -103,7 +103,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
             &Sale {
                 owner_id: owner_id.clone(),
                 approval_id,
-                nft_contract_id: nft_contract_id.to_string(),
+                nft_contract_id: nft_contract_id.clone(),
                 token_id: token_id.clone(),
                 sale_conditions,
                 bids,
@@ -155,10 +155,9 @@ impl NonFungibleTokenApprovalReceiver for Market {
 
         if let Some(token_type) = token_type {
             assert!(
-                token_id.contains(&token_type),
+                token_id.contains(token_type.as_str()),
                 "TokenType should be substr of TokenId"
             );
-            let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type

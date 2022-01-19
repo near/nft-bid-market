@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 use std::collections::HashMap;
 
-use near_sdk::{promise_result_as_success, Gas, PromiseResult};
+use near_sdk::{promise_result_as_success, Gas};
 use near_sdk::ext_contract;
 
 use crate::*;
@@ -28,7 +28,7 @@ pub struct Payout {
 
 pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
-pub type TokenType = Option<String>;
+pub type TokenType = Option<AccountId>;
 pub type ContractAndSeriesId = String;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -36,13 +36,13 @@ pub type ContractAndSeriesId = String;
 pub struct Sale {
     pub owner_id: AccountId,
     pub approval_id: u64,
-    pub nft_contract_id: String,
+    pub nft_contract_id: AccountId,
     pub token_id: String,
     pub sale_conditions: SaleConditions,
     pub bids: Bids,
     pub created_at: u64,
     pub is_auction: Option<bool>,
-    pub token_type: Option<String>,
+    pub token_type: TokenType,
 
     pub start: Option<u64>,
     pub end: Option<u64>,
