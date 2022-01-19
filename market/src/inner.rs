@@ -84,11 +84,17 @@ impl Market {
             .expect("No sale");
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
-                sale.bids
-                    .get_mut(ft_token_id)
-                    .expect("No token")
-                    .remove(index);
-
+                if bid_vec.len() == 1 {
+                    //If the vector contained only one bid, should remove ft_token_id from the HashMap
+                    sale.bids
+                        .remove(ft_token_id);
+                } else {
+                    //If there are several bids for this ft_token_id, should remove one bid
+                    sale.bids
+                        .get_mut(ft_token_id)
+                        .expect("No token")
+                        .remove(index);
+                };
                 self.market.sales.insert(&contract_and_token_id, &sale);
                 break; // shouldn't allow same bids by same user
             };
