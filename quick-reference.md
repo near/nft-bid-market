@@ -105,6 +105,31 @@ To get sales for the given owner:
 near view $MARKET_CONTRACT_ID get_sales_by_owner_id '{"account_id": "'$CONTRACT_PARENT'", "from_index": "0", "limit": 10}'
 ```
 
+To find number of sales for given nft contract:
+```bash
+near view $MARKET_CONTRACT_ID get_supply_by_nft_contract_id '{"nft_contract_id": "'$NFT_CONTRACT_ID'"}'
+```
+
+To get sales for the given nft contract:
+```bash
+near view $MARKET_CONTRACT_ID get_sales_by_nft_contract_id '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "from_index": "0", "limit": 10}'
+```
+
+To find number of sales for token type:
+```bash
+near view $MARKET_CONTRACT_ID get_supply_by_nft_token_type '{"token_type": "1"}'
+```
+
+To get sales for token type:
+```bash
+near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "1", "from_index": "0", "limit": 10}'
+```
+
+To get the sale:
+```bash
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
+```
+
 ## NFT contract
 
 Owner can assign private minters
