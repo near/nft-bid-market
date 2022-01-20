@@ -33,8 +33,8 @@ impl Market {
         owner_id: AccountId,
         approval_id: u64,
         nft_contract_id: AccountId,
-    ) {
-        // maybe return value
+    ) { // should return value
+        
         require!(
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
             "Incorrect duration"
@@ -95,6 +95,9 @@ impl Market {
             end: None,
         };
         auction.bid = Some(bid);
+        if auction.end - env::block_timestamp() < EXTENSION_DURATION {
+            auction.end = env::block_timestamp() + EXTENSION_DURATION;
+        }
         self.market.auctions.insert(&auction_id.into(), &auction);
     }
 }

@@ -103,7 +103,7 @@ pub struct MarketSales {
     pub bid_history_length: u8,
 
     pub auctions: UnorderedMap<u128, Auction>,
-    pub next_auction_id: u128, // should be LazyOption?
+    pub next_auction_id: u128,
 }
 
 #[near_bindgen]
