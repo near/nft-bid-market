@@ -28,7 +28,7 @@ pub struct Payout {
 
 pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
-pub type TokenType = Option<AccountId>;
+pub type TokenType = Option<String>;
 pub type ContractAndSeriesId = String;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]

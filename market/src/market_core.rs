@@ -158,6 +158,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_id.contains(token_type.as_str()),
                 "TokenType should be substr of TokenId"
             );
+            let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type
