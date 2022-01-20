@@ -5,6 +5,7 @@ use near_sdk::{promise_result_as_success, Gas};
 use near_sdk::ext_contract;
 
 use crate::*;
+use crate::auction::Auction;
 use common::*;
 
 use bid::Bids;
@@ -100,6 +101,9 @@ pub struct MarketSales {
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
     pub bid_history_length: u8,
+
+    pub auctions: UnorderedMap<u128, Auction>,
+    pub next_auction_id: u128, // should be LazyOption?
 }
 
 #[near_bindgen]

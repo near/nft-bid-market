@@ -14,3 +14,5 @@ pub use near_contract_standards::non_fungible_token::{
     metadata::{NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC},
     refund_deposit, NonFungibleToken, Token, TokenId,
 };
+
+pub const NANOS_PER_SEC: u64 = 1_000_000_000;

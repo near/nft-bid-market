@@ -26,8 +26,27 @@ pub struct SaleArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_auction: Option<bool>,
 
-    pub start: Option<u64>,
-    pub end: Option<u64>,
+    pub start: Option<U64>,
+    pub end: Option<U64>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AuctionArgs {
+    pub token_type: TokenType,
+    pub minimal_step: U128,
+    pub start_price: U128,
+
+    pub start: U64,
+    pub duration: U64,
+    pub buy_out_price: Option<U128>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum ArgsKind {
+    Sale(SaleArgs),
+    Auction(AuctionArgs),
 }
 
 #[near_bindgen]
@@ -82,7 +101,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
             is_auction,
             start,
             end,
-        } = near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs");
+        } = near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs"); // TODO: take ArgsKind here
 
         for (ft_token_id, _price) in sale_conditions.clone() {
             if !self.market.ft_token_ids.contains(&ft_token_id) {
@@ -107,11 +126,11 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_id: token_id.clone(),
                 sale_conditions,
                 bids,
-                created_at: env::block_timestamp() / 1000000,
+                created_at: env::block_timestamp(),
                 token_type: token_type.clone(),
                 is_auction,
-                start,
-                end,
+                start: start.map(|s| s.into()),
+                end: end.map(|e| e.into()),
             },
         );
 

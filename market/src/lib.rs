@@ -6,6 +6,7 @@ mod common;
 mod inner;
 mod sale_views;
 mod fee;
+mod auction;
 
 use common::*;
 
@@ -31,6 +32,8 @@ pub enum StorageKey {
     FTTokenIds,
     StorageDeposits,
     OriginFees,
+    Auctions,
+    AuctionId
 }
 
 #[near_bindgen]
@@ -60,6 +63,8 @@ impl Market {
             ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
             bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
+            auctions: UnorderedMap::new(StorageKey::Auctions),
+            next_auction_id: 0,
         };
         //let mut origins = LookupMap::new(StorageKey::OriginFees);
         //let mut origin = UnorderedMap::new(b'o').insert(&AccountId::new_unchecked("near".to_owned()), &ORIGIN);
