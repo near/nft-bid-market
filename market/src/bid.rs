@@ -59,7 +59,7 @@ impl Market{
         let bids_for_token_id = sale.bids.entry(ft_token_id.clone()).or_insert_with(Vec::new);
         
         if !bids_for_token_id.is_empty() {
-            let current_bid = &bids_for_token_id[bids_for_token_id.len()-1];
+            let current_bid = &bids_for_token_id.last().unwrap();
             assert!(
                 amount > current_bid.price.0,
                 "Can't pay less than or equal to current bid price: {}",

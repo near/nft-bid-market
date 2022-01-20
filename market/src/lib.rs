@@ -9,7 +9,7 @@ mod fee;
 
 use common::*;
 
-use crate::sale::{Sale, MarketSales, SaleConditions, TokenType};
+use crate::sale::{Sale, MarketSales, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
 use crate::fee::Fees;
 use std::collections::HashMap;
 
@@ -59,7 +59,7 @@ impl Market {
             by_nft_token_type: LookupMap::new(StorageKey::ByNFTTokenType),
             ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
-            bid_history_length: 1,
+            bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
         };
         //let mut origins = LookupMap::new(StorageKey::OriginFees);
         //let mut origin = UnorderedMap::new(b'o').insert(&AccountId::new_unchecked("near".to_owned()), &ORIGIN);
