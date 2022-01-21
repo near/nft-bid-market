@@ -104,7 +104,7 @@ impl Market {
     #[payable]
     pub fn cancel_auction(&mut self, auction_id: U128) {
         assert_one_yocto();
-        let mut auction = self
+        let auction = self
             .market
             .auctions
             .get(&auction_id.into())
@@ -121,7 +121,7 @@ impl Market {
     }
 
     pub fn finish_auction(&mut self, auction_id: U128) {
-        let mut auction = self
+        let auction = self
             .market
             .auctions
             .get(&auction_id.into())
