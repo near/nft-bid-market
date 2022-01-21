@@ -23,8 +23,6 @@ pub trait NonFungibleTokenApprovalReceiver {
 pub struct SaleArgs {
     pub sale_conditions: SaleConditions,
     pub token_type: TokenType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_auction: Option<bool>,
 
     pub start: Option<U64>,
     pub end: Option<U64>,
@@ -98,7 +96,6 @@ impl NonFungibleTokenApprovalReceiver for Market {
         let SaleArgs {
             sale_conditions,
             token_type,
-            is_auction,
             start,
             end,
         } = near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs"); // TODO: take ArgsKind here
@@ -128,7 +125,6 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 bids,
                 created_at: env::block_timestamp(),
                 token_type: token_type.clone(),
-                is_auction,
                 start: start.map(|s| s.into()),
                 end: end.map(|e| e.into()),
             },

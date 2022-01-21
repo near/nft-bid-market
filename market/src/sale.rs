@@ -42,7 +42,6 @@ pub struct Sale {
     pub sale_conditions: SaleConditions,
     pub bids: Bids,
     pub created_at: u64,
-    pub is_auction: Option<bool>,
     pub token_type: TokenType,
 
     pub start: Option<u64>,
@@ -180,7 +179,7 @@ impl Market {
         let deposit = env::attached_deposit();
         assert!(deposit > 0, "Attached deposit must be greater than 0");
 
-        if !sale.is_auction.unwrap_or(false) && deposit == price.0 {
+        if deposit == price.0 {
             self.process_purchase(
                 contract_id,
                 token_id,
@@ -189,12 +188,6 @@ impl Market {
                 buyer_id,
             );
         } else {
-            if sale.is_auction.unwrap() && price.0 > 0 {
-                assert!(
-                    deposit >= price.0,
-                    "Attached deposit must be greater than reserve price"
-                );
-            }
             self.add_bid(
                 contract_and_token_id,
                 deposit,
