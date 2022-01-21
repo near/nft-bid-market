@@ -89,11 +89,7 @@ impl Market {
                 // TOOD: buyout
             }
         }
-        let min_deposit = if let Some(ref bid) = auction.bid {
-            bid.price.0 + auction.minimal_step
-        } else {
-            auction.start_price
-        };
+        let min_deposit = self.get_minimal_next_bid(auction_id).0;
         require!(deposit >= min_deposit);
         let bid = Bid {
             owner_id: env::predecessor_account_id(),
