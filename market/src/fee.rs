@@ -1,35 +1,50 @@
 use crate::*;
 use common::*;
 
-pub type FeeAmount = u128; //should be f64
-pub type FeeAccountAndAmount = UnorderedMap<AccountId, FeeAmount>;
+//pub type FeeAccountAndAmount = UnorderedMap<AccountId, u128>;
+pub type OriginApp = String;
+
+pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
+pub const ORIGIN: u128 = 300;
+pub const ROYALTY: u128 = 3000;
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 //#[serde(crate = "near_sdk::serde")]
 pub struct Fees {
-    pub protocol_fee: FeeAmount,
-    pub origins: LookupMap<TokenId, FeeAccountAndAmount>,
+    pub protocol_fee: u128,
+    pub origins: UnorderedMap<AccountId, u128>,
+    pub royalty: u128,
 }
 
-//pub `fees: Fees` should be added to Market
 
 impl Fees {
     //Should be called in add_bid to check that the buyer attached enough deposit to pay the price + fee.
-    pub fn total_amount_fee_side(&self, price: U128, token: TokenId) -> U128 {
-        U128(price.0 + self.calculate_protocol_fees(price).0 + self.calculate_origins(price, token).0)
+    pub fn total_amount_fee_side(&self, price: U128) -> U128 {
+        U128(price.0 + self.calculate_protocol_fee(price).0 + self.calculate_origin_fee(price).0)
     }
 
-    pub fn calculate_protocol_fees(&self, price: U128) -> U128 {
-        U128(price.0*self.protocol_fee)
+    pub fn calculate_protocol_fee(&self, price: U128) -> U128 {
+        U128(price.0*self.protocol_fee / 10_000 as u128)
     }
 
-    pub fn calculate_origins(&self, price: U128, token: TokenId) -> U128 {
-        let accounts_and_fees = self.origins.get(&token).unwrap();
+    pub fn calculate_origin_fee(&self, price: U128) -> U128 {
+    //    let accounts_and_fees = self.origins.get(&token).unwrap();
+    //    let mut total_origin: u128 = 0;
+    //    for (_account, fee) in accounts_and_fees.iter() {
+    //        total_origin += fee;
+    //    }
+    //    U128(price.0*total_origin)
+
         let mut total_origin: u128 = 0;
-        for (_account, fee) in accounts_and_fees.iter() {
+        for (_account, fee) in self.origins.iter() {
             total_origin += fee;
         }
-        U128(price.0*total_origin)
+
+        U128(price.0*total_origin  / 10_000 as u128)
+    }
+
+    pub fn calculate_royalty(&self, price: U128) -> U128 {
+        U128(price.0*self.royalty / 10_000 as u128)
     }
 
 }
