@@ -1,5 +1,6 @@
-use crate::*;
+use crate::auction::Auction;
 use crate::common::*;
+use crate::*;
 
 #[near_bindgen]
 impl Market {
@@ -25,5 +26,11 @@ impl Market {
         auction.start >= env::block_timestamp() && auction.start < env::block_timestamp()
     }
 
+    pub fn get_auction(&self, auction_id: U128) -> Auction {
+        self.market
+            .auctions
+            .get(&auction_id.into())
+            .unwrap_or_else(|| env::panic_str("Auction does not exist"))
+    }
     //pub fn get_bid_total_amount() -> U128;
 }
