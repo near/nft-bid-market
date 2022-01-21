@@ -16,7 +16,7 @@ pub const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
 pub const GAS_FOR_NFT_TRANSFER: Gas = Gas(15_000_000_000_000);
 pub const GAS_FOR_MINT: Gas = Gas(20_000_000_000_000);
 pub const BID_HISTORY_LENGTH_DEFAULT: u8 = 10;
-const NO_DEPOSIT: Balance = 0;
+pub(crate) const NO_DEPOSIT: Balance = 0;
 pub static DELIMETER: &str = "||";
 
 pub type SaleConditions = HashMap<FungibleTokenId, U128>;
@@ -314,10 +314,11 @@ impl Market {
         // Protocol fees
         let protocol_fee = price.0 * PROTOCOL_FEE / 10_000u128;
 
-        let mut owner_payout:u128 = payout
+        let mut owner_payout: u128 = payout
             .payout
             .remove(&sale.owner_id)
-            .unwrap_or_else(|| unreachable!()).into();
+            .unwrap_or_else(|| unreachable!())
+            .into();
         owner_payout -= protocol_fee;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
@@ -456,6 +457,8 @@ trait ExtSelf {
         sale: Sale,
         price: U128,
     ) -> Promise;
+
+    fn resolve_finish_auction(&mut self, token_type: TokenType, buyer_id: AccountId, price: U128);
 
     fn resolve_mint(
         &mut self,

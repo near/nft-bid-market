@@ -1,5 +1,6 @@
 use crate::bid::{Bid, Bids};
 use crate::market_core::AuctionArgs;
+use crate::sale::{ext_contract, ext_self, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES, NO_DEPOSIT};
 use crate::*;
 use near_sdk::near_bindgen;
 // should check calculation
@@ -33,8 +34,9 @@ impl Market {
         owner_id: AccountId,
         approval_id: u64,
         nft_contract_id: AccountId,
-    ) { // should return value
-        
+    ) {
+        // should return value
+
         require!(
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
             "Incorrect duration"
@@ -104,7 +106,7 @@ impl Market {
     #[payable]
     pub fn cancel_auction(&mut self, auction_id: U128) {
         assert_one_yocto();
-        let mut auction = self
+        let auction = self
             .market
             .auctions
             .get(&auction_id.into())
@@ -121,21 +123,47 @@ impl Market {
     }
 
     pub fn finish_auction(&mut self, auction_id: U128) {
-        let mut auction = self
+        let auction = self
             .market
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction is not active"));
         require!(
-            env::block_timestamp() > auction.end, 
+            env::block_timestamp() > auction.end,
             "Auction can be finalized only after the end time"
         );
-        require!(
-            auction.bid.is_some(),
-            "Can finalize only if there is a bid"
-        );
-
+        let final_bid = auction
+            .bid
+            .unwrap_or_else(|| env::panic_str("Can finalize only if there is a bid"));
         //need to call process_purchase?
         self.market.auctions.remove(&auction_id.into());
+        ext_contract::nft_transfer_payout(
+            final_bid.owner_id.clone(),
+            auction.token_id.clone(),
+            auction.approval_id,
+            None,
+            final_bid.price,
+            10,
+            auction.nft_contract_id.clone(),
+            1,
+            GAS_FOR_NFT_TRANSFER,
+        )
+        .then(ext_self::resolve_finish_auction(
+            auction.token_type,
+            final_bid.owner_id.clone(),
+            final_bid.price,
+            env::current_account_id(),
+            NO_DEPOSIT,
+            GAS_FOR_ROYALTIES,
+        ));
+    }
+
+    #[private]
+    pub fn resolve_finish_auction(
+        &mut self,
+        token_type: TokenType,
+        buyer_id: AccountId,
+        price: U128,
+    ) {
     }
 }
