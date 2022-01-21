@@ -83,11 +83,6 @@ impl Market{
         if bids_for_token_id.len() > self.market.bid_history_length as usize {
             bids_for_token_id.remove(0);
         }
-
-        //Extend the time if the bid is sent less than 15 minutes before auction end
-        if sale.is_auction.unwrap() && env::block_timestamp() + BEFORE_AUCTION_END < sale.end.unwrap() {
-            sale.extend(AUCTION_EXTEND);
-        }
         
         self.market.sales.insert(&contract_and_token_id, sale);
     }
