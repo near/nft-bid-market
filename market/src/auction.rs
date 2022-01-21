@@ -88,8 +88,8 @@ impl Market {
                 // TOOD: buyout
             }
         }
-        let min_deposit = if let Some(bid) = auction.bid {
-            bid.price.into()
+        let min_deposit = if let Some(ref bid) = auction.bid {
+            bid.price.0 + auction.minimal_step
         } else {
             auction.start_price
         };
@@ -100,6 +100,11 @@ impl Market {
             start: None,
             end: None,
         };
+        //Return previous bid
+        if let Some(previous_bid) = auction.bid {
+            self.refund_bid(ft_token_id, &previous_bid);
+        }
+
         auction.bid = Some(bid);
         if auction.end - env::block_timestamp() < EXTENSION_DURATION {
             auction.end = env::block_timestamp() + EXTENSION_DURATION;

@@ -7,6 +7,7 @@ mod inner;
 mod sale_views;
 mod fee;
 mod auction;
+mod auction_views;
 
 use common::*;
 
