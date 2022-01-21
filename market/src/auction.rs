@@ -14,11 +14,12 @@ pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 #[serde(crate = "near_sdk::serde")]
 pub struct Auction {
     pub owner_id: AccountId,
+    #[serde(skip_deserializing)] // not sure about this
     pub approval_id: u64,
     pub nft_contract_id: AccountId,
     pub token_id: String,
     pub bid: Option<Bid>,
-    pub created_at: u64, // do we need this for auctions?
+    pub created_at: u64,
     pub ft_token_id: AccountId,
     pub minimal_step: u128,
     pub start_price: u128,
