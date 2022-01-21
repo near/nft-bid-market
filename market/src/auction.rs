@@ -100,4 +100,16 @@ impl Market {
         }
         self.market.auctions.insert(&auction_id.into(), &auction);
     }
+
+    #[payable]
+    pub fn cancel(&mut self, auction_id: U128) {
+        assert_one_yocto();
+        let mut auction = self
+            .market
+            .auctions
+            .get(&auction_id.into())
+            .unwrap_or_else(|| env::panic_str("auction not active"));
+        require!(auction.bid.is_none(), "Can cancel the auction only is there is no bid");
+        self.market.auctions.remove(&auction_id.into());
+    }
 }
