@@ -11,7 +11,7 @@ mod auction;
 use common::*;
 
 use crate::sale::{Sale, MarketSales, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
-use crate::fee::{Fees, PROTOCOL_FEE, ORIGIN, ROYALTY};
+use crate::fee::{Fees, PROTOCOL_FEE, ORIGIN};
 use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
@@ -39,7 +39,7 @@ pub enum StorageKey {
 pub struct Market {
     non_fungible_token_account_ids: LookupSet<AccountId>,
     market: MarketSales,
-    fees: Fees,
+    //fees: Fees, may be used
 }
 
 
@@ -51,8 +51,8 @@ impl Market {
         non_fungible_token_account_ids.extend(nft_ids);
         let mut tokens = UnorderedSet::new(StorageKey::FTTokenIds);
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
-        let mut origins = UnorderedMap::new(StorageKey::OriginFees);
-        origins.insert(&owner_id.clone(), &ORIGIN).unwrap();
+        // let mut origins = UnorderedMap::new(StorageKey::OriginFees);
+        // origins.insert(&owner_id.clone(), &ORIGIN).unwrap();
         let market = MarketSales {
             owner_id,
             series_sales: UnorderedMap::new(StorageKey::TokenSeries),
@@ -66,15 +66,14 @@ impl Market {
             auctions: UnorderedMap::new(StorageKey::Auctions),
             next_auction_id: 0,
         };
-        let fees = Fees {
+        /*let fees = Fees {
             protocol_fee: PROTOCOL_FEE, 
             origins,
-            royalty: ROYALTY
-        };
+        };*/
         Self {
             non_fungible_token_account_ids, 
             market, 
-            fees
+            //fees
         }
     }
 

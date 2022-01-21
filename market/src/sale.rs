@@ -1,11 +1,11 @@
 #![allow(clippy::too_many_arguments)]
 use std::collections::HashMap;
 
-use near_sdk::{promise_result_as_success, Gas};
 use near_sdk::ext_contract;
+use near_sdk::{promise_result_as_success, Gas};
 
-use crate::*;
 use crate::auction::Auction;
+use crate::*;
 use common::*;
 
 use bid::Bids;
@@ -48,7 +48,6 @@ pub struct Sale {
     pub start: Option<u64>,
     pub end: Option<u64>,
 }
-
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct SeriesSale {
@@ -307,7 +306,7 @@ impl Market {
                 })
         });
         // is payout option valid?
-        let payout = if let Some(payout_option) = payout_option {
+        let mut payout = if let Some(payout_option) = payout_option {
             payout_option
         } else {
             if ft_token_id == "near".parse().unwrap() {
@@ -319,11 +318,23 @@ impl Market {
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
         self.refund_all_bids(&sale.bids);
 
+        // Protocol fees
+        let protocol_fee = price.0 * PROTOCOL_FEE / 10_000u128;
+
+        let mut owner_payout:u128 = payout
+            .payout
+            .remove(&sale.owner_id)
+            .unwrap_or_else(|| unreachable!()).into();
+        owner_payout -= protocol_fee;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
+            // Royalties
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
+                owner_payout -= amount.0;
             }
+            // Payouts
+            Promise::new(sale.owner_id).transfer(owner_payout);
             // refund all FTs (won't be any)
             price
         } else {
