@@ -52,7 +52,7 @@ impl Market {
         let mut tokens = UnorderedSet::new(StorageKey::FTTokenIds);
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
         // let mut origins = UnorderedMap::new(StorageKey::OriginFees);
-        // origins.insert(&owner_id.clone(), &ORIGIN).unwrap();
+        // origins.insert(&owner_id.clone(), &ORIGIN);
         let market = MarketSales {
             owner_id,
             series_sales: UnorderedMap::new(StorageKey::TokenSeries),
