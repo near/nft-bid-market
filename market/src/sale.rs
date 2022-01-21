@@ -458,7 +458,13 @@ trait ExtSelf {
         price: U128,
     ) -> Promise;
 
-    fn resolve_finish_auction(&mut self, token_type: TokenType, buyer_id: AccountId, price: U128);
+    fn resolve_finish_auction(
+        &mut self,
+        ft_token_id: AccountId,
+        buyer_id: AccountId,
+        owner_id: AccountId,
+        price: U128,
+    );
 
     fn resolve_mint(
         &mut self,

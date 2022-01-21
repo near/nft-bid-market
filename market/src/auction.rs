@@ -1,8 +1,11 @@
 use crate::bid::{Bid, Bids};
 use crate::market_core::AuctionArgs;
-use crate::sale::{ext_contract, ext_self, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES, NO_DEPOSIT};
+use crate::sale::{
+    ext_contract, ext_self, Payout, GAS_FOR_FT_TRANSFER, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES,
+    NO_DEPOSIT,
+};
 use crate::*;
-use near_sdk::near_bindgen;
+use near_sdk::{near_bindgen, promise_result_as_success};
 // should check calculation
 pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
@@ -16,7 +19,7 @@ pub struct Auction {
     pub token_id: String,
     pub bid: Option<Bid>,
     pub created_at: u64, // do we need this for auctions?
-    pub token_type: TokenType,
+    pub ft_token_id: AccountId,
     pub minimal_step: u128,
     pub start_price: u128,
     pub buy_out_price: Option<u128>,
@@ -41,6 +44,7 @@ impl Market {
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
             "Incorrect duration"
         );
+        let ft_token_id = self.token_type_to_ft_token_type(args.token_type);
         let start = args.start.0;
         require!(start >= env::block_timestamp(), "incorrect start time");
         let end = start + args.duration.0;
@@ -52,7 +56,7 @@ impl Market {
             token_id,
             bid: None,
             created_at: env::block_timestamp(),
-            token_type: args.token_type,
+            ft_token_id,
             minimal_step: args.minimal_step.into(),
             start_price: args.start_price.into(),
             buy_out_price: args.buy_out_price.map(|p| p.into()),
@@ -67,9 +71,9 @@ impl Market {
 
     #[payable]
     pub fn put_bid(&mut self, auction_id: U128, token_type: TokenType) {
-        let token_type = AccountId::new_unchecked(token_type.unwrap_or("near".to_owned()));
+        let ft_token_id = self.token_type_to_ft_token_type(token_type);
         require!(
-            self.market.ft_token_ids.contains(&token_type),
+            self.market.ft_token_ids.contains(&ft_token_id),
             "token not supported"
         );
         let mut auction = self
@@ -122,7 +126,7 @@ impl Market {
         self.market.auctions.remove(&auction_id.into());
     }
 
-    pub fn finish_auction(&mut self, auction_id: U128) {
+    pub fn finish_auction(&mut self, auction_id: U128) -> Promise {
         let auction = self
             .market
             .auctions
@@ -149,21 +153,101 @@ impl Market {
             GAS_FOR_NFT_TRANSFER,
         )
         .then(ext_self::resolve_finish_auction(
-            auction.token_type,
+            auction.ft_token_id,
             final_bid.owner_id.clone(),
+            auction.owner_id,
             final_bid.price,
             env::current_account_id(),
             NO_DEPOSIT,
             GAS_FOR_ROYALTIES,
-        ));
+        ))
     }
 
     #[private]
     pub fn resolve_finish_auction(
         &mut self,
-        token_type: TokenType,
+        ft_token_id: AccountId,
         buyer_id: AccountId,
+        owner_id: AccountId,
         price: U128,
-    ) {
+    ) -> U128 {
+        let payout_option = promise_result_as_success().and_then(|value| {
+            near_sdk::serde_json::from_slice::<Payout>(&value)
+                .ok()
+                .and_then(|payout| {
+                    if payout.payout.len() + 1 > 10 || payout.payout.is_empty() {
+                        env::log_str("Cannot have more than 10 payouts and sale.bids refunds");
+                        None
+                    } else {
+                        let mut remainder = price.0;
+                        for &value in payout.payout.values() {
+                            remainder = remainder.checked_sub(value.0)?;
+                        }
+                        if remainder <= 1 {
+                            Some(payout)
+                        } else {
+                            None
+                        }
+                    }
+                })
+        });
+        // is payout option valid?
+        let mut payout = if let Some(payout_option) = payout_option {
+            payout_option
+        } else {
+            if ft_token_id == "near".parse().unwrap() {
+                Promise::new(buyer_id).transfer(u128::from(price));
+            }
+            // leave function and return all FTs in ft_resolve_transfer
+            return price;
+        };
+        // Protocol fees
+        let protocol_fee = price.0 * PROTOCOL_FEE / 10_000u128;
+
+        let mut owner_payout: u128 = payout
+            .payout
+            .remove(&owner_id)
+            .unwrap_or_else(|| unreachable!())
+            .into();
+        owner_payout -= protocol_fee;
+        // NEAR payouts
+        if ft_token_id == "near".parse().unwrap() {
+            // Royalties
+            for (receiver_id, amount) in payout.payout {
+                Promise::new(receiver_id).transfer(amount.0);
+                owner_payout -= amount.0;
+            }
+            // Payouts
+            Promise::new(owner_id).transfer(owner_payout);
+            // refund all FTs (won't be any)
+            price
+        } else {
+            // FT payouts
+            for (receiver_id, amount) in payout.payout {
+                ext_contract::ft_transfer(
+                    receiver_id,
+                    amount,
+                    None,
+                    ft_token_id.clone(),
+                    1,
+                    GAS_FOR_FT_TRANSFER,
+                );
+            }
+            // keep all FTs (already transferred for payouts)
+            U128(0)
+        }
+    }
+
+    fn token_type_to_ft_token_type(&self, token_type: TokenType) -> AccountId {
+        let token_type = if let Some(token_type) = token_type {
+            AccountId::new_unchecked(token_type)
+        } else {
+            AccountId::new_unchecked("near".to_owned())
+        };
+        require!(
+            self.market.ft_token_ids.contains(&token_type),
+            "token not supported"
+        );
+        token_type
     }
 }
