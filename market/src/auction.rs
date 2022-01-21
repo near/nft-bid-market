@@ -102,14 +102,40 @@ impl Market {
     }
 
     #[payable]
-    pub fn cancel(&mut self, auction_id: U128) {
+    pub fn cancel_auction(&mut self, auction_id: U128) {
         assert_one_yocto();
         let mut auction = self
             .market
             .auctions
             .get(&auction_id.into())
-            .unwrap_or_else(|| env::panic_str("auction not active"));
-        require!(auction.bid.is_none(), "Can cancel the auction only is there is no bid");
+            .unwrap_or_else(|| env::panic_str("Auction is not active"));
+        require!(
+            auction.owner_id == env::predecessor_account_id(),
+            "Only the auction owner can cancel the auction"
+        );
+        require!(
+            auction.bid.is_none(),
+            "Can't cancel the auction after the first bid is made"
+        );
+        self.market.auctions.remove(&auction_id.into());
+    }
+
+    pub fn finish_auction(&mut self, auction_id: U128) {
+        let mut auction = self
+            .market
+            .auctions
+            .get(&auction_id.into())
+            .unwrap_or_else(|| env::panic_str("Auction is not active"));
+        require!(
+            env::block_timestamp() > auction.end, 
+            "Auction can be finalized only after the end time"
+        );
+        require!(
+            auction.bid.is_some(),
+            "Can finalize only if there is a bid"
+        );
+
+        //need to call process_purchase?
         self.market.auctions.remove(&auction_id.into());
     }
 }
