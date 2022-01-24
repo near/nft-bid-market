@@ -1,5 +1,6 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use crate::{
+    auction::Auction,
     sale::{SeriesSale, DELIMETER},
     token::TokenSeriesSale,
 };
@@ -14,7 +15,7 @@ pub trait NonFungibleTokenApprovalReceiver {
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    );
+    ) -> Option<(u128, Auction)>;
     fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale);
 }
 
@@ -55,7 +56,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    ) {
+    ) -> Option<(u128, Auction)> {
         /*require!(
             self.non_fungible_token_account_ids.contains(&env::predecessor_account_id()),
             "Only supports the one non-fungible token contract"
@@ -93,12 +94,26 @@ impl NonFungibleTokenApprovalReceiver for Market {
             STORAGE_PER_SALE
         );
 
+        let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
+        let sale = match args {
+            ArgsKind::Sale(sale_args) => sale_args,
+            ArgsKind::Auction(auction_args) => {
+                return Some(self.start_auction(
+                    auction_args,
+                    token_id,
+                    owner_id,
+                    approval_id,
+                    nft_contract_id,
+                ));
+            }
+        };
+        // TODO: move this to another method
         let SaleArgs {
             sale_conditions,
             token_type,
             start,
             end,
-        } = near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs"); // TODO: take ArgsKind here
+        } = sale;
 
         for (ft_token_id, _price) in sale_conditions.clone() {
             if !self.market.ft_token_ids.contains(&ft_token_id) {
@@ -192,6 +207,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 .by_nft_token_type
                 .insert(&token_type, &by_nft_token_type);
         }
+        None
     }
 
     fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale) {

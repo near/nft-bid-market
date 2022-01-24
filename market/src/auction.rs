@@ -31,14 +31,14 @@ pub struct Auction {
 
 #[near_bindgen]
 impl Market {
-    fn start_auction(
+    pub (crate) fn start_auction(
         &mut self,
         args: AuctionArgs,
         token_id: TokenId,
         owner_id: AccountId,
         approval_id: u64,
         nft_contract_id: AccountId,
-    ) {
+    ) -> (u128, Auction) {
         // should return value
 
         require!(
@@ -66,8 +66,10 @@ impl Market {
         };
         self.market.auctions.insert(&auction_id, &auction);
         self.market.next_auction_id += 1;
-        env::log_str(&near_sdk::serde_json::to_string(&(auction_id, auction)).unwrap());
-        //(auction_id, auction)
+
+        // log or return here?
+        // env::log_str(&near_sdk::serde_json::to_string(&(auction_id, auction)).unwrap());
+        (auction_id, auction)
     }
 
     #[payable]
