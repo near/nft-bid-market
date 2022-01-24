@@ -141,19 +141,27 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 
 ### Auction
 
-`CONTRACT_PARENT` mints one more token `1:4`:
+`CONTRACT_PARENT` mints two more token `1:4` and `1:5`:
 ```bash
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
 
-And puts it on auction:
+And puts them on auction:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\"} }"}' --accountId $CONTRACT_PARENT --deposit 1
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MARKET_CONTRACT_ID'", 
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\"} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He set the minimal price to `10000` and mimimal step `1000`. The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
+He set the minimal price to `10000` and minimal step `1000`. The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
+
+`CONTRACT_PARENT` can cancel his auction before the end in case there is no bid:
+```bash
+near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "1"}' --accountId $CONTRACT_PARENT --depositYocto 1
+```
 
 `ALICE` can create a bid:
 ```bash
@@ -162,7 +170,7 @@ near call $MARKET_CONTRACT_ID put_bid '{"auction_id": "0", "token_type": "near"}
 
 After auction ends anyone can finish it:
 ```bash
-near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "0"}' --accountId $ALICE
+near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "0"}' --accountId $ALICE --gas 200000000000000
 ```
 
 #### View methods for auctions
