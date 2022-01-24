@@ -53,11 +53,7 @@ impl Market {
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
-        if let Some(ref bid) = auction.bid {
-            Some(bid.price)
-        } else {
-            None
-        }
+        auction.bid.map(|bid| bid.price)
     }
 
     //pub fn get_bid_total_amount() -> U128;

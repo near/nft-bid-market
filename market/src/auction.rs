@@ -1,4 +1,4 @@
-use crate::bid::{Bid, Bids};
+use crate::bid::Bid;
 use crate::market_core::AuctionArgs;
 use crate::sale::{
     ext_contract, ext_self, Payout, GAS_FOR_FT_TRANSFER, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES,

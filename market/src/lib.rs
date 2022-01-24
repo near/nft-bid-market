@@ -1,18 +1,18 @@
-mod bid;
-mod sale;
-mod token;
-mod market_core;
-mod common;
-mod inner;
-mod sale_views;
-mod fee;
 mod auction;
 mod auction_views;
+mod bid;
+mod common;
+mod fee;
+mod inner;
+mod market_core;
+mod sale;
+mod sale_views;
+mod token;
 
 use common::*;
 
-use crate::sale::{Sale, MarketSales, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
-use crate::fee::{Fees, PROTOCOL_FEE, ORIGIN};
+use crate::fee::PROTOCOL_FEE;
+use crate::sale::{MarketSales, Sale, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
 use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
@@ -32,7 +32,7 @@ pub enum StorageKey {
     StorageDeposits,
     OriginFees,
     Auctions,
-    AuctionId
+    AuctionId,
 }
 
 #[near_bindgen]
@@ -42,7 +42,6 @@ pub struct Market {
     market: MarketSales,
     //fees: Fees, may be used
 }
-
 
 #[near_bindgen]
 impl Market {
@@ -68,12 +67,12 @@ impl Market {
             next_auction_id: 0,
         };
         /*let fees = Fees {
-            protocol_fee: PROTOCOL_FEE, 
+            protocol_fee: PROTOCOL_FEE,
             origins,
         };*/
         Self {
-            non_fungible_token_account_ids, 
-            market, 
+            non_fungible_token_account_ids,
+            market,
             //fees
         }
     }
@@ -97,17 +96,22 @@ impl Market {
 
     #[payable]
     pub fn storage_deposit(&mut self, account_id: Option<AccountId>) {
-        let storage_account_id = account_id
-            .unwrap_or_else(env::predecessor_account_id);
+        let storage_account_id = account_id.unwrap_or_else(env::predecessor_account_id);
         let deposit = env::attached_deposit();
         assert!(
             deposit >= STORAGE_PER_SALE,
             "Requires minimum deposit of {}",
             STORAGE_PER_SALE
         );
-        let mut balance: u128 = self.market.storage_deposits.get(&storage_account_id).unwrap_or(0);
+        let mut balance: u128 = self
+            .market
+            .storage_deposits
+            .get(&storage_account_id)
+            .unwrap_or(0);
         balance += deposit;
-        self.market.storage_deposits.insert(&storage_account_id, &balance);
+        self.market
+            .storage_deposits
+            .insert(&storage_account_id, &balance);
     }
 
     pub fn storage_amount(&self) -> U128 {
