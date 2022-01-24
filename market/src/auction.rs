@@ -77,18 +77,17 @@ impl Market {
             self.market.ft_token_ids.contains(&ft_token_id),
             "token not supported"
         );
+        require!(
+            self.check_auction_in_progress(auction_id),
+            "Auction is not in progress"
+        );
         let mut auction = self
             .market
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("auction not active"));
-        require!(env::block_timestamp() <= auction.end);
+        //require!(env::block_timestamp() <= auction.end); //Should check auction.start too. Used check_auction_in_progress instead
         let deposit = env::attached_deposit();
-        if let Some(buy_out_price) = auction.buy_out_price {
-            if buy_out_price == deposit {
-                // TOOD: buyout
-            }
-        }
         let min_deposit = self.get_minimal_next_bid(auction_id).0;
         require!(deposit >= min_deposit);
         let bid = Bid {
@@ -101,10 +100,16 @@ impl Market {
         if let Some(previous_bid) = auction.bid {
             self.refund_bid(ft_token_id, &previous_bid);
         }
-
+        // Extend the auction if the bid is added EXTENSION_DURATION (15 min) before the auction end
         auction.bid = Some(bid);
         if auction.end - env::block_timestamp() < EXTENSION_DURATION {
             auction.end = env::block_timestamp() + EXTENSION_DURATION;
+        }
+        // If the price is bigger than the buy_out_price, the auction end is set to the current time
+        if let Some(buy_out_price) = auction.buy_out_price {
+            if buy_out_price >= deposit {
+                auction.end = env::block_timestamp();
+            }
         }
         self.market.auctions.insert(&auction_id.into(), &auction);
     }
