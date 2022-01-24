@@ -23,7 +23,7 @@ impl Market {
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
-        auction.start >= env::block_timestamp() && auction.start < env::block_timestamp()
+        auction.end >= env::block_timestamp() && auction.start < env::block_timestamp()
     }
 
     pub fn get_auction(&self, auction_id: U128) -> Auction {

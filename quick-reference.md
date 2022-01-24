@@ -98,7 +98,7 @@ near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_I
 ```
 This removes the sale and corresponding bids and returns money.
 
-### View methods for market
+#### View methods for sales
 To find number of sales:
 ```bash
 near view $MARKET_CONTRACT_ID get_supply_sales
@@ -148,12 +148,49 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 
 And puts it on auction:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\"} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
 He set the minimal price to `10000` and mimimal step `1000`. The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
+
+`ALICE` can create a bid:
+```bash
+near call $MARKET_CONTRACT_ID put_bid '{"auction_id": "0", "token_type": "near"}' --accountId $ALICE --depositYocto 10000
+```
+
+After auction ends anyone can finish it:
+```bash
+near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "0"}' --accountId $ALICE
+```
+
+#### View methods for auctions
+
+To get the creator of the latest bid:
+```bash
+near view $MARKET_CONTRACT_ID get_current_buyer '{"auction_id": "0"}'
+```
+
+To check whether the auction in progress:
+```bash
+near view $MARKET_CONTRACT_ID check_auction_in_progress '{"auction_id": "0"}'
+```
+
+To get the auction:
+```bash
+near view $MARKET_CONTRACT_ID get_auction '{"auction_id": "0"}'
+```
+
+To get the minimal bid one could bid (not including fees):
+```bash
+near view $MARKET_CONTRACT_ID get_minimal_next_bid '{"auction_id": "0"}'
+```
+
+To get the amount of the latest bid (not including fees):
+```bash
+near view $MARKET_CONTRACT_ID get_current_bid '{"auction_id": "0"}'
+```
 
 ## NFT contract
 
