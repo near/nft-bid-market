@@ -141,7 +141,16 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 
 ### Auction
 
+`CONTRACT_PARENT` mints one more token:
+```bash
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
+```
 
+And puts it on auction:
+```bash
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\"} }"}' --accountId $CONTRACT_PARENT --deposit 1
+```
 
 ## NFT contract
 
