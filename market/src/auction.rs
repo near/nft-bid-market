@@ -112,7 +112,7 @@ impl Market {
         }
         // If the price is bigger than the buy_out_price, the auction end is set to the current time
         if let Some(buy_out_price) = auction.buy_out_price {
-            if buy_out_price >= deposit {
+            if buy_out_price <= deposit {
                 auction.end = env::block_timestamp();
             }
         }
