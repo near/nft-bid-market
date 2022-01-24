@@ -36,7 +36,7 @@ pub struct AuctionArgs {
     pub minimal_step: U128,
     pub start_price: U128,
 
-    pub start: U64,
+    pub start: Option<U64>,
     pub duration: U64,
     pub buy_out_price: Option<U128>,
 }

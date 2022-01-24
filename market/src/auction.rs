@@ -31,7 +31,7 @@ pub struct Auction {
 
 #[near_bindgen]
 impl Market {
-    pub (crate) fn start_auction(
+    pub(crate) fn start_auction(
         &mut self,
         args: AuctionArgs,
         token_id: TokenId,
@@ -46,7 +46,10 @@ impl Market {
             "Incorrect duration"
         );
         let ft_token_id = self.token_type_to_ft_token_type(args.token_type);
-        let start = args.start.0;
+        let start = args
+            .start
+            .map(|s| s.into())
+            .unwrap_or_else(env::block_timestamp);
         require!(start >= env::block_timestamp(), "incorrect start time");
         let end = start + args.duration.0;
         let auction_id = self.market.next_auction_id;
