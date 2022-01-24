@@ -47,5 +47,18 @@ impl Market {
         U128(min_deposit)
     }
 
+    pub fn get_current_bid(&self, auction_id: U128) -> Option<U128> {
+        let auction = self
+            .market
+            .auctions
+            .get(&auction_id.into())
+            .unwrap_or_else(|| env::panic_str("Auction does not exist"));
+        if let Some(ref bid) = auction.bid {
+            Some(bid.price)
+        } else {
+            None
+        }
+    }
+
     //pub fn get_bid_total_amount() -> U128;
 }
