@@ -57,7 +57,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MAR
 ```
 He sets the price of 10000 yoctoNEAR for each token.
 
-Seller can withdraw any extra storage deposits (will return 0.07 in this case)
+The seller can withdraw any extra storage deposits (will return 0.07 in this case)
 ```bash
 near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
 ```
@@ -69,14 +69,13 @@ If the attached deposit is equal to the price, she automatically buys it.
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 ```
 
-If `ALICE` tries to buy the second token (`1:2`), but the attached deposit less than the required price, 
-she will only offer to buy the token.
+If `ALICE` tries to buy the second token (`1:2`), but the attached deposit less than the required price, she will only offer to buy the token.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2"}' --accountId $ALICE --depositYocto 8000 --gas 200000000000000
 
 near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 ```
-`ALICE` got the token only after `CONTRACT_PARENT` had accepted the offer using `accept_offer`.
+`ALICE` gets the token only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 
 If `CONTRACT_PARENT` wants to increase or decrease the price of `1:3`, he can run 
 ```bash
@@ -92,11 +91,11 @@ near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID
 ```
 This would remove her bid and return her money.
 
-The sale also can be removed by `CONTRACT_PARENT` (and he would also need to pay 1 yoctoNEAR for this action):
+The sale can be removed by `CONTRACT_PARENT` (and he would also need to pay 1 yoctoNEAR for this action):
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
-This removes the sale and corresponding bids and returns money.
+This removes the sale and corresponding bids and returns the money.
 
 #### View methods for sales
 To find number of sales:
@@ -141,7 +140,7 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 
 ### Auction
 
-`CONTRACT_PARENT` mints two more token `1:4` and `1:5`:
+`CONTRACT_PARENT` mints two more tokens `1:4` and `1:5`:
 ```bash
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -163,14 +162,13 @@ He set the minimal price to `10000` and minimal step `1000`. The duration `90000
 near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "1"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
 
-`ALICE` can create a bid:
+`ALICE` can create a bid on the ongoing auction:
 ```bash
 near call $MARKET_CONTRACT_ID put_bid '{"auction_id": "0", "token_type": "near"}' --accountId $ALICE --depositYocto 10000
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
 If `ALICE` had called `put_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
-
 
 After auction ends anyone can finish it:
 ```bash
@@ -211,7 +209,7 @@ Owner can assign private minters
 near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
 ```
 
-Owner of series can approve market, for minting tokens in this series
+Owner of series can approve market for minting tokens in this series
 ```bash
 near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT
 ```
@@ -227,7 +225,7 @@ Get metadata, owner_id and royalty of specific token series
 near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
 ```
 
-Get how many tokens of specific token series already minted
+Get how many tokens of the specific token series already minted
 ```bash
 near view $NFT_CONTRACT_ID nft_supply_for_series '{"token_series_id": "1"}'
 ```
