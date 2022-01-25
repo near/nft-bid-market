@@ -87,8 +87,7 @@ impl Market {
             if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
                 if bid_vec.len() == 1 {
                     //If the vector contained only one bid, should remove ft_token_id from the HashMap
-                    sale.bids
-                        .remove(ft_token_id);
+                    sale.bids.remove(ft_token_id);
                 } else {
                     //If there are several bids for this ft_token_id, should remove one bid
                     sale.bids

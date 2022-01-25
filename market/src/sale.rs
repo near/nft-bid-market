@@ -325,7 +325,6 @@ impl Market {
             // Royalties
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
-                owner_payout -= amount.0;
             }
             // Payouts
             Promise::new(sale.owner_id).transfer(owner_payout);

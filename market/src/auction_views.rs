@@ -32,7 +32,7 @@ impl Market {
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"))
     }
-    
+
     pub fn get_minimal_next_bid(&self, auction_id: U128) -> U128 {
         let auction = self
             .market
