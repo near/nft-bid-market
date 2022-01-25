@@ -188,7 +188,6 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 token_id.contains(token_type.as_str()),
                 "TokenType should be substr of TokenId"
             );
-            let token_type = AccountId::new_unchecked(token_type);
             let mut by_nft_token_type = self
                 .market
                 .by_nft_token_type
@@ -196,7 +195,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
                 .unwrap_or_else(|| {
                     UnorderedSet::new(
                         StorageKey::ByNFTTokenTypeInner {
-                            token_type_hash: hash_account_id(&token_type),
+                            token_type_hash: hash_account_id(&AccountId::new_unchecked(token_type.clone())),
                         }
                         .try_to_vec()
                         .unwrap(),

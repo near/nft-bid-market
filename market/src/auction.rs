@@ -14,7 +14,6 @@ pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 #[serde(crate = "near_sdk::serde")]
 pub struct Auction {
     pub owner_id: AccountId,
-    #[serde(skip_deserializing)] // not sure about this
     pub approval_id: u64,
     pub nft_contract_id: AccountId,
     pub token_id: String,

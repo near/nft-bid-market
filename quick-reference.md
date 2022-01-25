@@ -125,12 +125,12 @@ near view $MARKET_CONTRACT_ID get_sales_by_nft_contract_id '{"nft_contract_id": 
 
 To find number of sales for token type:
 ```bash
-near view $MARKET_CONTRACT_ID get_supply_by_nft_token_type '{"token_type": "1"}'
+near view $MARKET_CONTRACT_ID get_supply_by_nft_token_type '{"token_type": "near"}'
 ```
 
 To get sales for token type:
 ```bash
-near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "1", "from_index": "0", "limit": 10}'
+near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near", "from_index": "0", "limit": 10}'
 ```
 
 To get the sale:

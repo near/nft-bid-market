@@ -84,7 +84,7 @@ impl Market {
 
     pub fn get_supply_by_nft_token_type(
         &self,
-        token_type: AccountId,
+        token_type: String,
     ) -> U64 {
         let by_nft_token_type = self.market.by_nft_token_type.get(&token_type);
         if let Some(by_nft_token_type) = by_nft_token_type {
@@ -96,7 +96,7 @@ impl Market {
 
     pub fn get_sales_by_nft_token_type(
         &self,
-        token_type: AccountId,
+        token_type: String,
         from_index: U64,
         limit: u64,
     ) -> Vec<Sale> {

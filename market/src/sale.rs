@@ -95,7 +95,7 @@ pub struct MarketSales {
     pub series_sales: UnorderedMap<ContractAndSeriesId, SeriesSale>,
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
-    pub by_nft_token_type: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
+    pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
     pub bid_history_length: u8,

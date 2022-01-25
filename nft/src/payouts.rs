@@ -94,7 +94,7 @@ impl Payouts for Nft {
                 token_series_id,
                 receiver_id,
             } = near_sdk::serde_json::from_str(&series_mint_args).expect("invalid SeriesMintArgs");
-            self.nft_mint(token_series_id, receiver_id);
+            self.nft_mint(token_series_id, receiver_id.clone(), Some(receiver_id));
         } else {
             self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         }
