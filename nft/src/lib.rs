@@ -160,6 +160,7 @@ impl Nft {
         token_id
     }
 
+    // Create series with given metadata
     #[payable]
     pub fn nft_create_series(
         &mut self,

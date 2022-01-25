@@ -164,11 +164,11 @@ near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "1"}' --accountId $
 
 `ALICE` can create a bid on the ongoing auction:
 ```bash
-near call $MARKET_CONTRACT_ID put_bid '{"auction_id": "0", "token_type": "near"}' --accountId $ALICE --depositYocto 10000
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "0", "token_type": "near"}' --accountId $ALICE --depositYocto 10000
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
-If `ALICE` had called `put_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
+If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
 
 After auction ends anyone can finish it:
 ```bash
@@ -234,7 +234,7 @@ Get a list of all series
 ```bash
 near view $NFT_CONTRACT_ID nft_series
 ```
-or if needed pagination
+or with pagination
 ```bash
 near view $NFT_CONTRACT_ID nft_series '{"from_index": "0", "limit": 10}'
 ```

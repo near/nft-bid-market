@@ -42,6 +42,7 @@ pub trait Payouts {
 
 #[near_bindgen]
 impl Payouts for Nft {
+    // Payout mapping for the given token, based on 'balance' and royalty
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout {
         let token_owner = self.tokens.owner_by_id.get(&token_id).expect("no token id");
 
@@ -76,6 +77,9 @@ impl Payouts for Nft {
         );
         payout
     }
+
+    // nft_transfer with 'balance' for calculation of Payout mapping for the given token
+    // extra: lazy minting for series
     #[payable]
     fn nft_transfer_payout(
         &mut self,
