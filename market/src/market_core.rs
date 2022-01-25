@@ -109,19 +109,20 @@ impl NonFungibleTokenApprovalReceiver for Market {
         };
         // TODO: move this to another method
         let SaleArgs {
-            sale_conditions,
+            mut sale_conditions,
             token_type,
             start,
             end,
         } = sale;
 
-        for (ft_token_id, _price) in sale_conditions.clone() {
-            if !self.market.ft_token_ids.contains(&ft_token_id) {
+        for (ft_token_id, price) in sale_conditions.iter_mut() {
+            if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",
                     ft_token_id
                 ));
             }
+            // TODO: add fees to price here?
         }
 
         // env::log(format!("add_sale for owner: {}", &owner_id).as_bytes());

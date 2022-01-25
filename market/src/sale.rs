@@ -6,6 +6,7 @@ use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
 use crate::*;
+use crate::fee::PAYOUT_TOTAL_VALUE;
 use common::*;
 
 use bid::Bids;
@@ -243,12 +244,14 @@ impl Market {
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
+        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
+        let new_price = price.0 - protocol_fee;
         ext_contract::nft_transfer_payout(
             buyer_id.clone(),
             token_id,
             sale.approval_id,
             None, // need to check here if series
-            price,
+            price, //U128(new_price)
             10,
             nft_contract_id,
             1,

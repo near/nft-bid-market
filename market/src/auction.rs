@@ -1,4 +1,5 @@
 use crate::bid::Bid;
+use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::AuctionArgs;
 use crate::sale::{
     ext_contract, ext_self, Payout, GAS_FOR_FT_TRANSFER, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES,
@@ -213,7 +214,7 @@ impl Market {
             return price;
         };
         // Protocol fees
-        let protocol_fee = price.0 * PROTOCOL_FEE / 10_000u128;
+        let protocol_fee = price.0 * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE;
 
         let mut owner_payout: u128 = payout
             .payout

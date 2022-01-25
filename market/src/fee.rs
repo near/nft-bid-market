@@ -3,6 +3,7 @@ use common::*;
 
 //pub type FeeAccountAndAmount = UnorderedMap<AccountId, u128>;
 
+pub const PAYOUT_TOTAL_VALUE:u128 = 10_000;
 pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
