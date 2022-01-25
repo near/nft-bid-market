@@ -79,7 +79,7 @@ impl Payouts for Nft {
     }
 
     // nft_transfer with 'balance' for calculation of Payout mapping for the given token
-    // extra: lazy minting for series
+    // extra: lazy minting? for series
     #[payable]
     fn nft_transfer_payout(
         &mut self,

@@ -18,6 +18,9 @@ use std::collections::HashMap;
 
 const GAS_FOR_NFT_APPROVE: Gas = Gas(10_000_000_000_000);
 
+// Since Near doesn't support multitoken(yet) by default we need to create some workaround
+// In this nft implementation every token is part of TokenSeries
+// Token series is tokens, that share same metadata.
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Nft {
@@ -89,7 +92,12 @@ impl Nft {
 
     // public mints
     #[payable]
-    pub fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId, refund_id: Option<AccountId>) -> TokenId {
+    pub fn nft_mint(
+        &mut self,
+        token_series_id: TokenSeriesId,
+        reciever_id: AccountId,
+        refund_id: Option<AccountId>,
+    ) -> TokenId {
         let refund_id = refund_id.unwrap_or_else(env::predecessor_account_id);
         let initial_storage_usage = env::storage_usage();
 
@@ -160,7 +168,7 @@ impl Nft {
         token_id
     }
 
-    // Create series with given metadata
+    // Create series with given metadata and royalty
     #[payable]
     pub fn nft_create_series(
         &mut self,
