@@ -89,19 +89,7 @@ impl Market {
         self.market.auctions.insert(&auction_id, &auction);
         self.market.next_auction_id += 1;
 
-        let auction_json = AuctionJson {
-            owner_id: auction.owner_id,
-            nft_contract_id: auction.nft_contract_id,
-            token_id: auction.token_id,
-            bid: auction.bid,
-            created_at: auction.created_at,
-            ft_token_id: auction.ft_token_id,
-            minimal_step: auction.minimal_step,
-            start_price: auction.start_price,
-            buy_out_price: auction.buy_out_price,
-            start: auction.start,
-            end: auction.end,
-        }
+        let auction_json = self.json_from_auction(auction);
 
         // log or return here?
         // env::log_str(&near_sdk::serde_json::to_string(&(auction_id, auction)).unwrap());
@@ -304,5 +292,21 @@ impl Market {
             "token not supported"
         );
         token_type
+    }
+
+    pub fn json_from_auction(&self, auction: Auction) -> AuctionJson {
+        AuctionJson {
+            owner_id: auction.owner_id,
+            nft_contract_id: auction.nft_contract_id,
+            token_id: auction.token_id,
+            bid: auction.bid,
+            created_at: auction.created_at,
+            ft_token_id: auction.ft_token_id,
+            minimal_step: auction.minimal_step,
+            start_price: auction.start_price,
+            buy_out_price: auction.buy_out_price,
+            start: auction.start,
+            end: auction.end,
+        }
     }
 }

@@ -31,19 +31,7 @@ impl Market {
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
-        AuctionJson {
-            owner_id: auction.owner_id,
-            nft_contract_id: auction.nft_contract_id,
-            token_id: auction.token_id,
-            bid: auction.bid,
-            created_at: auction.created_at,
-            ft_token_id: auction.ft_token_id,
-            minimal_step: auction.minimal_step,
-            start_price: auction.start_price,
-            buy_out_price: auction.buy_out_price,
-            start: auction.start,
-            end: auction.end,
-        }
+        self.json_from_auction(auction)
     }
 
     // Returns the minimum amount of the next auction bid (not including fees)

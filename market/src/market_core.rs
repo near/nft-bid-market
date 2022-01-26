@@ -1,6 +1,6 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use crate::{
-    auction::Auction,
+    auction::{Auction, AuctionJson},
     sale::{SeriesSale, DELIMETER},
     token::TokenSeriesSale,
 };
@@ -15,7 +15,7 @@ pub trait NonFungibleTokenApprovalReceiver {
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    ) -> Option<(u128, Auction)>;
+    ) -> Option<(u128, AuctionJson)>;
     fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale);
 }
 
