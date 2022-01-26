@@ -57,7 +57,7 @@ impl Market {
         owner_id: AccountId,
         approval_id: u64,
         nft_contract_id: AccountId,
-    ) -> (u128, Auction) {
+    ) -> (u128, AuctionJson) {
         // should return value
 
         require!(
@@ -89,9 +89,23 @@ impl Market {
         self.market.auctions.insert(&auction_id, &auction);
         self.market.next_auction_id += 1;
 
+        let auction_json = AuctionJson {
+            owner_id: auction.owner_id,
+            nft_contract_id: auction.nft_contract_id,
+            token_id: auction.token_id,
+            bid: auction.bid,
+            created_at: auction.created_at,
+            ft_token_id: auction.ft_token_id,
+            minimal_step: auction.minimal_step,
+            start_price: auction.start_price,
+            buy_out_price: auction.buy_out_price,
+            start: auction.start,
+            end: auction.end,
+        }
+
         // log or return here?
         // env::log_str(&near_sdk::serde_json::to_string(&(auction_id, auction)).unwrap());
-        (auction_id, auction)
+        (auction_id, auction_json)
     }
 
     // Adds a bid to the corresponding auction

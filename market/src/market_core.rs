@@ -59,7 +59,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    ) -> Option<(u128, Auction)> {
+    ) -> Option<(u128, AuctionJson)> {
 
         // make sure that the method is called in a cross contract call and the signer is owner_id
 
