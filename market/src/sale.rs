@@ -48,6 +48,21 @@ pub struct Sale {
     pub end: Option<u64>,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct SaleJson {
+    pub owner_id: AccountId,
+    pub nft_contract_id: AccountId,
+    pub token_id: String,
+    pub sale_conditions: SaleConditions,
+    pub bids: Bids,
+    pub created_at: u64,
+    pub token_type: TokenType,
+
+    pub start: Option<u64>,
+    pub end: Option<u64>,
+}
+
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct SeriesSale {
     pub owner_id: AccountId,

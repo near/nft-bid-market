@@ -2,7 +2,7 @@ use crate::*;
 use crate::common::*;
 
 use std::cmp::min;
-use crate::sale::{DELIMETER, ContractAndTokenId};
+use crate::sale::{DELIMETER, ContractAndTokenId, SaleJson};
 
 #[near_bindgen]
 impl Market {
@@ -65,7 +65,7 @@ impl Market {
         nft_contract_id: AccountId,
         from_index: U64,
         limit: u64,
-    ) -> Vec<Sale> {
+    ) -> Vec<SaleJson> {
         let mut tmp = vec![];
         let by_nft_contract_id = self.market.by_nft_contract_id.get(&nft_contract_id);
         let sales = if let Some(by_nft_contract_id) = by_nft_contract_id {
@@ -77,7 +77,13 @@ impl Market {
         let start = u64::from(from_index);
         let end = min(start + limit, sales.len());
         for i in start..end {
-            tmp.push(self.market.sales.get(&format!("{}{}{}", &nft_contract_id, DELIMETER, &keys.get(i).unwrap())).unwrap());
+            let sale = self
+                .market
+                .sales
+                .get(&format!("{}{}{}", &nft_contract_id, DELIMETER, &keys.get(i).unwrap()))
+                .unwrap();
+            let sale_json = self.json_from_sale(sale);
+            tmp.push(sale_json);
         }
         tmp
     }
@@ -99,7 +105,7 @@ impl Market {
         token_type: String,
         from_index: U64,
         limit: u64,
-    ) -> Vec<Sale> {
+    ) -> Vec<SaleJson> {
         let mut tmp = vec![];
         let by_nft_token_type = self.market.by_nft_token_type.get(&token_type);
         let sales = if let Some(by_nft_token_type) = by_nft_token_type {
@@ -111,13 +117,37 @@ impl Market {
         let start = u64::from(from_index);
         let end = min(start + limit, sales.len());
         for i in start..end {
-            tmp.push(self.market.sales.get(&keys.get(i).unwrap()).unwrap());
+            let sale = self
+                .market
+                .sales
+                .get(&keys.get(i).unwrap())
+                .unwrap();
+            let sale_json = self.json_from_sale(sale);
+            tmp.push(sale_json);
         }
         tmp
     }
 
-    pub fn get_sale(&self, nft_contract_token: ContractAndTokenId) -> Option<Sale> {
-        self.market.sales.get(&nft_contract_token)
+    pub fn get_sale(&self, nft_contract_token: ContractAndTokenId) -> Option<SaleJson> {
+        if let Some(sale) = self.market.sales.get(&nft_contract_token) {
+            Some(self.json_from_sale(sale))
+        } else {
+            None
+        }
     }
     
+    fn json_from_sale(&self, sale: Sale) -> SaleJson {
+        SaleJson {
+            owner_id: sale.owner_id,
+            nft_contract_id: sale.nft_contract_id,
+            token_id: sale.token_id,
+            sale_conditions: sale.sale_conditions,
+            bids: sale.bids,
+            created_at: sale.created_at,
+            token_type: sale.token_type,
+
+            start: sale.start,
+            end: sale.end,
+        }
+    }
 }
