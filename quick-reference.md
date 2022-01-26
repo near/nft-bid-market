@@ -189,7 +189,7 @@ near view $MARKET_CONTRACT_ID check_auction_in_progress '{"auction_id": "0"}'
 
 To get the auction:
 ```bash
-near view $MARKET_CONTRACT_ID get_auction '{"auction_id": "0"}'
+near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "0"}'
 ```
 
 To get the minimal bid one could bid (not including fees):

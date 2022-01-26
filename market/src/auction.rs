@@ -29,6 +29,23 @@ pub struct Auction {
     pub end: u64,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AuctionJson {
+    pub owner_id: AccountId,
+    pub nft_contract_id: AccountId,
+    pub token_id: String,
+    pub bid: Option<Bid>,
+    pub created_at: u64,
+    pub ft_token_id: AccountId,
+    pub minimal_step: u128,
+    pub start_price: u128,
+    pub buy_out_price: Option<u128>,
+
+    pub start: u64,
+    pub end: u64,
+}
+
 #[near_bindgen]
 impl Market {
     // Called in nft_on_approve to create a new auction
@@ -78,7 +95,7 @@ impl Market {
     }
 
     // Adds a bid to the corresponding auction
-    // Supports buyout
+    // Supports buyout and time extension
     #[payable]
     pub fn auction_add_bid(&mut self, auction_id: U128, token_type: TokenType) {
         let ft_token_id = self.token_type_to_ft_token_type(token_type);
