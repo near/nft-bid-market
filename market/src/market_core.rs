@@ -50,6 +50,9 @@ pub enum ArgsKind {
 
 #[near_bindgen]
 impl NonFungibleTokenApprovalReceiver for Market {
+    // nft_on_approve is called via cross-contract call in order to create a new sale or auction.
+    // If the auction is added, it returns a pair of the auction_id and the auction itself.
+    // In case it is called to create the sale, it returns None.
     fn nft_on_approve(
         &mut self,
         token_id: TokenId,
@@ -57,16 +60,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
         approval_id: u64,
         msg: String,
     ) -> Option<(u128, Auction)> {
-        /*require!(
-            self.non_fungible_token_account_ids.contains(&env::predecessor_account_id()),
-            "Only supports the one non-fungible token contract"
-        );
-        match msg.as_str() {
-            _ => ()
-        }
-        todo!()*/
 
-        // enforce cross contract call and owner_id is signer
+        // make sure that the method is called in a cross contract call and the signer is owner_id
 
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
@@ -80,7 +75,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
             "owner_id should be signer_id"
         );
 
-        // enforce signer's storage is enough to cover + 1 more sale
+        // check that the signer's storage is enough to cover one more sale
 
         let storage_amount = self.storage_amount().0;
         let owner_paid_storage = self.market.storage_deposits.get(&signer_id).unwrap_or(0);
@@ -93,6 +88,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
             signer_storage_required / STORAGE_PER_SALE,
             STORAGE_PER_SALE
         );
+
+        // Parse the msg to find Sale or Auction arguments
 
         let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
         let sale = match args {
@@ -115,6 +112,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
             end,
         } = sale;
 
+        // check that the offered ft token is supported
+
         for (ft_token_id, price) in sale_conditions.iter_mut() {
             if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
@@ -126,6 +125,8 @@ impl NonFungibleTokenApprovalReceiver for Market {
         }
 
         // env::log(format!("add_sale for owner: {}", &owner_id).as_bytes());
+
+        // Create a new sale with given arguments and empty list of bids
 
         let bids = HashMap::new();
 

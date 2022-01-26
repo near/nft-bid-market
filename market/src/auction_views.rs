@@ -33,6 +33,7 @@ impl Market {
             .unwrap_or_else(|| env::panic_str("Auction does not exist"))
     }
 
+    // Returns the minimum amount of the next auction bid (not including fees)
     pub fn get_minimal_next_bid(&self, auction_id: U128) -> U128 {
         let auction = self
             .market

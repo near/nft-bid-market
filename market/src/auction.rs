@@ -31,6 +31,8 @@ pub struct Auction {
 
 #[near_bindgen]
 impl Market {
+    // Called in nft_on_approve to create a new auction
+    // Returns a pair of the auction_id and the auction itself
     pub(crate) fn start_auction(
         &mut self,
         args: AuctionArgs,
@@ -75,6 +77,8 @@ impl Market {
         (auction_id, auction)
     }
 
+    // Adds a bid to the corresponding auction
+    // Supports buyout
     #[payable]
     pub fn auction_add_bid(&mut self, auction_id: U128, token_type: TokenType) {
         let ft_token_id = self.token_type_to_ft_token_type(token_type);
@@ -91,10 +95,15 @@ impl Market {
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("auction not active"));
-        //require!(env::block_timestamp() <= auction.end); //Should check auction.start too. Used check_auction_in_progress instead
         let deposit = env::attached_deposit();
         let min_deposit = self.get_minimal_next_bid(auction_id).0;
-        require!(deposit >= min_deposit);
+
+        // Check that the bid is not smaller than the minimal allowed bid
+        require!(
+            deposit >= min_deposit,
+            format!("Should bid at least {}", min_deposit)
+        );
+        // Create a bid
         let bid = Bid {
             owner_id: env::predecessor_account_id(),
             price: deposit.into(),
@@ -119,6 +128,8 @@ impl Market {
         self.market.auctions.insert(&auction_id.into(), &auction);
     }
 
+    // Cancels the auction if it doesn't have a bid yet
+    // Can be called by the auction owner
     #[payable]
     pub fn cancel_auction(&mut self, auction_id: U128) {
         assert_one_yocto();
@@ -138,6 +149,8 @@ impl Market {
         self.market.auctions.remove(&auction_id.into());
     }
 
+    // Finishes the auction if it has reached its end
+    // Can be called by anyone
     pub fn finish_auction(&mut self, auction_id: U128) -> Promise {
         let auction = self
             .market
@@ -151,7 +164,6 @@ impl Market {
         let final_bid = auction
             .bid
             .unwrap_or_else(|| env::panic_str("Can finalize only if there is a bid"));
-        //need to call process_purchase?
         self.market.auctions.remove(&auction_id.into());
         ext_contract::nft_transfer_payout(
             final_bid.owner_id.clone(),
