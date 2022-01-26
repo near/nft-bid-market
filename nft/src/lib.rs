@@ -90,7 +90,8 @@ impl Nft {
         }
     }
 
-    // public mints
+    // public mint,
+    // mints NFT with metadata of token series
     #[payable]
     pub fn nft_mint(
         &mut self,
@@ -115,7 +116,7 @@ impl Nft {
             "permission denied"
         );
         require!(
-            token_series.tokens.len() < token_series.metadata.copies.unwrap_or(1),
+            token_series.tokens.len() < token_series.metadata.copies.unwrap_or(u64::MAX),
             "Max token minted"
         );
         let token_id = format!(
@@ -238,7 +239,7 @@ impl Nft {
             env::predecessor_account_id().eq(&token_series.owner_id),
             "Not token owner"
         );
-        require!(token_series.metadata.copies.unwrap_or(1) - token_series.tokens.len() >= copies);
+        require!(token_series.metadata.copies.unwrap_or(u64::MAX) - token_series.tokens.len() >= copies);
         token_series.approved_market_id = Some(approved_market_id.clone());
         self.token_series_by_id
             .insert(&token_series_id, &token_series);

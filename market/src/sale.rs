@@ -6,7 +6,6 @@ use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
 use crate::*;
-use crate::fee::PAYOUT_TOTAL_VALUE;
 use common::*;
 
 use bid::Bids;
@@ -244,8 +243,8 @@ impl Market {
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
-        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
-        let new_price = price.0 - protocol_fee;
+        // let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
+        // let new_price = price.0 - protocol_fee;
         ext_contract::nft_transfer_payout(
             buyer_id.clone(),
             token_id,
@@ -268,8 +267,9 @@ impl Market {
         ))
     }
 
-    /// self callback
-
+    // self callback
+    // If transfer of token succeded - count fees and transfer payouts
+    // If failed - refund price to buyer
     #[private]
     pub fn resolve_purchase(
         &mut self,
@@ -350,73 +350,7 @@ impl Market {
         }
     }
 
-    // #[payable]
-    // pub fn buy_token_copy(
-    //     &mut self,
-    //     nft_contract_id: AccountId,
-    //     series_id: TokenSeriesId,
-    //     reciever_id: AccountId,
-    // ) -> Promise {
-    //     let contract_and_series: ContractAndSeriesId =
-    //         format!("{}{}{}", nft_contract_id, DELIMETER, series_id);
-    //     let price = self
-    //         .market
-    //         .token_series
-    //         .get(&contract_and_series)
-    //         .expect("Token series not found");
-    //     let balance = env::attached_deposit() - price;
-    //     ext_contract::nft_mint(
-    //         series_id,
-    //         reciever_id,
-    //         nft_contract_id.clone(),
-    //         balance,
-    //         GAS_FOR_MINT,
-    //     )
-    //     .then(ext_self::resolve_mint(
-    //         nft_contract_id,
-    //         env::predecessor_account_id(),
-    //         env::attached_deposit().into(),
-    //         price.into(),
-    //         env::current_account_id(),
-    //         0,
-    //         GAS_FOR_MINT,
-    //     ))
-    // }
-
-    // #[private]
-    // pub fn resolve_mint(
-    //     &mut self,
-    //     nft_contract_id: AccountId,
-    //     buyer_id: AccountId,
-    //     deposit: U128,
-    //     price: U128,
-    // ) {
-    //     require!(
-    //         env::promise_results_count() == 1,
-    //         "Contract expected a result on the callback"
-    //     );
-    //     match env::promise_result(0) {
-    //         PromiseResult::Successful(token_id) => ext_contract::nft_payout(
-    //             near_sdk::serde_json::from_slice::<TokenId>(&token_id)
-    //                 .unwrap_or_else(|_| env::panic_str("Should be unreachable")),
-    //             price,
-    //             10,
-    //             nft_contract_id.clone(),
-    //             0,
-    //             GAS_FOR_NFT_TRANSFER,
-    //         )
-    //         .then(ext_self::resolve_token_buy(
-    //             buyer_id,
-    //             deposit,
-    //             price,
-    //             nft_contract_id,
-    //             0,
-    //             GAS_FOR_ROYALTIES,
-    //         )),
-    //         _ => Promise::new(buyer_id).transfer(deposit.into()),
-    //     };
-    // }
-
+    // For lazy-mint situations easier resolver
     #[private]
     pub fn resolve_token_buy(&mut self, buyer_id: AccountId, deposit: U128, price: U128) -> U128 {
         let payout_option = promise_result_as_success().and_then(|value| {
