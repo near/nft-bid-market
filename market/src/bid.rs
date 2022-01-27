@@ -33,6 +33,8 @@ pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 
 #[near_bindgen]
 impl Market {
+    // Adds a bid if it is higher than the last bid of this ft_token_id
+    // Refunds the previous bid (of this ft_token_id)
     #[allow(clippy::too_many_arguments)]
     #[private]
     pub fn add_bid(

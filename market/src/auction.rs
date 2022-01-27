@@ -206,6 +206,9 @@ impl Market {
         ))
     }
 
+    // self callback
+    // If transfer of token succeded - count fees and transfer payouts
+    // If failed - refund price to buyer
     #[private]
     pub fn resolve_finish_auction(
         &mut self,

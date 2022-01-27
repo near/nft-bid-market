@@ -162,6 +162,9 @@ impl Market {
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
 
+    // Offer to buy the nft
+    // Buy nft if the attached deposit equal to the price, otherwise adds a bid
+    // TODO: support ft ??
     #[payable]
     pub fn offer(
         &mut self,
@@ -215,6 +218,8 @@ impl Market {
         }
     }
 
+    // Accepts the last offer
+    // TODO: choose what bid to accept ??
     pub fn accept_offer(
         &mut self,
         nft_contract_id: AccountId,
