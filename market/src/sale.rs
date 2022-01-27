@@ -5,6 +5,8 @@ use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
+use crate::market_core::SaleArgs;
+use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::*;
 use common::*;
 
@@ -121,6 +123,121 @@ pub struct MarketSales {
 
 #[near_bindgen]
 impl Market {
+    pub(crate) fn start_sale(
+        &mut self,
+        args: SaleArgs,
+        token_id: TokenId,
+        owner_id: AccountId,
+        approval_id: u64,
+        nft_contract_id: AccountId,
+    ) {
+        let SaleArgs {
+            sale_conditions,
+            token_type,
+            start,
+            end,
+        } = args;
+
+        // check that the offered ft token is supported
+
+        for (ft_token_id, _price) in sale_conditions.iter() {
+            if !self.market.ft_token_ids.contains(ft_token_id) {
+                env::panic_str(&format!(
+                    "Token {} not supported by this market",
+                    ft_token_id
+                ));
+            }
+            // TODO: add fees to price here?
+        }
+
+        // env::log(format!("add_sale for owner: {}", &owner_id).as_bytes());
+
+        // Create a new sale with given arguments and empty list of bids
+
+        let bids = HashMap::new();
+
+        let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
+        self.market.sales.insert(
+            &contract_and_token_id,
+            &Sale {
+                owner_id: owner_id.clone(),
+                approval_id,
+                nft_contract_id: nft_contract_id.clone(),
+                token_id: token_id.clone(),
+                sale_conditions,
+                bids,
+                created_at: env::block_timestamp(),
+                token_type: token_type.clone(),
+                start: start.map(|s| s.into()),
+                end: end.map(|e| e.into()),
+            },
+        );
+
+        // extra for views
+
+        let mut by_owner_id = self.market.by_owner_id.get(&owner_id).unwrap_or_else(|| {
+            UnorderedSet::new(
+                StorageKey::ByOwnerIdInner {
+                    account_id_hash: hash_account_id(&owner_id),
+                }
+                .try_to_vec()
+                .unwrap(),
+            )
+        });
+
+        // Check that the paid storage amount is enough
+        let owner_paid_storage = self.market.storage_deposits.get(&env::signer_account_id()).unwrap_or(0);
+        let owner_occupied_storage = u128::from(by_owner_id.len()) * STORAGE_PER_SALE;
+        assert!(
+            owner_paid_storage > owner_occupied_storage,
+            "User has more sales than storage paid"
+        );
+        by_owner_id.insert(&contract_and_token_id);
+        self.market.by_owner_id.insert(&owner_id, &by_owner_id);
+
+        let mut by_nft_contract_id = self
+            .market
+            .by_nft_contract_id
+            .get(&nft_contract_id)
+            .unwrap_or_else(|| {
+                UnorderedSet::new(
+                    StorageKey::ByNFTContractIdInner {
+                        account_id_hash: hash_account_id(&nft_contract_id),
+                    }
+                    .try_to_vec()
+                    .unwrap(),
+                )
+            });
+        by_nft_contract_id.insert(&token_id);
+        self.market
+            .by_nft_contract_id
+            .insert(&nft_contract_id, &by_nft_contract_id);
+
+        if let Some(token_type) = token_type {
+            assert!(
+                token_id.contains(token_type.as_str()),
+                "TokenType should be substr of TokenId"
+            );
+            let mut by_nft_token_type = self
+                .market
+                .by_nft_token_type
+                .get(&token_type)
+                .unwrap_or_else(|| {
+                    UnorderedSet::new(
+                        StorageKey::ByNFTTokenTypeInner {
+                            token_type_hash: hash_account_id(&AccountId::new_unchecked(token_type.clone())),
+                        }
+                        .try_to_vec()
+                        .unwrap(),
+                    )
+                });
+            by_nft_token_type.insert(&contract_and_token_id);
+            self.market
+                .by_nft_token_type
+                .insert(&token_type, &by_nft_token_type);
+        }
+    }
+
     /// TODO remove without redirect to wallet? panic reverts
     #[payable]
     pub fn remove_sale(&mut self, nft_contract_id: AccountId, token_id: String) {
