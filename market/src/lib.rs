@@ -13,7 +13,6 @@ use common::*;
 
 use crate::fee::PROTOCOL_FEE;
 use crate::sale::{MarketSales, Sale, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
-use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 

@@ -1,6 +1,6 @@
 //use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use crate::{
-    auction::{Auction, AuctionJson},
+    auction::AuctionJson,
     sale::{SeriesSale, DELIMETER},
     token::TokenSeriesSale,
 };
@@ -60,20 +60,15 @@ impl NonFungibleTokenApprovalReceiver for Market {
         approval_id: u64,
         msg: String,
     ) -> Option<(u128, AuctionJson)> {
-
         // make sure that the method is called in a cross contract call and the signer is owner_id
 
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
-        assert_ne!(
-            nft_contract_id, signer_id,
+        require!(
+            nft_contract_id != signer_id,
             "nft_on_approve should only be called via cross-contract call"
         );
-        assert_eq!(
-            &owner_id.clone(),
-            &signer_id,
-            "owner_id should be signer_id"
-        );
+        require!(owner_id == signer_id, "owner_id should be signer_id");
 
         // check that the signer's storage is enough to cover one more sale
 
@@ -92,34 +87,26 @@ impl NonFungibleTokenApprovalReceiver for Market {
         // Parse the msg to find Sale or Auction arguments
 
         let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
-        let sale = match args {
+        match args {
             ArgsKind::Sale(sale_args) => {
-                self.start_sale(
-                    sale_args,
-                    token_id,
-                    owner_id,
-                    approval_id,
-                    nft_contract_id,
-                );
-                return None;
-            },
-            ArgsKind::Auction(auction_args) => {
-                return Some(self.start_auction(
-                    auction_args,
-                    token_id,
-                    owner_id,
-                    approval_id,
-                    nft_contract_id,
-                ));
+                self.start_sale(sale_args, token_id, owner_id, approval_id, nft_contract_id);
+                None
             }
-        };
+            ArgsKind::Auction(auction_args) => Some(self.start_auction(
+                auction_args,
+                token_id,
+                owner_id,
+                approval_id,
+                nft_contract_id,
+            )),
+        }
     }
 
     fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale) {
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
-        assert_ne!(
-            nft_contract_id, signer_id,
+        require!(
+            nft_contract_id != signer_id,
             "nft_on_approve should only be called via cross-contract call"
         );
         require!(
