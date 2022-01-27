@@ -106,8 +106,8 @@ impl Market {
 impl Market {
     pub(crate) fn refund_all_bids(&mut self, bids_map: &Bids) {
         for (ft, bids) in bids_map {
-            if let Some(bid) = bids.last() {
-                self.refund_bid((*ft).clone(), &bid);
+            for bid in bids {
+                self.refund_bid((*ft).clone(), bid);
             }
         }
     }
