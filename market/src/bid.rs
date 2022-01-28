@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
 
-use crate::sale::{ext_contract, ContractAndTokenId, FungibleTokenId, Sale, GAS_FOR_FT_TRANSFER};
+use crate::sale::{ext_contract, ContractAndTokenId, FungibleTokenId, Sale, GAS_FOR_FT_TRANSFER, DELIMETER};
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -89,6 +89,7 @@ impl Market {
         self.market.sales.insert(&contract_and_token_id, sale);
     }
 
+    // TODO: support ft
     #[payable]
     pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: TokenId, bid: Bid) {
         assert_one_yocto();
@@ -100,6 +101,61 @@ impl Market {
         let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
         self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
         self.refund_bid(ft_token_id, &bid);
+    }
+
+    // Cancels the bid if it has ended
+    // Refunds it
+    pub fn cancel_bid(&mut self, nft_contract_id: AccountId, token_id: TokenId, bid: Bid) {
+        let mut is_finished = false;
+        if let Some(end) = bid.end {
+            is_finished &= env::block_timestamp() >= end.0;
+        }
+        require!(
+            is_finished,
+            "The bid hasn't ended yet"
+        );
+        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
+        self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
+        self.refund_bid(ft_token_id, &bid);
+    }
+
+    // Cancel all expired bids
+    pub fn cancel_expired_bids(&mut self, nft_contract_id: AccountId, token_id: TokenId) {
+        let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
+        let sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
+        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
+        let bid_vec = sale.bids.get(&ft_token_id).expect("No token");
+        let mut sale = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale");
+        for (index, bid_from_vec) in bid_vec.iter().enumerate() {
+            // Check whether the bid has ended
+            let mut is_finished = false;
+            if let Some(end) = bid_from_vec.end {
+                is_finished &= env::block_timestamp() >= end.0;
+            }
+            if is_finished {
+                if bid_vec.len() == 1 {
+                    //If the vector contained only one bid, should remove ft_token_id from the HashMap
+                    sale.bids.remove(&ft_token_id);
+                } else {
+                    //If there are several bids for this ft_token_id, should remove one bid
+                    sale.bids
+                        .get_mut(&ft_token_id)
+                        .expect("No token")
+                        .remove(index);
+                };
+                self.market.sales.insert(&contract_and_token_id, &sale);
+
+                self.refund_bid(ft_token_id.clone(), &bid_from_vec);
+            };
+        };
     }
 }
 
