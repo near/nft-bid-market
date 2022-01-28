@@ -3,16 +3,18 @@ mod token;
 
 pub mod common;
 mod series_views;
+pub mod event;
 use common::*;
 
 mod token_series;
+use event::NearEvent;
 use near_contract_standards::non_fungible_token::refund_deposit_to_account;
 use near_sdk::{ext_contract, Gas, Promise};
 use payouts::assert_at_least_one_yocto;
 use token_series::{TokenSeries, TokenSeriesId, TokenSeriesSale, TOKEN_DELIMETER};
 
 mod payouts;
-use crate::payouts::MAXIMUM_ROYALTY;
+use crate::{payouts::MAXIMUM_ROYALTY, event::NftMintData};
 
 use std::collections::HashMap;
 
@@ -166,6 +168,11 @@ impl Nft {
             .insert(&token_series_id, &token_series);
 
         refund_deposit_to_account(env::storage_usage() - initial_storage_usage, refund_id);
+        
+        // Event
+        let mint_log = NftMintData::new(&reciever_id, vec![&token_id], None);
+        NearEvent::nft_mint(vec![mint_log]).emit();
+        
         token_id
     }
 

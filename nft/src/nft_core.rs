@@ -1,4 +1,5 @@
 use crate::*;
+use crate::event::NftTransferData;
 use near_contract_standards::non_fungible_token::{core::NonFungibleTokenCore, Token};
 
 #[near_bindgen]
@@ -10,8 +11,22 @@ impl NonFungibleTokenCore for Nft {
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {
+        let old_owner_id =
+            self.tokens.owner_by_id.get(&token_id).unwrap_or_else(|| env::panic_str("Token not found"));
+        let authorized_id = if old_owner_id != env::predecessor_account_id() {
+            Some(env::predecessor_account_id())
+        } else {
+            None
+        };
         self.tokens
-            .nft_transfer(receiver_id, token_id, approval_id, memo);
+            .nft_transfer(receiver_id.clone(), token_id.clone(), approval_id, memo.clone());
+        NearEvent::nft_transfer(vec![NftTransferData::new(
+            &old_owner_id,
+            &receiver_id,
+            vec![&token_id],
+            authorized_id.as_ref(),
+            memo.as_deref(),
+        )]).emit();
     }
 
     fn nft_transfer_call(

@@ -10,3 +10,5 @@ crate-type = ["cdylib"]
 [dependencies]
 near-sdk = "4.0.0-pre.5"
 near-contract-standards = "4.0.0-pre.5"
+serde_with = "1"
+serde = "1"
