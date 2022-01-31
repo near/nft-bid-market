@@ -1,11 +1,16 @@
 //use crate::*;
 //use common::*;
 
-//pub type FeeAccountAndAmount = UnorderedMap<AccountId, u128>;
-
 pub const PAYOUT_TOTAL_VALUE:u128 = 10_000;
 pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
 
+pub fn with_fees(price: u128) -> u128 {
+    price * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE
+}
+
+pub fn get_fee(price: u128) -> u128 {
+    price * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE
+}
 // #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 // //#[serde(crate = "near_sdk::serde")]
 // pub struct Fees {
