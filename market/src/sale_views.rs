@@ -129,11 +129,7 @@ impl Market {
     }
 
     pub fn get_sale(&self, nft_contract_token: ContractAndTokenId) -> Option<SaleJson> {
-        if let Some(sale) = self.market.sales.get(&nft_contract_token) {
-            Some(self.json_from_sale(sale))
-        } else {
-            None
-        }
+        self.market.sales.get(&nft_contract_token).map(|sale| self.json_from_sale(sale))
     }
     
     fn json_from_sale(&self, sale: Sale) -> SaleJson {
