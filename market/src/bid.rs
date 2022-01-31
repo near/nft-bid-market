@@ -47,6 +47,11 @@ impl Market {
         start: Option<U64>,
         end: Option<U64>,
     ) {
+        require!(
+            self.market.ft_token_ids.contains(&ft_token_id), 
+            format!("Token {} not supported by this market", ft_token_id)
+        );
+
         // store a bid and refund any current bid lower
         let new_bid = Bid {
             owner_id: buyer_id,
