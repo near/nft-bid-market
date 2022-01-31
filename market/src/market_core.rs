@@ -7,6 +7,8 @@ use crate::{
 use near_contract_standards::non_fungible_token::hash_account_id;
 //use crate::sale_views;
 use crate::*;
+use crate::bid::Origins;
+
 
 pub trait NonFungibleTokenApprovalReceiver {
     fn nft_on_approve(
@@ -27,6 +29,8 @@ pub struct SaleArgs {
 
     pub start: Option<U64>,
     pub end: Option<U64>,
+
+    pub origins: Option<Origins>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,6 +43,8 @@ pub struct AuctionArgs {
     pub start: Option<U64>,
     pub duration: U64,
     pub buy_out_price: Option<U128>,
+
+    pub origins: Option<Origins>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -89,7 +95,13 @@ impl NonFungibleTokenApprovalReceiver for Market {
         let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
         match args {
             ArgsKind::Sale(sale_args) => {
-                self.start_sale(sale_args, token_id, owner_id, approval_id, nft_contract_id);
+                self.start_sale(
+                    sale_args,
+                    token_id,
+                    owner_id,
+                    approval_id,
+                    nft_contract_id,
+                );
                 None
             }
             ArgsKind::Auction(auction_args) => Some(self.start_auction(
