@@ -25,6 +25,14 @@ pub fn calculate_origins(price: u128, origins: Origins) -> HashMap<AccountId, u1
     }
     map
 }
+
+pub fn calculate_origin_fee(price: u128, origins: &Origins) -> u128 {
+    let mut total = 0;
+    for p in origins.values() {
+        total += p.0;
+    }
+    price * total / (PAYOUT_TOTAL_VALUE + total)
+}
 // #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 // //#[serde(crate = "near_sdk::serde")]
 // pub struct Fees {
