@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
 
-use crate::sale::{ext_contract, ContractAndTokenId, FungibleTokenId, Sale, GAS_FOR_FT_TRANSFER, DELIMETER};
+use crate::sale::{
+    ext_contract, ContractAndTokenId, FungibleTokenId, Sale, DELIMETER, GAS_FOR_FT_TRANSFER,
+};
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -48,7 +50,7 @@ impl Market {
         end: Option<U64>,
     ) {
         require!(
-            self.market.ft_token_ids.contains(&ft_token_id), 
+            self.market.ft_token_ids.contains(&ft_token_id),
             format!("Token {} not supported by this market", ft_token_id)
         );
 
@@ -64,33 +66,18 @@ impl Market {
             .bids
             .entry(ft_token_id.clone())
             .or_insert_with(Vec::new);
-
-        if !bids_for_token_id.is_empty() {
-            let current_bid = &bids_for_token_id.last().unwrap();
-            assert!(
+        if let Some(current_bid) = bids_for_token_id.last() {
+            require!(
                 amount > current_bid.price.0,
-                "Can't pay less than or equal to current bid price: {}",
-                current_bid.price.0
+                format!("Can't pay less than or equal to current bid price: {}", current_bid.price.0)
             );
-            if ft_token_id == "near".to_string().parse().unwrap() {
-                Promise::new(current_bid.owner_id.clone()).transfer(u128::from(current_bid.price));
-            } else {
-                ext_contract::ft_transfer(
-                    current_bid.owner_id.clone(),
-                    current_bid.price,
-                    None,
-                    ft_token_id.clone(),
-                    1,
-                    GAS_FOR_FT_TRANSFER,
-                );
-            }
         }
 
         bids_for_token_id.push(new_bid);
         if bids_for_token_id.len() > self.market.bid_history_length as usize {
             // Need to refund the earliest bid before removing it
             let early_bid = &bids_for_token_id[0];
-            self.refund_bid(ft_token_id, &early_bid);
+            self.refund_bid(ft_token_id, early_bid);
             bids_for_token_id.remove(0);
         }
 
@@ -118,10 +105,7 @@ impl Market {
         if let Some(end) = bid.end {
             is_finished &= env::block_timestamp() >= end.0;
         }
-        require!(
-            is_finished,
-            "The bid hasn't ended yet"
-        );
+        require!(is_finished, "The bid hasn't ended yet");
         let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
         self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
         self.refund_bid(ft_token_id, &bid);
@@ -163,7 +147,7 @@ impl Market {
 
                 self.refund_bid(ft_token_id.clone(), &bid_from_vec);
             };
-        };
+        }
     }
 }
 
