@@ -1,3 +1,9 @@
+use std::collections::HashMap;
+
+use near_sdk::AccountId;
+
+use crate::bid::Origins;
+
 //use crate::*;
 //use common::*;
 
@@ -10,6 +16,14 @@ pub fn with_fees(price: u128) -> u128 {
 
 pub fn get_fee(price: u128) -> u128 {
     price * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE
+}
+
+pub fn calculate_origins(price: u128, origins: Origins) -> HashMap<AccountId, u128> {
+    let mut map = HashMap::with_capacity(origins.len());
+    for (origin, p) in origins {
+        map.insert(origin, price * p.0 / PAYOUT_TOTAL_VALUE);
+    }
+    map
 }
 // #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 // //#[serde(crate = "near_sdk::serde")]

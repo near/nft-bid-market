@@ -34,7 +34,7 @@ impl Bid {
 }
 
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
-pub type Origins = HashMap<AccountId, u128>;
+pub type Origins = HashMap<AccountId, U128>;
 
 #[near_bindgen]
 impl Market {
@@ -64,7 +64,7 @@ impl Market {
             price: U128(amount),
             start,
             end,
-            origins: origins.unwrap_or(HashMap::new()),
+            origins: origins.unwrap_or_default(),
         };
 
         let bids_for_token_id = sale
@@ -150,7 +150,7 @@ impl Market {
                 };
                 self.market.sales.insert(&contract_and_token_id, &sale);
 
-                self.refund_bid(ft_token_id.clone(), &bid_from_vec);
+                self.refund_bid(ft_token_id.clone(), bid_from_vec);
             };
         }
     }
