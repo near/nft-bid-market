@@ -29,6 +29,8 @@ pub struct Auction {
 
     pub start: u64,
     pub end: u64,
+
+    pub origins: Origins,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -74,6 +76,10 @@ impl Market {
         require!(start >= env::block_timestamp(), "incorrect start time");
         let end = start + args.duration.0;
         let auction_id = self.market.next_auction_id;
+        let origins = args
+            .origins
+            //.map(|s| s.into())
+            .unwrap_or_default();
         let auction = Auction {
             owner_id,
             approval_id,
@@ -87,6 +93,7 @@ impl Market {
             buy_out_price: args.buy_out_price.map(|p| p.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE),
             start,
             end,
+            origins,
         };
         self.market.auctions.insert(&auction_id, &auction);
         self.market.next_auction_id += 1;

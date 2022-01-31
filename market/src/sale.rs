@@ -49,6 +49,8 @@ pub struct Sale {
 
     pub start: Option<u64>,
     pub end: Option<u64>,
+
+    pub origins: Origins,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -137,6 +139,7 @@ impl Market {
             token_type,
             start,
             end,
+            origins,
         } = args;
 
         // check that the offered ft token is supported
@@ -169,6 +172,7 @@ impl Market {
                 token_type: token_type.clone(),
                 start: start.map(|s| s.into()),
                 end: end.map(|e| e.into()),
+                origins: origins.unwrap_or_default(),
             },
         );
 
