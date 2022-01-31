@@ -74,7 +74,7 @@ impl Market {
                     current_bid.owner_id.clone(),
                     current_bid.price,
                     None,
-                    ft_token_id,
+                    ft_token_id.clone(),
                     1,
                     GAS_FOR_FT_TRANSFER,
                 );
@@ -83,6 +83,9 @@ impl Market {
 
         bids_for_token_id.push(new_bid);
         if bids_for_token_id.len() > self.market.bid_history_length as usize {
+            // Need to refund the earliest bid before removing it
+            let early_bid = &bids_for_token_id[0];
+            self.refund_bid(ft_token_id, &early_bid);
             bids_for_token_id.remove(0);
         }
 
