@@ -57,6 +57,13 @@ impl Market {
             self.market.ft_token_ids.contains(&ft_token_id),
             format!("Token {} not supported by this market", ft_token_id)
         );
+        if let Some(ref origins) = origins {
+            let mut total: u128 = 0;
+            for val in origins.values() {
+                total += val.0;
+            }
+            require!(total < 4_700); // TODO: FINDOUT MAX ORIGINS
+        }
 
         // store a bid and refund any current bid lower
         let new_bid = Bid {
@@ -74,7 +81,10 @@ impl Market {
         if let Some(current_bid) = bids_for_token_id.last() {
             require!(
                 amount > current_bid.price.0,
-                format!("Can't pay less than or equal to current bid price: {}", current_bid.price.0)
+                format!(
+                    "Can't pay less than or equal to current bid price: {}",
+                    current_bid.price.0
+                )
             );
         }
 

@@ -5,11 +5,11 @@ use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
-use crate::fee::PAYOUT_TOTAL_VALUE;
+use crate::fee::{calculate_origins, PAYOUT_TOTAL_VALUE};
 use crate::market_core::SaleArgs;
-use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::*;
 use common::*;
+use near_contract_standards::non_fungible_token::hash_account_id;
 
 use bid::{Bids, Origins};
 pub type TokenSeriesId = String;
@@ -185,7 +185,11 @@ impl Market {
         });
 
         // Check that the paid storage amount is enough
-        let owner_paid_storage = self.market.storage_deposits.get(&env::signer_account_id()).unwrap_or(0);
+        let owner_paid_storage = self
+            .market
+            .storage_deposits
+            .get(&env::signer_account_id())
+            .unwrap_or(0);
         let owner_occupied_storage = u128::from(by_owner_id.len()) * STORAGE_PER_SALE;
         assert!(
             owner_paid_storage > owner_occupied_storage,
@@ -224,7 +228,9 @@ impl Market {
                 .unwrap_or_else(|| {
                     UnorderedSet::new(
                         StorageKey::ByNFTTokenTypeInner {
-                            token_type_hash: hash_account_id(&AccountId::new_unchecked(token_type.clone())),
+                            token_type_hash: hash_account_id(&AccountId::new_unchecked(
+                                token_type.clone(),
+                            )),
                         }
                         .try_to_vec()
                         .unwrap(),
@@ -321,6 +327,7 @@ impl Market {
                 ft_token_id.parse().unwrap(),
                 U128(deposit),
                 buyer_id,
+                origins.unwrap_or_default(),
             );
         } else {
             self.add_bid(
@@ -331,7 +338,7 @@ impl Market {
                 &mut sale,
                 start,
                 end,
-                origins
+                origins,
             );
         }
     }
@@ -367,6 +374,7 @@ impl Market {
             ft_token_id,
             bid.price,
             bid.owner_id.clone(),
+            bid.origins.clone(),
         );
     }
 
@@ -378,6 +386,7 @@ impl Market {
         ft_token_id: AccountId,
         price: U128,
         buyer_id: AccountId,
+        origins: Origins,
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
@@ -399,6 +408,7 @@ impl Market {
             buyer_id,
             sale,
             price,
+            origins,
             env::current_account_id(),
             NO_DEPOSIT,
             GAS_FOR_ROYALTIES,
@@ -415,6 +425,7 @@ impl Market {
         buyer_id: AccountId,
         sale: Sale,
         price: U128,
+        bid_origins: Origins,
     ) -> U128 {
         // checking for payout information
         let payout_option = promise_result_as_success().and_then(|value| {
@@ -461,8 +472,17 @@ impl Market {
             .unwrap_or_else(|| unreachable!())
             .into();
         owner_payout -= protocol_fee * 2;
+
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
+            // Bid Origin fees
+            for (receiver_id, amount) in calculate_origins(price.0 - protocol_fee, bid_origins) {
+                Promise::new(receiver_id).transfer(amount);
+            }
+            // Sale Origin fees 
+            //for (receiver_id, amount) in calculate_origins(price.0 - protocol_fee, sale.origins) {
+
+            //}
             // Royalties
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
@@ -530,6 +550,7 @@ trait ExtSelf {
         buyer_id: AccountId,
         sale: Sale,
         price: U128,
+        bid_origin: Origins,
     ) -> Promise;
 
     fn resolve_finish_auction(
