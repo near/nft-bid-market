@@ -5,6 +5,7 @@ use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
+use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::SaleArgs;
 use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::*;
@@ -132,7 +133,7 @@ impl Market {
         nft_contract_id: AccountId,
     ) {
         let SaleArgs {
-            sale_conditions,
+            mut sale_conditions,
             token_type,
             start,
             end,
@@ -140,17 +141,15 @@ impl Market {
 
         // check that the offered ft token is supported
 
-        for (ft_token_id, _price) in sale_conditions.iter() {
+        for (ft_token_id, mut price) in sale_conditions.iter_mut() {
             if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",
                     ft_token_id
                 ));
             }
-            // TODO: add fees to price here?
+            price.0 = price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE;
         }
-
-        // env::log(format!("add_sale for owner: {}", &owner_id).as_bytes());
 
         // Create a new sale with given arguments and empty list of bids
 
@@ -380,14 +379,14 @@ impl Market {
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
-        // let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
-        // let new_price = price.0 - protocol_fee;
+        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
+        let new_price = price.0 - protocol_fee;
         ext_contract::nft_transfer_payout(
             buyer_id.clone(),
             token_id,
             sale.approval_id,
             None, // need to check here if series
-            price, //U128(new_price)
+            U128(new_price),
             10,
             nft_contract_id,
             1,
@@ -452,14 +451,14 @@ impl Market {
         self.refund_all_bids(&sale.bids);
 
         // Protocol fees
-        let protocol_fee = price.0 * PROTOCOL_FEE / 10_000u128;
+        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
 
         let mut owner_payout: u128 = payout
             .payout
             .remove(&sale.owner_id)
             .unwrap_or_else(|| unreachable!())
             .into();
-        owner_payout -= protocol_fee;
+        owner_payout -= protocol_fee * 2;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
             // Royalties

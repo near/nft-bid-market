@@ -80,9 +80,9 @@ impl Market {
             bid: None,
             created_at: env::block_timestamp(),
             ft_token_id,
-            minimal_step: args.minimal_step.into(),
-            start_price: args.start_price.into(),
-            buy_out_price: args.buy_out_price.map(|p| p.into()),
+            minimal_step: args.minimal_step.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE,
+            start_price: args.start_price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE,
+            buy_out_price: args.buy_out_price.map(|p| p.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE),
             start,
             end,
         };
@@ -184,12 +184,14 @@ impl Market {
             .bid
             .unwrap_or_else(|| env::panic_str("Can finalize only if there is a bid"));
         self.market.auctions.remove(&auction_id.into());
+        let protocol_fee = final_bid.price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
+        let new_price = final_bid.price.0 - protocol_fee;
         ext_contract::nft_transfer_payout(
             final_bid.owner_id.clone(),
             auction.token_id.clone(),
             auction.approval_id,
             None,
-            final_bid.price,
+            U128(new_price),
             10,
             auction.nft_contract_id.clone(),
             1,
@@ -248,14 +250,14 @@ impl Market {
             return price;
         };
         // Protocol fees
-        let protocol_fee = price.0 * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE;
+        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
 
         let mut owner_payout: u128 = payout
             .payout
             .remove(&owner_id)
             .unwrap_or_else(|| unreachable!())
             .into();
-        owner_payout -= protocol_fee;
+        owner_payout -= protocol_fee * 2;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
             // Royalties
