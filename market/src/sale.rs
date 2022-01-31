@@ -11,7 +11,7 @@ use near_contract_standards::non_fungible_token::hash_account_id;
 use crate::*;
 use common::*;
 
-use bid::Bids;
+use bid::{Bids, Origins};
 pub type TokenSeriesId = String;
 
 pub const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
@@ -288,6 +288,7 @@ impl Market {
         token_id: String,
         start: Option<U64>,
         end: Option<U64>,
+        origins: Option<Origins>,
     ) {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
@@ -330,7 +331,7 @@ impl Market {
                 &mut sale,
                 start,
                 end,
-                None
+                origins
             );
         }
     }

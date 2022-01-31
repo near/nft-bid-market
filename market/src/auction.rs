@@ -1,4 +1,4 @@
-use crate::bid::Bid;
+use crate::bid::{Bid, Origins};
 use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::AuctionArgs;
 use crate::sale::{
@@ -101,7 +101,12 @@ impl Market {
     // Adds a bid to the corresponding auction
     // Supports buyout and time extension
     #[payable]
-    pub fn auction_add_bid(&mut self, auction_id: U128, token_type: TokenType) {
+    pub fn auction_add_bid(
+        &mut self,
+        auction_id: U128,
+        token_type: TokenType,
+        origins: Option<Origins>
+    ) {
         let ft_token_id = self.token_type_to_ft_token_type(token_type);
         require!(
             self.market.ft_token_ids.contains(&ft_token_id),
@@ -130,7 +135,7 @@ impl Market {
             price: deposit.into(),
             start: None,
             end: None,
-            origins: HashMap::new(),
+            origins: origins.unwrap_or(HashMap::new()),
         };
         //Return previous bid
         if let Some(previous_bid) = auction.bid {
