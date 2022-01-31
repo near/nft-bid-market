@@ -15,6 +15,8 @@ pub struct Bid {
 
     pub start: Option<U64>,
     pub end: Option<U64>,
+
+    pub origins: Origins,
 }
 
 impl Bid {
@@ -32,6 +34,7 @@ impl Bid {
 }
 
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
+pub type Origins = HashMap<AccountId, u128>;
 
 #[near_bindgen]
 impl Market {
@@ -48,6 +51,7 @@ impl Market {
         sale: &mut Sale,
         start: Option<U64>,
         end: Option<U64>,
+        origins: Option<Origins>,
     ) {
         require!(
             self.market.ft_token_ids.contains(&ft_token_id),
@@ -60,6 +64,7 @@ impl Market {
             price: U128(amount),
             start,
             end,
+            origins: origins.unwrap_or(HashMap::new()),
         };
 
         let bids_for_token_id = sale

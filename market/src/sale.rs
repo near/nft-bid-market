@@ -330,6 +330,7 @@ impl Market {
                 &mut sale,
                 start,
                 end,
+                None
             );
         }
     }

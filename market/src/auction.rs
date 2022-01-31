@@ -11,6 +11,8 @@ use near_sdk::{near_bindgen, promise_result_as_success};
 pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 
+use std::collections::HashMap;
+
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Auction {
@@ -128,6 +130,7 @@ impl Market {
             price: deposit.into(),
             start: None,
             end: None,
+            origins: HashMap::new(),
         };
         //Return previous bid
         if let Some(previous_bid) = auction.bid {
