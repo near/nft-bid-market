@@ -1,38 +1,42 @@
 use std::collections::HashMap;
-
-use near_sdk::AccountId;
-
-use crate::bid::Origins;
+use crate::common::*;
 
 //use crate::*;
 //use common::*;
 
+#[derive(Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Fees {
+    pub buyer: HashMap<AccountId, u32>,
+    pub seller: HashMap<AccountId, u32>,
+}
+
 pub const PAYOUT_TOTAL_VALUE:u128 = 10_000;
 pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
 
-pub fn with_fees(price: u128) -> u128 {
-    price * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE
-}
+// pub fn with_fees(price: u128) -> u128 {
+//     price * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE
+// }
 
-pub fn get_fee(price: u128) -> u128 {
-    price * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE
-}
+// pub fn get_fee(price: u128) -> u128 {
+//     price * PROTOCOL_FEE / PAYOUT_TOTAL_VALUE
+// }
 
-pub fn calculate_origins(price: u128, origins: Origins) -> HashMap<AccountId, u128> {
-    let mut map = HashMap::with_capacity(origins.len());
-    for (origin, p) in origins {
-        map.insert(origin, price * p.0 / PAYOUT_TOTAL_VALUE);
-    }
-    map
-}
+// pub fn calculate_origins(price: u128, origins: Origins) -> HashMap<AccountId, u128> {
+//     let mut map = HashMap::with_capacity(origins.len());
+//     for (origin, p) in origins {
+//         map.insert(origin, price * p / PAYOUT_TOTAL_VALUE);
+//     }
+//     map
+// }
 
-pub fn calculate_origin_fee(price: u128, origins: &Origins) -> u128 {
-    let mut total = 0;
-    for p in origins.values() {
-        total += p.0;
-    }
-    price * total / (PAYOUT_TOTAL_VALUE + total)
-}
+// pub fn calculate_origin_fee(price: u128, origins: &Origins) -> u128 {
+//     let mut total = 0;
+//     for p in origins.values() {
+//         total += p.0;
+//     }
+//     price * total / (PAYOUT_TOTAL_VALUE + total)
+// }
 // #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 // //#[serde(crate = "near_sdk::serde")]
 // pub struct Fees {

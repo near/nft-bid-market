@@ -1,4 +1,4 @@
-use crate::auction::{Auction, AuctionJson};
+use crate::auction::AuctionJson;
 use crate::common::*;
 use crate::*;
 

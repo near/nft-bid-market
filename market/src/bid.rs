@@ -34,7 +34,7 @@ impl Bid {
 }
 
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
-pub type Origins = HashMap<AccountId, U128>;
+pub type Origins = HashMap<AccountId, u32>;
 
 #[near_bindgen]
 impl Market {
@@ -58,9 +58,9 @@ impl Market {
             format!("Token {} not supported by this market", ft_token_id)
         );
         if let Some(ref origins) = origins {
-            let mut total: u128 = 0;
+            let mut total: u32 = 0;
             for val in origins.values() {
-                total += val.0;
+                total += val;
             }
             require!(total < 4_700); // TODO: FINDOUT MAX ORIGINS
         }

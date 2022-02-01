@@ -11,8 +11,6 @@ use near_sdk::{near_bindgen, promise_result_as_success};
 pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 
-use std::collections::HashMap;
-
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Auction {
@@ -62,7 +60,6 @@ impl Market {
         approval_id: u64,
         nft_contract_id: AccountId,
     ) -> (u128, AuctionJson) {
-        // should return value
 
         require!(
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
@@ -142,7 +139,7 @@ impl Market {
             price: deposit.into(),
             start: None,
             end: None,
-            origins: origins.unwrap_or(HashMap::new()),
+            origins: origins.unwrap_or_default(),
         };
         //Return previous bid
         if let Some(previous_bid) = auction.bid {

@@ -5,7 +5,7 @@ use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
-use crate::fee::{calculate_origins, PAYOUT_TOTAL_VALUE, calculate_origin_fee};
+use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::SaleArgs;
 use crate::*;
 use common::*;
@@ -390,18 +390,24 @@ impl Market {
         ft_token_id: AccountId,
         price: U128,
         buyer_id: AccountId,
-        origins: Origins,
+        #[allow(unused_mut)] mut origins: Origins,
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
-        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
-        let new_price = price.0 - protocol_fee;
+        origins.insert(env::current_account_id(), PROTOCOL_FEE as u32);
+        let mut seller_fee = HashMap::with_capacity(sale.origins.len() + 1);
+        seller_fee.extend(sale.origins.clone()); // TODO: dodge this clone
+        seller_fee.insert(env::current_account_id(), PROTOCOL_FEE as u32);
+        let fees = fee::Fees {
+            buyer: origins,
+            seller: seller_fee,
+        };
         ext_contract::nft_transfer_payout(
             buyer_id.clone(),
             token_id,
             sale.approval_id,
-            None, // need to check here if series
-            U128(new_price),
+            Some(near_sdk::serde_json::to_string(&fees).expect("Failed to sereailize")),
+            price,
             10,
             nft_contract_id,
             1,
@@ -412,7 +418,6 @@ impl Market {
             buyer_id,
             sale,
             price,
-            origins,
             env::current_account_id(),
             NO_DEPOSIT,
             GAS_FOR_ROYALTIES,
@@ -429,7 +434,6 @@ impl Market {
         buyer_id: AccountId,
         sale: Sale,
         price: U128,
-        bid_origins: Origins,
     ) -> U128 {
         // checking for payout information
         let payout_option = promise_result_as_success().and_then(|value| {
@@ -455,7 +459,7 @@ impl Market {
                 })
         });
         // is payout option valid?
-        let mut payout = if let Some(payout_option) = payout_option {
+        let payout = if let Some(payout_option) = payout_option {
             payout_option
         } else {
             if ft_token_id == "near".parse().unwrap() {
@@ -465,41 +469,13 @@ impl Market {
             return price;
         };
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
-        self.refund_all_bids(&sale.bids);
+        self.refund_all_bids(&sale.bids); // TODO: maybe should do this outside of this call
 
-        // TODO: move this stuff to nft contract,
-        //   so market just do transfers to Payouts mapping
-        
-        // Protocol fees
-        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
-
-        let mut owner_payout: u128 = payout
-            .payout
-            .remove(&sale.owner_id)
-            .unwrap_or_else(|| unreachable!())
-            .into();
-        owner_payout -= protocol_fee * 2;
-
-        let origin_fee = calculate_origin_fee(price.0 - protocol_fee, &bid_origins);
-        let actual_price = price.0 - protocol_fee - origin_fee;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
-            // Bid Origin fees
-            for (receiver_id, amount) in calculate_origins(actual_price, bid_origins) {
-                Promise::new(receiver_id).transfer(amount);
-            }
-            // Sale Origin fees 
-            for (receiver_id, amount) in calculate_origins(actual_price, sale.origins) {
-                Promise::new(receiver_id).transfer(amount);
-                owner_payout -= amount;
-            }
-            // Royalties
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
             }
-            // Payouts
-            Promise::new(sale.owner_id).transfer(owner_payout);
-            // refund all FTs (won't be any)
             price
         } else {
             // FT payouts
@@ -560,7 +536,6 @@ trait ExtSelf {
         buyer_id: AccountId,
         sale: Sale,
         price: U128,
-        bid_origin: Origins,
     ) -> Promise;
 
     fn resolve_finish_auction(
