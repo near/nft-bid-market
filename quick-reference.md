@@ -83,7 +83,7 @@ near view $NFT_CONTRACT_ID nft_series
 
 Using Market contract a user can put his NFT on a sale or an auction.
 He specifies the conditions on which he wants to sell NFT, such as FT type and price, start and end (or duration for auction), origins.
-Other users create bids, offering to buy (or buying the NFT). Bids for sales can have start/end time.
+Other users create bids, offering to buy (or buying) the NFT. Bids for sales can have start/end time.
 
 ### Workflow for creating and using sales
 
@@ -95,7 +95,7 @@ near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --dep
 `CONTRACT_PARENT` puts tokens `1:1`, `1:2` and `1:3` on sale:
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -103,7 +103,9 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
+Only the first token has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
+
+`CONTRACT_PARENT` sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
 ```bash
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:1"}'
 ```
