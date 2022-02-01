@@ -145,6 +145,11 @@ near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID
 ```
 This would remove her bid and return her money.
 
+If the sale has some bids which have expired anyone can remove them:
+```bash
+near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $ALICE
+```
+
 The sale can be removed by `CONTRACT_PARENT` (and he would also need to pay 1 yoctoNEAR for this action):
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
