@@ -23,7 +23,7 @@ near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id
 
 ## NFT contract
 
-NFT contract supports [standards](https://nomicon.io/Standards/NonFungibleToken/README.html) for Metadata, Approval Management and Royalties. In addition, it manages private minting and allows an owner of the series to give a permission to the market to mint tokens.
+NFT contract supports [standards](https://nomicon.io/Standards/NonFungibleToken/README.html) for Metadata, Approval Management and Royalties. In addition, it manages private minting and allows the owner of the series to give a permission to the market to mint tokens.
 
 In order to put a token or series of tokens on a sale or auction, one must create and mint it first.
 
@@ -48,26 +48,32 @@ near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --acc
 
 The owner of the series can approve market for minting tokens in this series
 ```bash
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
+
 near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
 This method will call **approved_market_id**'s method **nft_on_series_approve** with arguments 
 ```bash
 '{"token_series": {"sale_conditions": {"near": "1200"}, "series_id": "1", "owner_id": "'$CONTRACT_PARENT'", "copies": 1}}'
 ```
+After this `MARKET_CONTRACT_ID` can mint a new token `1:6`:
+```bash
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID --deposit 1
+```
 
 ### List of view methods for nft token series
 
-Get metadata, owner_id and royalty of specific token series:
+To get metadata, owner_id and royalty of specific token series:
 ```bash
 near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
 ```
 
-Get how many tokens of the specific token series already minted:
+To get how many tokens of the specific token series have already been minted:
 ```bash
 near view $NFT_CONTRACT_ID nft_supply_for_series '{"token_series_id": "1"}'
 ```
 
-Get a list of all series (with pagination or without it):
+To get a list of all series (with pagination or without it):
 ```bash
 near view $NFT_CONTRACT_ID nft_series '{"from_index": "0", "limit": 10}'
 near view $NFT_CONTRACT_ID nft_series
@@ -75,7 +81,9 @@ near view $NFT_CONTRACT_ID nft_series
 
 ## Market contract
 
-We can create either a new sale or a new auction.
+Using Market contract a user can put his NFT on a sale or an auction.
+He specifies the conditions on which he wants to sell NFT, such as FT type and price, start and end (or duration for auction), origins.
+Other users create bids, offering to buy (or buying) the NFT. Bids for sales can have start/end time.
 
 ### Workflow for creating and using sales
 
@@ -87,7 +95,7 @@ near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --dep
 `CONTRACT_PARENT` puts tokens `1:1`, `1:2` and `1:3` on sale:
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -95,11 +103,13 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
+Only the first token has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
+
+`CONTRACT_PARENT` sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
 ```bash
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:1"}'
 ```
-the price field will show `10300` due to 3% protocol fee.
+the `sale_conditions` field shows the price to be `10300` due to 3% protocol fee.
 
 The seller can withdraw any extra storage deposits (will return 0.07 in this case)
 ```bash
@@ -108,14 +118,14 @@ near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --de
 
 Any other account (in our case it is `ALICE`) can buy or offer to buy any of these tokens. 
 The difference is in the deposit which she attaches to `offer`. 
-If the attached deposit is equal to the price, she automatically buys it. The price is now equal to `10300` since a protocol fee (3%) was added.
+If the attached deposit is equal to the price (`10300` including protocol fee), she automatically buys it.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
 ```
 
 If `ALICE` tries to buy the second token (`1:2`), but the attached deposit less than the required price, she will only offer to buy the token.
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2"}' --accountId $ALICE --depositYocto 8000 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
 
 near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 ```
@@ -195,7 +205,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MAR
 ```
 He set the minimal price to `10000` and minimal step `1000`. Everyone should see the price as `10300` and minimal step `1030` (because it includes protocol fee). The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run. He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
 
-`CONTRACT_PARENT` can cancel his auction beforehand in case there is no bid:
+`CONTRACT_PARENT` can cancel his auction before the end in case there is no bid:
 ```bash
 near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "1"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
