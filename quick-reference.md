@@ -3,7 +3,7 @@
 NFT bid market consists of two contracts: NFT and Market.
 
 NFT contract allows to create and manage a token or token series. 
-It supports Metadata, Approval Management and Royalties.
+It supports Metadata, Approval Management and Royalties [standards](https://nomicon.io/Standards/NonFungibleToken/README.html).
 
 Market contract handles sales, bids and auctions.
 
@@ -21,30 +21,70 @@ near call $NFT_CONTRACT_ID new_default_meta '{"owner_id": "'$CONTRACT_PARENT'", 
 near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID
 ```
 
-## Market contract
+## NFT contract
 
-We can create either a new sale or a new auction.
+NFT contract supports [standards](https://nomicon.io/Standards/NonFungibleToken/README.html) for Metadata, Approval Management and Royalties. In addition, it manages private minting and allows an owner of the series to give a permission to the market to mint tokens.
 
-### Sale
+In order to put a token or series of tokens on a sale or auction, one must create and mint it first.
 
 `CONTRACT_PARENT` creates the series of maximum seven tokens:
 ```bash
 near call $NFT_CONTRACT_ID nft_create_series '{"token_metadata": {"title": "some title", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 7}, "royalty": {"'$CONTRACT_PARENT'": 500}}' --accountId $CONTRACT_PARENT --deposit 0.005
 ```
-And mints three of them:
+And mints five of them:
 ```bash
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-Now `NFT_CONTRACT_ID` has three tokens with ids `1:1`, `1:2` and `1:3`.
+Now there are five tokens with ids `1:1`, `1:2`, `1:3`, `1:4` and `1:5`.
+
+`CONTRACT_PARENT` (the owner) can assign private minters
+```bash
+near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
+```
+
+The owner of the series can approve market for minting tokens in this series
+```bash
+near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT --deposit 1
+```
+This method will call **approved_market_id**'s method **nft_on_series_approve** with arguments 
+```bash
+'{"token_series": {"sale_conditions": {"near": "1200"}, "series_id": "1", "owner_id": "'$CONTRACT_PARENT'", "copies": 1}}'
+```
+
+### List of view methods for nft token series
+
+Get metadata, owner_id and royalty of specific token series:
+```bash
+near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
+```
+
+Get how many tokens of the specific token series already minted:
+```bash
+near view $NFT_CONTRACT_ID nft_supply_for_series '{"token_series_id": "1"}'
+```
+
+Get a list of all series (with pagination or without it):
+```bash
+near view $NFT_CONTRACT_ID nft_series '{"from_index": "0", "limit": 10}'
+near view $NFT_CONTRACT_ID nft_series
+```
+
+## Market contract
+
+We can create either a new sale or a new auction.
+
+### Workflow for creating and using sales
 
 Before creating a sale the user needs to cover the storage (0.01 per one sale):
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1
 ```
 
-`CONTRACT_PARENT` puts all three tokens on sale:
+`CONTRACT_PARENT` puts tokens `1:1`, `1:2` and `1:3` on sale:
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -55,14 +95,18 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount.
+He sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
+```bash
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:1"}'
+```
+the price field will show `10300` due to 3% protocol fee.
 
 The seller can withdraw any extra storage deposits (will return 0.07 in this case)
 ```bash
 near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
 ```
 
-Now any other account (in our case it is `ALICE`) can buy or offer to buy any of these tokens. 
+Any other account (in our case it is `ALICE`) can buy or offer to buy any of these tokens. 
 The difference is in the deposit which she attaches to `offer`. 
 If the attached deposit is equal to the price, she automatically buys it. The price is now equal to `10300` since a protocol fee (3%) was added.
 ```bash
@@ -97,7 +141,7 @@ near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_I
 ```
 This removes the sale and corresponding bids and returns the money.
 
-#### View methods for sales
+### List of view methods for sales
 To find number of sales:
 ```bash
 near view $MARKET_CONTRACT_ID get_supply_sales
@@ -138,15 +182,9 @@ To get the sale:
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
-### Auction
+### Workflow for creating and using auction
 
-`CONTRACT_PARENT` mints two more tokens `1:4` and `1:5`:
-```bash
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 1
-```
-
-And puts them on auction:
+`CONTRACT_PARENT` puts tokens `1:4` and `1:5` on auction:
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
 
@@ -175,7 +213,7 @@ After auction ends anyone can finish it:
 near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "0"}' --accountId $ALICE --gas 200000000000000
 ```
 
-#### View methods for auctions
+### List of view methods for auctions
 
 To get the creator of the latest bid:
 ```bash
@@ -200,41 +238,4 @@ near view $MARKET_CONTRACT_ID get_minimal_next_bid '{"auction_id": "0"}'
 To get the amount of the latest bid:
 ```bash
 near view $MARKET_CONTRACT_ID get_current_bid '{"auction_id": "0"}'
-```
-
-## NFT contract
-
-Owner can assign private minters
-```bash
-near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
-```
-
-Owner of series can approve market for minting tokens in this series
-```bash
-near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT --deposit 1
-```
-This method will call **approved_market_id**'s method **nft_on_series_approve** with arguments 
-```bash
-'{"token_series": {"sale_conditions": {"near": "1200"}, "series_id": "1", "owner_id": "'$CONTRACT_PARENT'", "copies": 1}}'
-```
-
-### View methods on nft token series
-
-Get metadata, owner_id and royalty of specific token series
-```bash
-near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
-```
-
-Get how many tokens of the specific token series already minted
-```bash
-near view $NFT_CONTRACT_ID nft_supply_for_series '{"token_series_id": "1"}'
-```
-
-Get a list of all series
-```bash
-near view $NFT_CONTRACT_ID nft_series
-```
-or with pagination
-```bash
-near view $NFT_CONTRACT_ID nft_series '{"from_index": "0", "limit": 10}'
 ```
