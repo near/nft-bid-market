@@ -212,7 +212,6 @@ impl Market {
         .then(ext_self::resolve_finish_auction(
             auction.ft_token_id,
             final_bid.owner_id.clone(),
-            auction.owner_id,
             final_bid.price,
             env::current_account_id(),
             NO_DEPOSIT,
@@ -228,7 +227,6 @@ impl Market {
         &mut self,
         ft_token_id: AccountId,
         buyer_id: AccountId,
-        owner_id: AccountId,
         price: U128,
     ) -> U128 {
         let payout_option = promise_result_as_success().and_then(|value| {
@@ -252,7 +250,7 @@ impl Market {
                 })
         });
         // is payout option valid?
-        let mut payout = if let Some(payout_option) = payout_option {
+        let payout = if let Some(payout_option) = payout_option {
             payout_option
         } else {
             if ft_token_id == "near".parse().unwrap() {
@@ -261,24 +259,12 @@ impl Market {
             // leave function and return all FTs in ft_resolve_transfer
             return price;
         };
-        // Protocol fees
-        let protocol_fee = price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
 
-        let mut owner_payout: u128 = payout
-            .payout
-            .remove(&owner_id)
-            .unwrap_or_else(|| unreachable!())
-            .into();
-        owner_payout -= protocol_fee * 2;
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {
-            // Royalties
             for (receiver_id, amount) in payout.payout {
                 Promise::new(receiver_id).transfer(amount.0);
-                owner_payout -= amount.0;
             }
-            // Payouts
-            Promise::new(owner_id).transfer(owner_payout);
             // refund all FTs (won't be any)
             price
         } else {

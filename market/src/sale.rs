@@ -314,7 +314,7 @@ impl Market {
         );
 
         let buyer_id = env::predecessor_account_id();
-        assert_ne!(sale.owner_id, buyer_id, "Cannot bid on your own sale.");
+        require!(sale.owner_id != buyer_id, "Cannot bid on your own sale.");
         let ft_token_id = "near".to_string(); // Should be argument, if support of ft needed
         let price = *sale
             .sale_conditions
@@ -390,16 +390,16 @@ impl Market {
         ft_token_id: AccountId,
         price: U128,
         buyer_id: AccountId,
-        #[allow(unused_mut)] mut origins: Origins,
+        origins: Origins,
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
-
-        origins.insert(env::current_account_id(), PROTOCOL_FEE as u32);
+        let mut buyer = origins;
+        buyer.insert(env::current_account_id(), PROTOCOL_FEE as u32);
         let mut seller_fee = HashMap::with_capacity(sale.origins.len() + 1);
         seller_fee.extend(sale.origins.clone()); // TODO: dodge this clone
         seller_fee.insert(env::current_account_id(), PROTOCOL_FEE as u32);
         let fees = fee::Fees {
-            buyer: origins,
+            buyer,
             seller: seller_fee,
         };
         ext_contract::nft_transfer_payout(
@@ -542,7 +542,6 @@ trait ExtSelf {
         &mut self,
         ft_token_id: AccountId,
         buyer_id: AccountId,
-        owner_id: AccountId,
         price: U128,
     );
 

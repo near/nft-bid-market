@@ -1,5 +1,5 @@
+use crate::{bid::Origins, common::*};
 use std::collections::HashMap;
-use crate::common::*;
 
 //use crate::*;
 //use common::*;
@@ -11,7 +11,21 @@ pub struct Fees {
     pub seller: HashMap<AccountId, u32>,
 }
 
-pub const PAYOUT_TOTAL_VALUE:u128 = 10_000;
+pub fn calculate_origins(origins: &Origins) -> u32 {
+    let mut total: u32 = 0;
+    for val in origins.values() {
+        total += val;
+    }
+    total
+}
+
+pub fn calculate_actual_amount(amount: u128, total_origins: u32) -> u128 {
+    let origin_fee = amount * (total_origins as u128 + PROTOCOL_FEE)
+        / (PAYOUT_TOTAL_VALUE + total_origins as u128 + PROTOCOL_FEE);
+    amount - origin_fee
+}
+
+pub const PAYOUT_TOTAL_VALUE: u128 = 10_000;
 pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
 
 // pub fn with_fees(price: u128) -> u128 {

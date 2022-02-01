@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
 
+use crate::fee::{calculate_origins, calculate_actual_amount};
 use crate::sale::{
     ext_contract, ContractAndTokenId, FungibleTokenId, Sale, DELIMETER, GAS_FOR_FT_TRANSFER,
 };
@@ -57,13 +58,14 @@ impl Market {
             self.market.ft_token_ids.contains(&ft_token_id),
             format!("Token {} not supported by this market", ft_token_id)
         );
-        if let Some(ref origins) = origins {
-            let mut total: u32 = 0;
-            for val in origins.values() {
-                total += val;
-            }
-            require!(total < 4_700); // TODO: FINDOUT MAX ORIGINS
-        }
+        let total_origins = if let Some(ref origins) = origins {
+            calculate_origins(origins)
+        } else {
+            0
+        };
+
+        require!(total_origins < 4_700); // TODO: FINDOUT MAX ORIGINS
+        let actual_amount = calculate_actual_amount(amount, total_origins); 
 
         // store a bid and refund any current bid lower
         let new_bid = Bid {
@@ -79,8 +81,10 @@ impl Market {
             .entry(ft_token_id.clone())
             .or_insert_with(Vec::new);
         if let Some(current_bid) = bids_for_token_id.last() {
+        let current_origins = calculate_origins(&current_bid.origins);
+        let current_amount = calculate_actual_amount(current_bid.price.0, current_origins);
             require!(
-                amount > current_bid.price.0,
+                actual_amount > current_amount,
                 format!(
                     "Can't pay less than or equal to current bid price: {}",
                     current_bid.price.0
