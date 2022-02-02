@@ -240,7 +240,7 @@ impl Market {
             near_sdk::serde_json::from_slice::<Payout>(&value)
                 .ok()
                 .and_then(|payout| {
-                    if payout.payout.len() + 1 > 10 || payout.payout.is_empty() {
+                    if payout.payout.len() > 10 || payout.payout.is_empty() {
                         env::log_str("Cannot have more than 10 payouts and sale.bids refunds");
                         None
                     } else {
