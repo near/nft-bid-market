@@ -296,6 +296,7 @@ impl Market {
         &mut self,
         nft_contract_id: AccountId,
         token_id: String,
+        ft_token_id: AccountId,
         start: Option<U64>,
         end: Option<U64>,
         origins: Option<Origins>,
@@ -315,10 +316,9 @@ impl Market {
 
         let buyer_id = env::predecessor_account_id();
         require!(sale.owner_id != buyer_id, "Cannot bid on your own sale.");
-        let ft_token_id = "near".to_string(); // Should be argument, if support of ft needed
         let price = *sale
             .sale_conditions
-            .get(&ft_token_id.parse().unwrap())
+            .get(&ft_token_id)
             .expect("Not for sale in NEAR");
 
         let deposit = env::attached_deposit();
@@ -328,7 +328,7 @@ impl Market {
             self.process_purchase(
                 contract_id,
                 token_id,
-                ft_token_id.parse().unwrap(),
+                ft_token_id,
                 U128(deposit),
                 buyer_id,
                 origins.unwrap_or_default(),
@@ -337,7 +337,7 @@ impl Market {
             self.add_bid(
                 contract_and_token_id,
                 deposit,
-                ft_token_id.parse().unwrap(),
+                ft_token_id,
                 buyer_id,
                 &mut sale,
                 start,
@@ -347,8 +347,7 @@ impl Market {
         }
     }
 
-    // Accepts the last offer
-    // TODO: choose what bid to accept ??
+    // Accepts the last (highest) offer
     pub fn accept_offer(
         &mut self,
         nft_contract_id: AccountId,

@@ -105,39 +105,53 @@ impl Market {
 
     // TODO: support ft
     #[payable]
-    pub fn remove_bid(&mut self, nft_contract_id: AccountId, token_id: TokenId, bid: Bid) {
+    pub fn remove_bid(
+        &mut self,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
+        ft_token_id: AccountId,
+        bid: Bid,
+    ) {
         assert_one_yocto();
         assert_eq!(
             env::predecessor_account_id(),
             bid.owner_id,
             "Must be bid owner"
         );
-        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
         self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
         self.refund_bid(ft_token_id, &bid);
     }
 
     // Cancels the bid if it has ended
     // Refunds it
-    pub fn cancel_bid(&mut self, nft_contract_id: AccountId, token_id: TokenId, bid: Bid) {
+    pub fn cancel_bid(
+        &mut self,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
+        ft_token_id: AccountId,
+        bid: Bid,
+    ) {
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
             require!(is_finished, "The bid hasn't ended yet");
         }
-        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
         self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
         self.refund_bid(ft_token_id, &bid);
     }
 
     // Cancel all expired bids
-    pub fn cancel_expired_bids(&mut self, nft_contract_id: AccountId, token_id: TokenId) {
+    pub fn cancel_expired_bids(
+        &mut self,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
+        ft_token_id: AccountId,
+    ) {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
         let sale = self
             .market
             .sales
             .get(&contract_and_token_id)
             .expect("No sale");
-        let ft_token_id = AccountId::new_unchecked("near".to_owned()); // Should be argument, if support of ft needed
         let bid_vec = sale.bids.get(&ft_token_id).expect("No token");
         let mut sale = self
             .market
