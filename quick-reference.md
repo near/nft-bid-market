@@ -204,11 +204,11 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He set the minimal price to `10000` and minimal step `1000`. Everyone should see the price as `10300` and minimal step `1030` (because it includes protocol fee). The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run. He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
+He set the minimal price to `10000` and minimal step `1000`. Everyone should see the price as `10300` and minimal step `1030` (because it includes protocol fee). The duration `60000000000` corresponds to 1 minute. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run. He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
 
 `CONTRACT_PARENT` can cancel his auction before the end in case there is no bid:
 ```bash
