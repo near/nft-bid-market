@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::bid::{Bid, Origins};
 use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::AuctionArgs;
@@ -8,7 +10,7 @@ use crate::sale::{
 use crate::*;
 use near_sdk::{near_bindgen, promise_result_as_success};
 // should check calculation
-pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
+pub const EXTENSION_DURATION: u64 = /*15 * */ 60 * NANOS_PER_SEC; // 15 minutes, TODO: uncomment 1 minute for demo 
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -75,7 +77,6 @@ impl Market {
         let auction_id = self.market.next_auction_id;
         let origins = args
             .origins
-            //.map(|s| s.into())
             .unwrap_or_default();
         let auction = Auction {
             owner_id,
@@ -186,7 +187,7 @@ impl Market {
         let auction = self
             .market
             .auctions
-            .get(&auction_id.into())
+            .remove(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction is not active"));
         require!(
             env::block_timestamp() > auction.end,
@@ -195,15 +196,21 @@ impl Market {
         let final_bid = auction
             .bid
             .unwrap_or_else(|| env::panic_str("Can finalize only if there is a bid"));
-        self.market.auctions.remove(&auction_id.into());
-        let protocol_fee = final_bid.price.0 * PROTOCOL_FEE / (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE);
-        let new_price = final_bid.price.0 - protocol_fee;
+        let mut buyer = final_bid.origins;
+        buyer.insert(env::current_account_id(), PROTOCOL_FEE as u32);
+        let mut seller_fee = HashMap::with_capacity(auction.origins.len() + 1);
+        seller_fee.extend(auction.origins.clone()); // TODO: dodge this clone
+        seller_fee.insert(env::current_account_id(), PROTOCOL_FEE as u32);
+        let fees = fee::Fees {
+            buyer,
+            seller: seller_fee,
+        };
         ext_contract::nft_transfer_payout(
             final_bid.owner_id.clone(),
             auction.token_id.clone(),
             auction.approval_id,
-            None,
-            U128(new_price),
+            Some(near_sdk::serde_json::to_string(&fees).expect("Failed to sereailize")),
+            final_bid.price,
             10,
             auction.nft_contract_id.clone(),
             1,

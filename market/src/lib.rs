@@ -39,7 +39,6 @@ pub enum StorageKey {
 pub struct Market {
     non_fungible_token_account_ids: LookupSet<AccountId>,
     market: MarketSales,
-    //fees: Fees, may be used
 }
 
 #[near_bindgen]
@@ -50,8 +49,6 @@ impl Market {
         non_fungible_token_account_ids.extend(nft_ids);
         let mut tokens = UnorderedSet::new(StorageKey::FTTokenIds);
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
-        // let mut origins = UnorderedMap::new(StorageKey::OriginFees);
-        // origins.insert(&owner_id.clone(), &ORIGIN);
         let market = MarketSales {
             owner_id,
             series_sales: UnorderedMap::new(StorageKey::TokenSeries),
@@ -65,14 +62,9 @@ impl Market {
             auctions: UnorderedMap::new(StorageKey::Auctions),
             next_auction_id: 0,
         };
-        /*let fees = Fees {
-            protocol_fee: PROTOCOL_FEE,
-            origins,
-        };*/
         Self {
             non_fungible_token_account_ids,
             market,
-            //fees
         }
     }
 
