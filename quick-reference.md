@@ -97,9 +97,11 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+
+near view $MARKET_CONTRACT_ID get_sales
 ```
-`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price to `10300` due to 3% protocol fee.
-Only the first token has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
+`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price of two NFTs to `10300` due to 3% protocol fee.
+Only the first sale has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee. Thus the first NFT const `10400` (3% protocol fee + 1% origin fee).
 
 Seller can withdraw unused storage deposits
 ```bash
@@ -193,9 +195,9 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 
 ### Workflow for creating and using auction
 
-`CONTRACT_PARENT` puts NFTs `1:4` and `1:5` on auction:
+`CONTRACT_PARENT` puts three other NFTs on auction:
 ```bash
-near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.03
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -203,6 +205,8 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MAR
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:6", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
+
+near view $MARKET_CONTRACT_ID get_auctions
 ```
 He specified the minimal price to be `10000` and minimal step `1000`. The contract sets the price as `10300` and minimal step `1030` (because it includes protocol fee). 
 The duration `60000000000` corresponds to 1 minute.
