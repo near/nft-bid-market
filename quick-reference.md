@@ -35,8 +35,9 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
 ```
-Now he has five NFTs.
+Now he has six NFTs.
 
 <!---
 `CONTRACT_PARENT` (the owner) can assign private minters
@@ -200,29 +201,38 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MAR
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:6", "account_id": "'$MARKET_CONTRACT_ID'", 
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
 He specified the minimal price to be `10000` and minimal step `1000`. The contract sets the price as `10300` and minimal step `1030` (because it includes protocol fee). 
 The duration `60000000000` corresponds to 1 minute.
 You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
 He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
-Both auctions include origin fees equal to 1%.
+All three auctions include origin fee equal to 1%.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
 ```bash
-near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "1"}' --accountId $CONTRACT_PARENT --depositYocto 1
+near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "0"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
 
 `ALICE` can create a bid on the ongoing auction:
 ```bash
-near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "0", "token_type": "near"}' --accountId $ALICE --depositYocto 10300
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10300
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
 If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
-
-After auction ends anyone can finish it:
 ```bash
-near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "0"}' --accountId $ALICE --gas 200000000000000
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10300000000
+```
+
+After auction ends anyone can finish it. It will transfer NFTs to those who bought it:
+```bash
+near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "1"}' --accountId $ALICE --gas 200000000000000
+near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "2"}' --accountId $ALICE --gas 200000000000000
+
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:5"}'
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:6"}'
 ```
 
 ### List of view methods for auctions
