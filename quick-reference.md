@@ -109,22 +109,10 @@ If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal 
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
 `ALICE` gets the NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
-near state $ALICE
-near state $CONTRACT_PARENT
-near state $NFT_CONTRACT_ID
-
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
-
-near state $ALICE
-near state $CONTRACT_PARENT
-near state $NFT_CONTRACT_ID
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
 near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
-
-near state $ALICE
-near state $CONTRACT_PARENT
-near state $NFT_CONTRACT_ID
 ```
 
 If `CONTRACT_PARENT` wants to increase or decrease the price of the third NFT, he can call `update_price`. After this the price is `12360` yoctoNEAR (`360` yoctoNEAR added as the protocol fee):
@@ -146,7 +134,7 @@ If the sale has some bids which have expired, anyone can remove them:
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE
 ```
 
-The sale can be removed by `CONTRACT_PARENT` can call `remove_sale` to remove his sale and refund all the bids:
+`CONTRACT_PARENT` can call `remove_sale` to remove his sale and refund all the bids:
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
