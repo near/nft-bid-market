@@ -12,7 +12,9 @@ mod token;
 use common::*;
 
 use crate::fee::PROTOCOL_FEE;
-use crate::sale::{MarketSales, Sale, SaleConditions, TokenType, BID_HISTORY_LENGTH_DEFAULT};
+use crate::sale::{Sale, SaleConditions, TokenType, SeriesSale, BID_HISTORY_LENGTH_DEFAULT,
+    ContractAndTokenId, FungibleTokenId, ContractAndSeriesId};
+use crate::auction::Auction;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
@@ -32,6 +34,22 @@ pub enum StorageKey {
     OriginFees,
     Auctions,
     AuctionId,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct MarketSales {
+    pub owner_id: AccountId,
+    pub sales: UnorderedMap<ContractAndTokenId, Sale>,
+    pub series_sales: UnorderedMap<ContractAndSeriesId, SeriesSale>,
+    pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
+    pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
+    pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
+    pub ft_token_ids: UnorderedSet<FungibleTokenId>,
+    pub storage_deposits: LookupMap<AccountId, Balance>,
+    pub bid_history_length: u8,
+
+    pub auctions: UnorderedMap<u128, Auction>,
+    pub next_auction_id: u128,
 }
 
 #[near_bindgen]
