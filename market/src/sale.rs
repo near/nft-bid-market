@@ -253,7 +253,13 @@ impl Market {
         assert_one_yocto();
         let sale = self.internal_remove_sale(nft_contract_id, token_id);
         let owner_id = env::predecessor_account_id();
-        assert_eq!(owner_id, sale.owner_id, "Must be sale owner");
+        if sale.in_limits() {
+            assert_eq!(
+                owner_id,
+                sale.owner_id,
+                "Until the sale is finished, it can only be removed by the sale owner"
+            );
+        };
         self.refund_all_bids(&sale.bids);
     }
 
