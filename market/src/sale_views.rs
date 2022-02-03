@@ -14,14 +14,16 @@ impl Market {
         U64(self.market.sales.len())
     }
 
-    pub fn get_sales(
-        &self,
-    ) -> Vec<SaleJson> {
-        let mut tmp = vec![];
-        for (_contract_and_token_id, sale) in self.market.sales.iter() {
-            tmp.push(self.json_from_sale(sale));
-        }
-        tmp
+    pub fn get_sales(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<(ContractAndTokenId, SaleJson)> {
+        let sales = &self.market.sales;
+        let start_index: u128 = from_index.map(From::from).unwrap_or_default();
+        let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
+        sales
+            .iter()
+            .skip(start_index as usize)
+            .take(limit)
+            .map(|(contract_and_token_id, sale)| (contract_and_token_id, self.json_from_sale(sale)))
+            .collect()
     }
     
     pub fn get_supply_by_owner_id(
