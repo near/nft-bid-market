@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
-use crate::auction::Auction;
 use crate::fee::PAYOUT_TOTAL_VALUE;
 use crate::market_core::SaleArgs;
 use crate::*;
@@ -32,8 +31,8 @@ pub struct Payout {
 
 pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
-pub type TokenType = Option<String>;
 pub type ContractAndSeriesId = String;
+pub type TokenType = Option<String>;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -106,22 +105,6 @@ impl Sale {
 pub struct PurchaseArgs {
     pub nft_contract_id: AccountId,
     pub token_id: TokenId,
-}
-
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct MarketSales {
-    pub owner_id: AccountId,
-    pub sales: UnorderedMap<ContractAndTokenId, Sale>,
-    pub series_sales: UnorderedMap<ContractAndSeriesId, SeriesSale>,
-    pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
-    pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
-    pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
-    pub ft_token_ids: UnorderedSet<FungibleTokenId>,
-    pub storage_deposits: LookupMap<AccountId, Balance>,
-    pub bid_history_length: u8,
-
-    pub auctions: UnorderedMap<u128, Auction>,
-    pub next_auction_id: u128,
 }
 
 #[near_bindgen]
@@ -296,7 +279,7 @@ impl Market {
 
     // Offer to buy the nft
     // Buy nft if the attached deposit equal to the price, otherwise adds a bid
-    // TODO: support ft ??
+    // TODO: support ft ?? Isn't it already supported?
     #[payable]
     pub fn offer(
         &mut self,
