@@ -5,7 +5,7 @@ use near_sdk::ext_contract;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::auction::Auction;
-use crate::fee::PAYOUT_TOTAL_VALUE;
+use crate::fee::calculate_price_with_fees;
 use crate::market_core::SaleArgs;
 use crate::*;
 use common::*;
@@ -144,14 +144,14 @@ impl Market {
 
         // check that the offered ft token is supported
 
-        for (ft_token_id, mut price) in sale_conditions.iter_mut() {
+        for (ft_token_id, price) in sale_conditions.iter_mut() {
             if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",
                     ft_token_id
                 ));
             }
-            price.0 = price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE;
+            *price = U128::from(calculate_price_with_fees(*price, origins.as_ref()));
         }
 
         // Create a new sale with given arguments and empty list of bids
@@ -255,8 +255,7 @@ impl Market {
         let owner_id = env::predecessor_account_id();
         if sale.in_limits() {
             assert_eq!(
-                owner_id,
-                sale.owner_id,
+                owner_id, sale.owner_id,
                 "Until the sale is finished, it can only be removed by the sale owner"
             );
         };
@@ -290,6 +289,7 @@ impl Market {
                 ft_token_id
             ));
         }
+        let price = U128::from(calculate_price_with_fees(price, Some(&sale.origins)));
         sale.sale_conditions.insert(ft_token_id, price);
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
@@ -543,12 +543,7 @@ trait ExtSelf {
         price: U128,
     ) -> Promise;
 
-    fn resolve_finish_auction(
-        &mut self,
-        ft_token_id: AccountId,
-        buyer_id: AccountId,
-        price: U128,
-    );
+    fn resolve_finish_auction(&mut self, ft_token_id: AccountId, buyer_id: AccountId, price: U128);
 
     fn resolve_mint(
         &mut self,

@@ -27,7 +27,8 @@ impl Market {
     }
 
     pub fn get_auction_json(&self, auction_id: U128) -> AuctionJson {
-        let auction = self.market
+        let auction = self
+            .market
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
@@ -58,14 +59,16 @@ impl Market {
         auction.bid.map(|bid| bid.price)
     }
 
-    pub fn get_auctions(
-        &self,
-    ) -> Vec<(u128, AuctionJson)> {
-        let mut tmp = vec![];
-        for (id, auction) in self.market.auctions.iter() {
-            tmp.push((id, self.json_from_auction(auction)));
-        }
-        tmp
+    pub fn get_auctions(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<(u128, AuctionJson)> {
+        let auctions = &self.market.auctions;
+        let start_index: u128 = from_index.map(From::from).unwrap_or_default();
+        let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
+        auctions
+            .iter()
+            .skip(start_index as usize)
+            .take(limit)
+            .map(|(auction_id, auction)| (auction_id, self.json_from_auction(auction)))
+            .collect()
     }
 
     //pub fn get_bid_total_amount() -> U128;

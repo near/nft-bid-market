@@ -87,7 +87,7 @@ Before creating a sale the user needs to cover the storage (0.01 per one sale):
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.1
 ```
 
-`CONTRACT_PARENT` puts three NFTs on sale:
+`CONTRACT_PARENT` puts three NFTs on sale using [approval management](https://nomicon.io/Standards/NonFungibleToken/ApprovalManagement.html):
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
@@ -101,7 +101,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MAR
 `CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price to `10300` due to 3% protocol fee.
 Only the first token has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
 
-After the seller created his sales, he can withdraw any extra storage deposits (will return 0.07 in this case)
+Seller can withdraw unused storage deposits
 ```bash
 near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
 ```
@@ -110,7 +110,7 @@ Any other account (in our case it is `ALICE`) can buy or offer to buy any of the
 The difference is in the deposit which she attaches to `offer`. 
 If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal to the price (`10300` including protocol fee), she automatically buys it.
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
-`ALICE` gets the NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
+`ALICE` gets the second NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
@@ -135,7 +135,7 @@ near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "
 near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "bid": {"owner_id": "'$ALICE'", "price": "10000", "origins": {}}}' --accountId $ALICE --depositYocto 1
 ```
 
-If the sale has some bids which have expired, anyone can remove them:
+If the sale has some bids which have expired, anyone can refund them:
 ```bash
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE
 ```

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::bid::{Bid, Origins};
-use crate::fee::PAYOUT_TOTAL_VALUE;
+use crate::fee::calculate_price_with_fees;
 use crate::market_core::AuctionArgs;
 use crate::sale::{
     ext_contract, ext_self, Payout, GAS_FOR_FT_TRANSFER, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES,
@@ -86,9 +86,9 @@ impl Market {
             bid: None,
             created_at: env::block_timestamp(),
             ft_token_id,
-            minimal_step: args.minimal_step.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE,
-            start_price: args.start_price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE,
-            buy_out_price: args.buy_out_price.map(|p| p.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE),
+            minimal_step: calculate_price_with_fees(args.minimal_step, Some(&origins)),
+            start_price: calculate_price_with_fees(args.start_price, Some(&origins)),
+            buy_out_price: args.buy_out_price.map(|p| calculate_price_with_fees(p, Some(&origins))),
             start,
             end,
             origins,

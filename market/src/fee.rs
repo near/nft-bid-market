@@ -1,8 +1,8 @@
 use crate::{bid::Origins, common::*};
 use std::collections::HashMap;
 
-//use crate::*;
-//use common::*;
+pub const PAYOUT_TOTAL_VALUE: u128 = 10_000;
+pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
 
 #[derive(Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -25,8 +25,14 @@ pub fn calculate_actual_amount(amount: u128, total_origins: u32) -> u128 {
     amount - origin_fee
 }
 
-pub const PAYOUT_TOTAL_VALUE: u128 = 10_000;
-pub const PROTOCOL_FEE: u128 = 300; // 10_000 is 100%, so 300 is 3%
+pub fn calculate_price_with_fees(price: U128, origins: Option<&Origins>) -> u128 {
+    let total_origins = if let Some(origins) = origins {
+        calculate_origins(origins)
+    } else {
+        0
+    };
+    price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE + total_origins as u128) / PAYOUT_TOTAL_VALUE
+}
 
 // pub fn with_fees(price: u128) -> u128 {
 //     price * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE) / PAYOUT_TOTAL_VALUE
