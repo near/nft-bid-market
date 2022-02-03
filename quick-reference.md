@@ -44,7 +44,7 @@ near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --acc
 ```
 
 Instead of minting NFTs by himself, `CONTRACT_PARENT` can cover the storage for NFTs and give the market an approval to mint tokens.
-After this `$MARKET_CONTRACT_ID` mints new NFT.
+After this `$MARKET_CONTRACT_ID` can mint a new NFT.
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
 
@@ -95,13 +95,8 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MAR
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
+`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price to `10300` due to 3% protocol fee.
 Only the first token has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
-
-`CONTRACT_PARENT` sets the price of `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus if you look at the sale
-```bash
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:1"}'
-```
-the `sale_conditions` field shows the price to be `10300` due to 3% protocol fee.
 
 After the seller created his sales, he can withdraw any extra storage deposits (will return 0.07 in this case)
 ```bash
@@ -114,10 +109,22 @@ If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal 
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
 `ALICE` gets the NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
+near state $ALICE
+near state $CONTRACT_PARENT
+near state $NFT_CONTRACT_ID
+
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
+
+near state $ALICE
+near state $CONTRACT_PARENT
+near state $NFT_CONTRACT_ID
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
 near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
+
+near state $ALICE
+near state $CONTRACT_PARENT
+near state $NFT_CONTRACT_ID
 ```
 
 If `CONTRACT_PARENT` wants to increase or decrease the price of the third NFT, he can call `update_price`. After this the price is `12360` yoctoNEAR (`360` yoctoNEAR added as the protocol fee):
@@ -127,14 +134,14 @@ near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
-If `ALICE` adds a bid and then decides to remove it she could call `remove_bid`. This would remove her bid and return her money:
+If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 
 near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "bid": {"owner_id": "'$ALICE'", "price": "10000", "origins": {}}}' --accountId $ALICE --depositYocto 1
 ```
 
-If the sale has some bids which have expired anyone can remove them:
+If the sale has some bids which have expired, anyone can remove them:
 ```bash
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE
 ```
@@ -148,6 +155,11 @@ near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_I
 To find number of sales:
 ```bash
 near view $MARKET_CONTRACT_ID get_supply_sales
+```
+
+To show all sales:
+```bash
+near view $MARKET_CONTRACT_ID get_sales
 ```
 
 To find number of sales for given owner:
@@ -187,16 +199,20 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 
 ### Workflow for creating and using auction
 
-`CONTRACT_PARENT` puts tokens `1:4` and `1:5` on auction:
+`CONTRACT_PARENT` puts NFTs `1:4` and `1:5` on auction:
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.02
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 ```
-He set the minimal price to `10000` and minimal step `1000`. Everyone should see the price as `10300` and minimal step `103` (because it includes protocol fee). The duration `900000000000` corresponds to 15 minutes. You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run. He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
+He specified the minimal price to be `10000` and minimal step `1000`. The contract sets the price as `10300` and minimal step `1030` (because it includes protocol fee). 
+The duration `60000000000` corresponds to 1 minute.
+You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
+He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
+Both auctions include origin fees equal to 1%.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
 ```bash
@@ -241,4 +257,9 @@ near view $MARKET_CONTRACT_ID get_minimal_next_bid '{"auction_id": "0"}'
 To get the amount of the latest bid:
 ```bash
 near view $MARKET_CONTRACT_ID get_current_bid '{"auction_id": "0"}'
+```
+
+To show all auctions:
+```bash
+near view $MARKET_CONTRACT_ID get_auctions
 ```

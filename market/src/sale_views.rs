@@ -13,6 +13,16 @@ impl Market {
     ) -> U64 {
         U64(self.market.sales.len())
     }
+
+    pub fn get_sales(
+        &self,
+    ) -> Vec<SaleJson> {
+        let mut tmp = vec![];
+        for (_contract_and_token_id, sale) in self.market.sales.iter() {
+            tmp.push(self.json_from_sale(sale));
+        }
+        tmp
+    }
     
     pub fn get_supply_by_owner_id(
         &self,
@@ -31,7 +41,7 @@ impl Market {
         account_id: AccountId,
         from_index: U64,
         limit: u64,
-    ) -> Vec<Sale> {
+    ) -> Vec<SaleJson> {
         let mut tmp = vec![];
         let by_owner_id = self.market.by_owner_id.get(&account_id);
         let sales = if let Some(by_owner_id) = by_owner_id {
@@ -43,7 +53,12 @@ impl Market {
         let start = u64::from(from_index);
         let end = min(start + limit, sales.len());
         for i in start..end {
-            tmp.push(self.market.sales.get(&keys.get(i).unwrap()).unwrap());
+            let sale = self
+                .market
+                .sales
+                .get(&keys.get(i).unwrap())
+                .unwrap();
+            tmp.push(self.json_from_sale(sale));
         }
         tmp
     }

@@ -58,5 +58,15 @@ impl Market {
         auction.bid.map(|bid| bid.price)
     }
 
+    pub fn get_auctions(
+        &self,
+    ) -> Vec<(u128, AuctionJson)> {
+        let mut tmp = vec![];
+        for (id, auction) in self.market.auctions.iter() {
+            tmp.push((id, self.json_from_auction(auction)));
+        }
+        tmp
+    }
+
     //pub fn get_bid_total_amount() -> U128;
 }
