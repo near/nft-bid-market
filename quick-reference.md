@@ -38,13 +38,15 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 ```
 Now he has five NFTs.
 
+<!---
 `CONTRACT_PARENT` (the owner) can assign private minters
 ```bash
 near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
 ```
+-->
 
 Instead of minting NFTs by himself, `CONTRACT_PARENT` can cover the storage for NFTs and give the market an approval to mint tokens.
-After this `$MARKET_CONTRACT_ID` can mint a new NFT.
+After this `MARKET_CONTRACT_ID` can mint a new NFT.
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.01
 
@@ -110,9 +112,12 @@ If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the p
 `ALICE` gets the NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 ```
 
 If `CONTRACT_PARENT` wants to increase or decrease the price of the third NFT, he can call `update_price`. After this the price is `12360` yoctoNEAR (`360` yoctoNEAR added as the protocol fee):
