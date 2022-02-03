@@ -10,7 +10,8 @@ use crate::sale::{
 use crate::*;
 use near_sdk::{near_bindgen, promise_result_as_success};
 // should check calculation
-pub const EXTENSION_DURATION: u64 = /*15 * */ 60 * NANOS_PER_SEC; // 15 minutes, TODO: uncomment 1 minute for demo 
+//pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
+pub const EXTENSION_DURATION: u64 = 30 * NANOS_PER_SEC; // 30 seconds TODO: remove this line uncomment line above
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]

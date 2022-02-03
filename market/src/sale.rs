@@ -17,7 +17,7 @@ pub const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
 pub const GAS_FOR_ROYALTIES: Gas = Gas(115_000_000_000_000);
 pub const GAS_FOR_NFT_TRANSFER: Gas = Gas(15_000_000_000_000);
 // pub const GAS_FOR_MINT: Gas = Gas(20_000_000_000_000);
-pub const BID_HISTORY_LENGTH_DEFAULT: u8 = 10;
+pub const BID_HISTORY_LENGTH_DEFAULT: u8 = 5;
 pub(crate) const NO_DEPOSIT: Balance = 0;
 pub static DELIMETER: &str = "||";
 
@@ -279,7 +279,6 @@ impl Market {
 
     // Offer to buy the nft
     // Buy nft if the attached deposit equal to the price, otherwise adds a bid
-    // TODO: support ft ?? Isn't it already supported?
     #[payable]
     pub fn offer(
         &mut self,
@@ -457,7 +456,7 @@ impl Market {
             return price;
         };
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
-        self.refund_all_bids(&sale.bids); // TODO: maybe should do this outside of this call
+        self.refund_all_bids(&sale.bids); // TODO: maybe should do this outside of this call, to lower gas for this call
 
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {

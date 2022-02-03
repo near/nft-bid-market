@@ -103,7 +103,6 @@ impl Market {
         self.market.sales.insert(&contract_and_token_id, sale);
     }
 
-    // TODO: support ft
     #[payable]
     pub fn remove_bid(
         &mut self,
