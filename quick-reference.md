@@ -114,7 +114,7 @@ If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal 
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
 `ALICE` gets the second NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10400 --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
@@ -130,7 +130,7 @@ near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
-If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money:
+Bids for sales can be deleted. If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 
@@ -224,6 +224,8 @@ near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type":
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
+A bid for an auction can't be deleted.
+
 If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
 ```bash
 near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10400000000
@@ -240,6 +242,16 @@ near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:6"}'
 
 ### List of view methods for auctions
 
+To show all auctions:
+```bash
+near view $MARKET_CONTRACT_ID get_auctions
+```
+
+To get the auction:
+```bash
+near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "0"}'
+```
+
 To get the creator of the latest bid:
 ```bash
 near view $MARKET_CONTRACT_ID get_current_buyer '{"auction_id": "0"}'
@@ -250,22 +262,13 @@ To check whether the auction in progress:
 near view $MARKET_CONTRACT_ID check_auction_in_progress '{"auction_id": "0"}'
 ```
 
-To get the auction:
-```bash
-near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "0"}'
-```
-
-To get the minimal bid one could bid (including fees):
+To get the minimal bid one could bid (including protocol and origin fees):
 ```bash
 near view $MARKET_CONTRACT_ID get_minimal_next_bid '{"auction_id": "0"}'
 ```
 
-To get the amount of the latest bid:
+To get the amount of the latest bid (with protocol and origin fees):
 ```bash
 near view $MARKET_CONTRACT_ID get_current_bid '{"auction_id": "0"}'
 ```
 
-To show all auctions:
-```bash
-near view $MARKET_CONTRACT_ID get_auctions
-```
