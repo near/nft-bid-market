@@ -153,9 +153,10 @@ To find number of sales:
 near view $MARKET_CONTRACT_ID get_supply_sales
 ```
 
-To show all sales:
+To show all sales (with pagination or without it):
 ```bash
 near view $MARKET_CONTRACT_ID get_sales
+near view $MARKET_CONTRACT_ID get_sales '{"from_index": "0", "limit": 10}'
 ```
 
 To find number of sales for given owner:
@@ -242,8 +243,9 @@ near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:6"}'
 
 ### List of view methods for auctions
 
-To show all auctions:
+To show all auctions (with pagination or without it):
 ```bash
+near view $MARKET_CONTRACT_ID get_auctions '{"from_index": "0", "limit": 10}'
 near view $MARKET_CONTRACT_ID get_auctions
 ```
 

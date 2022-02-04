@@ -149,7 +149,7 @@ impl Market {
         self.market.sales.get(&nft_contract_token).map(|sale| self.json_from_sale(sale))
     }
     
-    fn json_from_sale(&self, sale: Sale) -> SaleJson {
+    pub fn json_from_sale(&self, sale: Sale) -> SaleJson {
         SaleJson {
             owner_id: sale.owner_id,
             nft_contract_id: sale.nft_contract_id,

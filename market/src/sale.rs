@@ -116,7 +116,7 @@ impl Market {
         owner_id: AccountId,
         approval_id: u64,
         nft_contract_id: AccountId,
-    ) {
+    ) -> SaleJson {
         let SaleArgs {
             mut sale_conditions,
             token_type,
@@ -142,21 +142,22 @@ impl Market {
         let bids = HashMap::new();
 
         let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
+        let sale = Sale {
+            owner_id: owner_id.clone(),
+            approval_id,
+            nft_contract_id: nft_contract_id.clone(),
+            token_id: token_id.clone(),
+            sale_conditions,
+            bids,
+            created_at: env::block_timestamp(),
+            token_type: token_type.clone(),
+            start: start.map(|s| s.into()),
+            end: end.map(|e| e.into()),
+            origins: origins.unwrap_or_default(),
+        };
         self.market.sales.insert(
             &contract_and_token_id,
-            &Sale {
-                owner_id: owner_id.clone(),
-                approval_id,
-                nft_contract_id: nft_contract_id.clone(),
-                token_id: token_id.clone(),
-                sale_conditions,
-                bids,
-                created_at: env::block_timestamp(),
-                token_type: token_type.clone(),
-                start: start.map(|s| s.into()),
-                end: end.map(|e| e.into()),
-                origins: origins.unwrap_or_default(),
-            },
+            &sale,
         );
 
         // extra for views
@@ -228,6 +229,8 @@ impl Market {
                 .by_nft_token_type
                 .insert(&token_type, &by_nft_token_type);
         }
+
+        self.json_from_sale(sale)
     }
 
     /// TODO remove without redirect to wallet? panic reverts

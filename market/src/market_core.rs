@@ -17,7 +17,7 @@ pub trait NonFungibleTokenApprovalReceiver {
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    ) -> Option<(u128, AuctionJson)>;
+    );
     fn nft_on_series_approve(&mut self, token_series: TokenSeriesSale);
 }
 
@@ -57,15 +57,14 @@ pub enum ArgsKind {
 #[near_bindgen]
 impl NonFungibleTokenApprovalReceiver for Market {
     // nft_on_approve is called via cross-contract call in order to create a new sale or auction.
-    // If the auction is added, it returns a pair of the auction_id and the auction itself.
-    // In case it is called to create the sale, it returns None.
+    // TODO: need to log?
     fn nft_on_approve(
         &mut self,
         token_id: TokenId,
         owner_id: AccountId,
         approval_id: u64,
         msg: String,
-    ) -> Option<(u128, AuctionJson)> {
+    ) {
         // make sure that the method is called in a cross contract call and the signer is owner_id
 
         let nft_contract_id = env::predecessor_account_id();
@@ -95,22 +94,23 @@ impl NonFungibleTokenApprovalReceiver for Market {
         let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
         match args {
             ArgsKind::Sale(sale_args) => {
-                self.start_sale(
+                let _sale_json = self.start_sale(
                     sale_args,
                     token_id,
                     owner_id,
                     approval_id,
                     nft_contract_id,
                 );
-                None
             }
-            ArgsKind::Auction(auction_args) => Some(self.start_auction(
-                auction_args,
-                token_id,
-                owner_id,
-                approval_id,
-                nft_contract_id,
-            )),
+            ArgsKind::Auction(auction_args) => {
+                let (_id, _auction_json) = self.start_auction(
+                    auction_args,
+                    token_id,
+                    owner_id,
+                    approval_id,
+                    nft_contract_id,
+                );
+            }
         }
     }
 
