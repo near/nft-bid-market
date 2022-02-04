@@ -289,7 +289,7 @@ impl Market {
         token_id: String,
         ft_token_id: AccountId,
         start: Option<U64>,
-        end: Option<U64>,
+        duration: Option<U64>,
         origins: Option<Origins>,
     ) {
         let contract_id: AccountId = nft_contract_id;
@@ -325,13 +325,15 @@ impl Market {
                 origins.unwrap_or_default(),
             );
         } else {
+            let start = start.unwrap_or(U64(env::block_timestamp()));
+            let end = duration.map(|d| U64(d.0 + start.0));
             self.add_bid(
                 contract_and_token_id,
                 deposit,
                 ft_token_id,
                 buyer_id,
                 &mut sale,
-                start,
+                Some(start),
                 end,
                 origins,
             );
