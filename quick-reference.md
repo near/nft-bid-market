@@ -101,7 +101,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MAR
 near view $MARKET_CONTRACT_ID get_sales
 ```
 `CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price of two NFTs to `10300` due to 3% protocol fee.
-Only the first sale has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee. Thus the first NFT const `10400` (3% protocol fee + 1% origin fee).
+Only the first sale has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee. Thus the first NFT costs `10400` (3% protocol fee + 1% origin fee).
 
 Seller can withdraw unused storage deposits
 ```bash
@@ -208,11 +208,10 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:6", "account_id": "'$MAR
 
 near view $MARKET_CONTRACT_ID get_auctions
 ```
-He specified the minimal price to be `10000` and minimal step `1000`. The contract sets the price as `10300` and minimal step `1030` (because it includes protocol fee). 
+`CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
 The duration `60000000000` corresponds to 1 minute.
 You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
-He also specified the `buy_out_price`, meaning that anyone can buy the token by this price.
-All three auctions include origin fee equal to 1%.
+There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
 ```bash
@@ -221,13 +220,13 @@ near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "0"}' --accountId $
 
 `ALICE` can create a bid on the ongoing auction:
 ```bash
-near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10300
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10400
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
 If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
 ```bash
-near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10300000000
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10400000000
 ```
 
 After auction ends anyone can finish it. It will transfer NFTs to those who bought it:
