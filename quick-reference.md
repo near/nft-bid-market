@@ -91,10 +91,8 @@ near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --dep
 ```bash
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
-
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:2", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
-
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MARKET_CONTRACT_ID'", 
 "msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $CONTRACT_PARENT --deposit 1
 
@@ -137,9 +135,19 @@ near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "
 near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "bid": {"owner_id": "'$ALICE'", "price": "10000", "origins": {}}}' --accountId $ALICE --depositYocto 1
 ```
 
-If the sale has some bids which have expired, anyone can refund them:
+Suppose somebody had added some bids and later they expired:
+```bash
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 500 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 600 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 800 --gas 200000000000000
+
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
+```
+These bids expired in 2 seconds.
+After this period anyone can refund them:
 ```bash
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
 `CONTRACT_PARENT` can call `remove_sale` to remove his sale and refund all the bids:
@@ -157,6 +165,11 @@ To show all sales (with pagination or without it):
 ```bash
 near view $MARKET_CONTRACT_ID get_sales
 near view $MARKET_CONTRACT_ID get_sales '{"from_index": "0", "limit": 10}'
+```
+
+To get the sale:
+```bash
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
 To find number of sales for given owner:
@@ -189,10 +202,6 @@ To get sales for token type:
 near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near", "from_index": "0", "limit": 10}'
 ```
 
-To get the sale:
-```bash
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
-```
 
 ### Workflow for creating and using auction
 

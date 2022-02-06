@@ -8,7 +8,7 @@ use crate::sale::{
 };
 use crate::*;
 
-#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Bid {
     pub owner_id: AccountId,
@@ -137,7 +137,7 @@ impl Market {
         self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
         self.refund_bid(ft_token_id, &bid);
     }
-
+    /*
     // Cancel all expired bids
     pub fn cancel_expired_bids(
         &mut self,
@@ -146,24 +146,53 @@ impl Market {
         ft_token_id: AccountId,
     ) {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let sale = self
+        /*let mut sale = self
             .market
             .sales
             .get(&contract_and_token_id)
-            .expect("No sale");
-        let bid_vec = sale.bids.get(&ft_token_id).expect("No token");
+            .expect("No sale");*/
         let mut sale = self
             .market
             .sales
             .get(&contract_and_token_id)
             .expect("No sale");
-        for (index, bid_from_vec) in bid_vec.iter().enumerate() {
+        let bid_vec = self
+            .market
+            .sales
+            .get(&contract_and_token_id)
+            .expect("No sale")
+            .bids
+            .get_mut(&ft_token_id)
+            .expect("No token");
+        bid_vec.retain(|bid_from_vec| {
+            let mut not_finished = true;
+            if let Some(end) = bid_from_vec.end {
+                //is_finished &= env::block_timestamp() >= end.0;
+                if env::block_timestamp() >= end.0 {
+                    self.refund_bid(ft_token_id.clone(), bid_from_vec);
+                    not_finished = false;
+                };
+            }
+            not_finished
+        });
+        if bid_vec.len() == 1 {
+            //If there is no bids left, should remove ft_token_id from the HashMap
+            sale.bids.remove(&ft_token_id);
+        } else {
+            sale.bids.insert(ft_token_id.clone(),  bid_vec.to_vec());
+            self.market.sales.insert(&contract_and_token_id, &sale);
+        };
+        /*for (index, bid_from_vec) in bid_vec.iter().rev().enumerate() {
             // Check whether the bid has ended
             let mut is_finished = false;
             if let Some(end) = bid_from_vec.end {
-                is_finished &= env::block_timestamp() >= end.0;
+                //is_finished &= env::block_timestamp() >= end.0;
+                if env::block_timestamp() >= end.0 {
+                    is_finished = true;
+                };
             }
             if is_finished {
+                env::log_str("IS_FINISHED");
                 if bid_vec.len() == 1 {
                     //If the vector contained only one bid, should remove ft_token_id from the HashMap
                     sale.bids.remove(&ft_token_id);
@@ -177,9 +206,11 @@ impl Market {
                 self.market.sales.insert(&contract_and_token_id, &sale);
 
                 self.refund_bid(ft_token_id.clone(), bid_from_vec);
+            } else {
+                env::log_str(format!("NOT_FINISHED, now: {}", env::block_timestamp()).as_str());
             };
-        }
-    }
+        } */
+    }*/
 }
 
 impl Market {
