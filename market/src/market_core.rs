@@ -1,11 +1,9 @@
-//use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use crate::{
-    auction::AuctionJson,
     sale::{SeriesSale, DELIMETER},
     token::TokenSeriesSale,
 };
 use near_contract_standards::non_fungible_token::hash_account_id;
-//use crate::sale_views;
+use near_sdk::serde_json::json;
 use crate::*;
 use crate::bid::Origins;
 
@@ -94,22 +92,27 @@ impl NonFungibleTokenApprovalReceiver for Market {
         let args: ArgsKind = near_sdk::serde_json::from_str(&msg).expect("Not valid args");
         match args {
             ArgsKind::Sale(sale_args) => {
-                let _sale_json = self.start_sale(
+                let sale_json = self.start_sale(
                     sale_args,
                     token_id,
                     owner_id,
                     approval_id,
                     nft_contract_id,
                 );
+                env::log_str(&near_sdk::serde_json::to_string(&sale_json).unwrap());
             }
             ArgsKind::Auction(auction_args) => {
-                let (_id, _auction_json) = self.start_auction(
+                let (id, auction_json) = self.start_auction(
                     auction_args,
                     token_id,
                     owner_id,
                     approval_id,
                     nft_contract_id,
                 );
+                env::log_str(&json!({
+                    "auction_id": id,
+                    "auction_json": auction_json
+                }).to_string())
             }
         }
     }

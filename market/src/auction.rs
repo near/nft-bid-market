@@ -99,7 +99,6 @@ impl Market {
 
         let auction_json = self.json_from_auction(auction);
 
-        // log or return here?
         // env::log_str(&near_sdk::serde_json::to_string(&(auction_id, auction)).unwrap());
         (auction_id, auction_json)
     }

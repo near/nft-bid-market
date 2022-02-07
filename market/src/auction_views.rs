@@ -59,15 +59,19 @@ impl Market {
         auction.bid.map(|bid| bid.price)
     }
 
-    pub fn get_auctions(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<(u128, AuctionJson)> {
+    pub fn get_auctions(
+        &self,
+        from_index: Option<U128>,
+        limit: Option<u64>,
+    ) -> Vec<AuctionJson> {
         let auctions = &self.market.auctions;
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
         auctions
-            .iter()
+            .values()
             .skip(start_index as usize)
             .take(limit)
-            .map(|(auction_id, auction)| (auction_id, self.json_from_auction(auction)))
+            .map(|auction| self.json_from_auction(auction))
             .collect()
     }
 
