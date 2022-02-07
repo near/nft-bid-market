@@ -10,8 +10,8 @@ use crate::sale::{
 use crate::*;
 use near_sdk::{near_bindgen, promise_result_as_success};
 // should check calculation
-//pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
-pub const EXTENSION_DURATION: u64 = 30 * NANOS_PER_SEC; // 30 seconds TODO: remove this line uncomment line above
+pub const EXTENSION_DURATION: u64 = 15 * 60 * NANOS_PER_SEC; // 15 minutes
+//pub const EXTENSION_DURATION: u64 = 30 * NANOS_PER_SEC; // 30 seconds TODO: remove this line uncomment line above
 pub const MAX_DURATION: u64 = 1000 * 60 * 60 * 24 * NANOS_PER_SEC; // 1000 days
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -66,7 +66,7 @@ impl Market {
 
         require!(
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
-            "Incorrect duration"
+            format!("Incorrect duration. Should be at least {}", EXTENSION_DURATION)
         );
         let ft_token_id = self.token_type_to_ft_token_type(args.token_type);
         let start = args

@@ -216,22 +216,24 @@ near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near"
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.03
 
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:4", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:6", "account_id": "'$MARKET_CONTRACT_ID'", 
-"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"60000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
+"msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 
 near view $MARKET_CONTRACT_ID get_auctions
 ```
 `CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
-The duration `60000000000` corresponds to 1 minute.
+The duration `900000000000` corresponds to 15 minutes.
 You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is complete.
 There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
 ```bash
 near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "0"}' --accountId $CONTRACT_PARENT --depositYocto 1
+
+near view $MARKET_CONTRACT_ID get_auctions
 ```
 
 `ALICE` can create a bid on the ongoing auction:
@@ -253,6 +255,8 @@ near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "2"}'
 
 After auction ends anyone can finish it. It will transfer NFTs to those who bought it:
 ```bash
+near call $MARKET_CONTRACT_ID hack_finish_auction '{"auction_id": "1"}' --accountId $ALICE
+
 near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "1"}' --accountId $ALICE --gas 200000000000000
 near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "2"}' --accountId $ALICE --gas 200000000000000
 
@@ -261,6 +265,7 @@ near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:6"}'
 
 near view $MARKET_CONTRACT_ID get_auctions
 ```
+> Here we called `hack_finish_auction` in order to finish the auction ahead of time. It is done for demonstration purposes. All content of `hack.rs` should be deleted later.
 
 ### List of view methods for auctions
 

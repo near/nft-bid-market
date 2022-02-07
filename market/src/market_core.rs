@@ -109,10 +109,10 @@ impl NonFungibleTokenApprovalReceiver for Market {
                     approval_id,
                     nft_contract_id,
                 );
-                env::log_str(&json!({
-                    "auction_id": id,
-                    "auction_json": auction_json
-                }).to_string())
+                //env::log_str(&json!({
+                //    "auction_id": id,
+                //    "auction_json": auction_json
+                //}).to_string())
             }
         }
     }

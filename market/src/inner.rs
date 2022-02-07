@@ -95,7 +95,7 @@ impl Market {
                         .remove(index);
                 };
                 self.market.sales.insert(&contract_and_token_id, &sale);
-                break; // shouldn't allow same bids by same user
+                break; // shouldn't allow bids with equal price 
             };
         }
 
