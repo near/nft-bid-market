@@ -9,6 +9,8 @@ mod sale;
 mod sale_views;
 mod token;
 
+mod hack; // TODO: remove
+
 use common::*;
 
 use crate::fee::PROTOCOL_FEE;
