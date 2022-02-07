@@ -128,25 +128,31 @@ near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
-Bids for sales can be deleted. If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money:
+Bids for sales can be deleted. If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money, even before the bid ends:
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10000 --gas 200000000000000
 
 near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "bid": {"owner_id": "'$ALICE'", "price": "10000", "origins": {}}}' --accountId $ALICE --depositYocto 1
 ```
 
-Suppose somebody had added some bids and later they expired:
+Suppose some purchasers had added some bids and later they expired.
+After this anyone can refund them:
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 500 --gas 200000000000000
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 600 --gas 200000000000000
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "2000000000"}' --accountId $ALICE --depositYocto 800 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 500 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 600 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 800 --gas 200000000000000
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 
+near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $NFT_CONTRACT_ID
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
-These bids expired in 2 seconds.
-After this period anyone can refund them:
+
+It is possible to refund a specific bid:
 ```bash
-near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $ALICE
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 700 --gas 200000000000000
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
+
+near call $MARKET_CONTRACT_ID cancel_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "bid": {"owner_id": "'$ALICE'", "price": "700", "origins": {}}}' --accountId $NFT_CONTRACT_ID
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
 
@@ -220,7 +226,7 @@ near view $MARKET_CONTRACT_ID get_auctions
 ```
 `CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
 The duration `60000000000` corresponds to 1 minute.
-You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is run.
+You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is complete.
 There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
@@ -231,6 +237,8 @@ near call $MARKET_CONTRACT_ID cancel_auction '{"auction_id": "0"}' --accountId $
 `ALICE` can create a bid on the ongoing auction:
 ```bash
 near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10400
+
+near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "1"}'
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
@@ -239,6 +247,8 @@ A bid for an auction can't be deleted.
 If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
 ```bash
 near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10400000000
+
+near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "2"}'
 ```
 
 After auction ends anyone can finish it. It will transfer NFTs to those who bought it:
@@ -248,6 +258,8 @@ near call $MARKET_CONTRACT_ID finish_auction '{"auction_id": "2"}' --accountId $
 
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:5"}'
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:6"}'
+
+near view $MARKET_CONTRACT_ID get_auctions
 ```
 
 ### List of view methods for auctions
