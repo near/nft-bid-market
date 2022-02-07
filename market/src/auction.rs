@@ -41,14 +41,14 @@ pub struct AuctionJson {
     pub nft_contract_id: AccountId,
     pub token_id: String,
     pub bid: Option<Bid>,
-    pub created_at: u64,
+    pub created_at: U64,
     pub ft_token_id: AccountId,
-    pub minimal_step: u128,
-    pub start_price: u128,
-    pub buy_out_price: Option<u128>,
+    pub minimal_step: U128,
+    pub start_price: U128,
+    pub buy_out_price: Option<U128>,
 
-    pub start: u64,
-    pub end: u64,
+    pub start: U64,
+    pub end: U64,
 }
 
 #[near_bindgen]
@@ -310,13 +310,13 @@ impl Market {
             nft_contract_id: auction.nft_contract_id,
             token_id: auction.token_id,
             bid: auction.bid,
-            created_at: auction.created_at,
+            created_at: auction.created_at.into(),
             ft_token_id: auction.ft_token_id,
-            minimal_step: auction.minimal_step,
-            start_price: auction.start_price,
-            buy_out_price: auction.buy_out_price,
-            start: auction.start,
-            end: auction.end,
+            minimal_step: auction.minimal_step.into(),
+            start_price: auction.start_price.into(),
+            buy_out_price: auction.buy_out_price.map(|p| p.into()),
+            start: auction.start.into(),
+            end: auction.end.into(),
         }
     }
 }
