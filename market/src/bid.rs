@@ -172,12 +172,13 @@ impl Market {
             not_finished
         });
         if bid_vec.is_empty() {
-            //If there is no bids left, should remove ft_token_id from the HashMap
+            // If there is no bids left, should remove ft_token_id from the HashMap
             sale.bids.remove(&ft_token_id);
         } else {
+            // If there are some bids left, add a vector of valid bids
             sale.bids.insert(ft_token_id.clone(),  bid_vec.to_vec());
-            self.market.sales.insert(&contract_and_token_id, &sale);
         };
+        self.market.sales.insert(&contract_and_token_id, &sale);
     }
 }
 
