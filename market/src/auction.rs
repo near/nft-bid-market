@@ -137,7 +137,7 @@ impl Market {
         let bid = Bid {
             owner_id: env::predecessor_account_id(),
             price: deposit.into(),
-            start: None,
+            start: env::block_timestamp().into(),
             end: None,
             origins: origins.unwrap_or_default(),
         };

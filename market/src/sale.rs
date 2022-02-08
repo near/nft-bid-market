@@ -333,7 +333,7 @@ impl Market {
                 ft_token_id,
                 buyer_id,
                 &mut sale,
-                Some(start),
+                start,
                 end,
                 origins,
             );
