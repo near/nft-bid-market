@@ -67,8 +67,9 @@ impl Market {
         nft_contract_id: AccountId,
         ft_token_id: &AccountId,
         token_id: TokenId,
-        bid: &Bid,
-    ) -> Sale {
+        owner_id: &AccountId,
+        price: U128
+    ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
         let sale = self
             .market
@@ -83,7 +84,7 @@ impl Market {
             .get(&contract_and_token_id)
             .expect("No sale");
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
-            if bid_from_vec.owner_id == bid.owner_id && bid_from_vec.price == bid.price {
+            if &(bid_from_vec.owner_id) == owner_id && bid_from_vec.price == price {
                 if bid_vec.len() == 1 {
                     //If the vector contained only one bid, should remove ft_token_id from the HashMap
                     sale.bids.remove(ft_token_id);
@@ -95,10 +96,10 @@ impl Market {
                         .remove(index);
                 };
                 self.market.sales.insert(&contract_and_token_id, &sale);
-                break; // shouldn't allow bids with equal price 
+                //break; // shouldn't allow bids with equal price 
+                return Some((*bid_from_vec).clone());
             };
         }
-
-        sale
+        None
     }
 }

@@ -143,7 +143,7 @@ impl Market {
         };
         //Return previous bid
         if let Some(previous_bid) = auction.bid {
-            self.refund_bid(ft_token_id, &previous_bid);
+            self.refund_bid(ft_token_id, previous_bid.owner_id, previous_bid.price);
         }
         // Extend the auction if the bid is added EXTENSION_DURATION (15 min) before the auction end
         auction.bid = Some(bid);

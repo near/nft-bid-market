@@ -95,7 +95,7 @@ impl Market {
         if bids_for_token_id.len() > self.market.bid_history_length as usize {
             // Need to refund the earliest bid before removing it
             let early_bid = &bids_for_token_id[0];
-            self.refund_bid(ft_token_id, early_bid);
+            self.refund_bid(ft_token_id, early_bid.owner_id.clone(), early_bid.price);
             bids_for_token_id.remove(0);
         }
 
@@ -108,16 +108,18 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: TokenId,
         ft_token_id: AccountId,
-        bid: Bid,
+        price: U128
     ) {
         assert_one_yocto();
-        assert_eq!(
-            env::predecessor_account_id(),
-            bid.owner_id,
-            "Must be bid owner"
+        let owner_id = env::predecessor_account_id();
+        self.internal_remove_bid(
+            nft_contract_id,
+            &ft_token_id,
+            token_id,
+            &owner_id,
+            price.clone()
         );
-        self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
-        self.refund_bid(ft_token_id, &bid);
+        self.refund_bid(ft_token_id, owner_id, price);
     }
 
     // Cancels the bid if it has ended
@@ -127,14 +129,15 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: TokenId,
         ft_token_id: AccountId,
-        bid: Bid,
+        owner_id: AccountId,
+        price: U128
     ) {
+        let bid = self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &owner_id, price.clone()).expect("No such bid");
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
             require!(is_finished, "The bid hasn't ended yet");
         }
-        self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &bid);
-        self.refund_bid(ft_token_id, &bid);
+        self.refund_bid(ft_token_id, owner_id, price);
     }
     
     // Cancel all expired bids
@@ -164,7 +167,11 @@ impl Market {
             if let Some(end) = bid_from_vec.end {
                 //is_finished &= env::block_timestamp() >= end.0;
                 if env::block_timestamp() >= end.0 {
-                    self.refund_bid(ft_token_id.clone(), bid_from_vec);
+                    self.refund_bid(
+                        ft_token_id.clone(),
+                        bid_from_vec.owner_id.clone(),
+                        bid_from_vec.price
+                    );
                     not_finished = false;
                 };
             }
@@ -185,18 +192,18 @@ impl Market {
     pub(crate) fn refund_all_bids(&mut self, bids_map: &Bids) {
         for (ft, bids) in bids_map {
             for bid in bids {
-                self.refund_bid((*ft).clone(), bid);
+                self.refund_bid((*ft).clone(), bid.owner_id.clone(), bid.price.clone());
             }
         }
     }
 
-    pub(crate) fn refund_bid(&mut self, bid_ft: FungibleTokenId, bid: &Bid) {
+    pub(crate) fn refund_bid(&mut self, bid_ft: FungibleTokenId, owner_id: AccountId, price: U128) {
         if bid_ft.as_str() == "near" {
-            Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
+            Promise::new(owner_id.clone()).transfer(u128::from(price));
         } else {
             ext_contract::ft_transfer(
-                bid.owner_id.clone(),
-                bid.price,
+                owner_id,
+                price,
                 None,
                 bid_ft,
                 1,
