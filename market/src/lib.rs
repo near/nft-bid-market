@@ -17,6 +17,7 @@ use crate::fee::PROTOCOL_FEE;
 use crate::sale::{Sale, SaleConditions, TokenType, SeriesSale, BID_HISTORY_LENGTH_DEFAULT,
     ContractAndTokenId, FungibleTokenId, ContractAndSeriesId};
 use crate::auction::Auction;
+pub use crate::sale::SaleJson;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
