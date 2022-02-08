@@ -157,18 +157,14 @@ fn test_fees_transfers() {
         unreachable!();
     }
     let auction_json: AuctionJson = view!(market.get_auction_json(1.into())).unwrap_json();
-    println!("{}", auction_json.end.0 - time_during_bid);
     assert!(auction_json.end.0 - time_during_bid == EXTENSION_DURATION);
+    let blocks_needed = (auction_json.end.0 - root.borrow_runtime().current_block().block_timestamp) / root.borrow_runtime().genesis.block_prod_time;
     let mut i = 0;
-    println!(
-        "cur_time = {}",
-        root.borrow_runtime().current_block().block_timestamp
-    );
     while root.borrow_runtime().current_block().block_timestamp < auction_json.end.0 {
         i += 1;
         prod_block(&root);
     }
     call!(user1, market.finish_auction(1.into())).assert_success();
-    println!("i = {}", i);
+    assert!(i == blocks_needed);
     println!("{}", serde_json::to_string_pretty(&auction_json).unwrap());
 }
