@@ -60,11 +60,11 @@ pub struct SaleJson {
     pub token_id: String,
     pub sale_conditions: SaleConditions,
     pub bids: Bids,
-    pub created_at: u64,
+    pub created_at: U64,
     pub token_type: TokenType,
 
-    pub start: Option<u64>,
-    pub end: Option<u64>,
+    pub start: Option<U64>,
+    pub end: Option<U64>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]

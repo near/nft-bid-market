@@ -156,11 +156,11 @@ impl Market {
             token_id: sale.token_id,
             sale_conditions: sale.sale_conditions,
             bids: sale.bids,
-            created_at: sale.created_at,
+            created_at: sale.created_at.into(),
             token_type: sale.token_type,
 
-            start: sale.start,
-            end: sale.end,
+            start: sale.start.map(|s| s.into()),
+            end: sale.end.map(|e| e.into()),
         }
     }
 }
