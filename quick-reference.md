@@ -1,11 +1,11 @@
 # NFT bid market
 
-NFT bid market consists of two contracts: NFT and Market.
+NFT bid market consists of two contracts: _NFT_ and _Market_.
 
-NFT contract allows to create and manage a token or token series. 
+_NFT contract_ allows to create and manage a token or token series. 
 It supports Metadata, Approval Management and Royalties [standards](https://nomicon.io/Standards/NonFungibleToken/README.html).
 
-Market contract handles sales, bids and auctions.
+_Market contract_ handles sales, bids and auctions.
 
 To build both contracts and deploy it on dev account:
 ```bash
@@ -23,7 +23,7 @@ near call $MARKET_CONTRACT_ID new '{"nft_ids": ["'$NFT_CONTRACT_ID'"], "owner_id
 
 ## NFT contract
 
-NFT contract supports [standards](https://nomicon.io/Standards/NonFungibleToken/README.html) for Metadata, Approval Management and Royalties. In addition, it manages private minting and allows the owner of the series to give a permission to the market to mint NFTs.
+_NFT contract_ supports [standards](https://nomicon.io/Standards/NonFungibleToken/README.html) for Metadata, Approval Management and Royalties. It also manages private minting.
 
 Suppose `CONTRACT_PARENT` wants to sell a series of NFTs.
 The first step is to create the series and mint several NFTs:
@@ -58,6 +58,8 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 
 ### List of view methods for nft token series
 
+The contract supports methods for Metadata, Approval Management and Royalties according to the [standards](https://nomicon.io/Standards/NonFungibleToken/README.html). Below we list only additional methods.
+
 To get metadata, owner_id and royalty of the series:
 ```bash
 near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
@@ -76,7 +78,7 @@ near view $NFT_CONTRACT_ID nft_series
 
 ## Market contract
 
-Using Market contract a user can put his NFT on a sale or an auction.
+Using _Market contract_ a user can put his NFT on a sale or an auction.
 He specifies the conditions on which he wants to sell NFT, such as FT type and price, start and end (or duration for auction), origins.
 Other users create bids, offering to buy (or buying) the NFT. Bids for sales can have start/end time.
 
@@ -146,6 +148,7 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near"}' --accountId $NFT_CONTRACT_ID
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:3"}'
 ```
+For this example we created bids with duration equal to 0.1 second and canceled them.
 
 It is possible to refund a specific bid:
 ```bash
@@ -160,6 +163,8 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
 ```
+When the sale is in progress, only `CONTRACT_PARENT` can call it. 
+If the sale ends and no bid is accepted, anyone can call `remove_sale`.
 
 ### List of view methods for sales
 To find number of sales:
@@ -211,7 +216,7 @@ near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near"
 
 ### Workflow for creating and using auction
 
-`CONTRACT_PARENT` puts three other NFTs on auction:
+`CONTRACT_PARENT` puts three NFTs on auction:
 ```bash
 near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --deposit 0.03
 
@@ -226,7 +231,7 @@ near view $MARKET_CONTRACT_ID get_auctions
 ```
 `CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
 The duration `900000000000` corresponds to 15 minutes.
-You can't set the duration lower than that. One can set the specific start time, otherwise the auction starts as soon as the command is complete.
+You can't set the duration lower than that. `CONTRACT_PARENT` can set the specific start time, otherwise the auction starts as soon as the command is complete.
 There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:

@@ -14,7 +14,7 @@ pub struct Bid {
     pub owner_id: AccountId,
     pub price: U128,
 
-    pub start: Option<U64>,
+    pub start: U64,
     pub end: Option<U64>,
 
     pub origins: Origins,
@@ -22,15 +22,14 @@ pub struct Bid {
 
 impl Bid {
     pub fn in_limits(&self) -> bool {
-        let mut res = true;
+        let mut res_start = true;
+        let mut res_end = true;
         let now = env::block_timestamp();
-        if let Some(start) = self.start {
-            res &= start.0 < now;
-        }
+        res_start &= self.start.0 < now;
         if let Some(end) = self.end {
-            res &= now < end.0;
+            res_end &= now < end.0;
         }
-        res
+        res_end && res_start
     }
 }
 
@@ -50,7 +49,7 @@ impl Market {
         ft_token_id: AccountId,
         buyer_id: AccountId,
         sale: &mut Sale,
-        start: Option<U64>,
+        start: U64,
         end: Option<U64>,
         origins: Option<Origins>,
     ) {
