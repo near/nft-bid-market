@@ -4,15 +4,18 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use near_contract_standards::non_fungible_token::metadata::TokenMetadata;
 use near_sdk::{
     env,
+    json_types::U128,
     serde_json::{self, json},
     AccountId,
 };
 use near_sdk_sim::{
     call, deploy, init_simulator,
     runtime::{init_runtime, GenesisConfig, RuntimeStandalone},
-    to_yocto, view, ContractAccount, UserAccount, STORAGE_AMOUNT,
+    to_yocto,
+    transaction::ExecutionStatus,
+    view, ContractAccount, UserAccount, STORAGE_AMOUNT,
 };
-use nft_bid_market::{MarketContract, SaleJson};
+use nft_bid_market::{AuctionJson, MarketContract, EXTENSION_DURATION};
 use nft_contract::NftContract;
 near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
     MARKET_WASM_BYTES => "../res/nft_bid_market.wasm",
@@ -28,7 +31,7 @@ pub fn init() -> (
     ContractAccount<NftContract>,
 ) {
     let g_config = GenesisConfig {
-        block_prod_time: 1_000_000_000 * 60 * 10, // 10 mins/block
+        block_prod_time: 1_000_000_000 * 60, // 1 mins/block
         ..Default::default()
     };
     let root = init_simulator(Some(g_config));
@@ -107,12 +110,13 @@ fn test_fees_transfers() {
         deposit = to_yocto("0.1")
     )
     .assert_success();
-
-    for i in 1..2 {
+    let origins = HashMap::from([(origin1.account_id(), 100u32)]);
+    for i in 1..3 {
+        let token_id = format!("1:{}", i);
         call!(
             user1,
             nft.nft_approve(
-                format!("1:{}", i),
+                token_id,
                 market.account_id(),
                 Some(
                     json!({
@@ -123,7 +127,7 @@ fn test_fees_transfers() {
                             "start": null,
                             "duration": "900000000000",
                             "buy_out_price": "10000000000",
-                            "origins": null,
+                            "origins": origins,
                         }
                     })
                     .to_string()
@@ -134,10 +138,37 @@ fn test_fees_transfers() {
         .assert_success();
     }
 
+    call!(user1, market.cancel_auction(0.into()), deposit = 1).assert_success();
+    let time_during_bid = root.borrow_runtime().current_block().block_timestamp + root.borrow_runtime().genesis.block_prod_time; // +1 block
     call!(
-        user1,
-        market.cancel_auction(0.into()),
-        deposit = 1
+        user2,
+        market.auction_add_bid(1.into(), Some("near".to_string()), None),
+        deposit = 10400
     )
     .assert_success();
+    let res = call!(user1, market.finish_auction(1.into()));
+    if let ExecutionStatus::Failure(execution_error) =
+        &res.promise_errors().remove(0).unwrap().outcome().status
+    {
+        assert!(execution_error
+            .to_string()
+            .contains("Auction can be finalized only after the end time"));
+    } else {
+        unreachable!();
+    }
+    let auction_json: AuctionJson = view!(market.get_auction_json(1.into())).unwrap_json();
+    println!("{}", auction_json.end.0 - time_during_bid);
+    assert!(auction_json.end.0 - time_during_bid == EXTENSION_DURATION);
+    let mut i = 0;
+    println!(
+        "cur_time = {}",
+        root.borrow_runtime().current_block().block_timestamp
+    );
+    while root.borrow_runtime().current_block().block_timestamp < auction_json.end.0 {
+        i += 1;
+        prod_block(&root);
+    }
+    call!(user1, market.finish_auction(1.into())).assert_success();
+    println!("i = {}", i);
+    println!("{}", serde_json::to_string_pretty(&auction_json).unwrap());
 }
