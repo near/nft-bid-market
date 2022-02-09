@@ -102,8 +102,18 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:3", "account_id": "'$MAR
 
 near view $MARKET_CONTRACT_ID get_sales
 ```
+<!---
 `CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price of two NFTs to `10300` due to 3% protocol fee.
 Only the first sale has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee. Thus the first NFT costs `10400` (3% protocol fee + 1% origin fee).
+-->
+
+`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. It doesn't include protocol and origins fee. To see the full price you can call `price_with_fees`:
+```bash
+near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
+```
+Here you specify the `price` you want to pay and `origins` you want to add to your bid.
+
+Only the first sale has origin fee. It will be paid by `CONTRACT_PARENT` to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
 
 Seller can withdraw unused storage deposits
 ```bash
@@ -125,7 +135,7 @@ near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 ```
 
-If `CONTRACT_PARENT` wants to increase or decrease the price of the third NFT, he can call `update_price`. After this the price is `12360` yoctoNEAR (`360` yoctoNEAR added as the protocol fee):
+If `CONTRACT_PARENT` wants to increase or decrease the price of the third NFT, he can call `update_price`.
 ```bash
 near call $MARKET_CONTRACT_ID update_price '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3", "ft_token_id": "near", "price": "12000"}' --accountId $CONTRACT_PARENT --depositYocto 1
 
@@ -219,6 +229,11 @@ To get sales for token type:
 near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near", "from_index": "0", "limit": 10}'
 ```
 
+To get the full price with a protocol and origins fee:
+```bash
+near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
+```
+<sub> This method is not specific for sales. Can be used in context of auctions.
 
 ### Workflow for creating and using auction
 
@@ -234,11 +249,18 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:6", "account_id": "'$MAR
 "msg": "{\"Auction\": {\"token_type\": \"near\", \"minimal_step\": \"100\", \"start_price\": \"10000\", \"start\": null, \"duration\": \"900000000000\", \"buy_out_price\": \"10000000000\", \"origins\": {\"'$NFT_CONTRACT_ID'\": 100}} }"}' --accountId $CONTRACT_PARENT --deposit 1
 
 near view $MARKET_CONTRACT_ID get_auctions
+near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
 ```
+<!---
 `CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
 The duration `900000000000` corresponds to 15 minutes.
 You can't set the duration lower than that. `CONTRACT_PARENT` can set the specific start time, otherwise the auction starts as soon as the command is complete.
 There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
+-->
+The duration `900000000000` corresponds to 15 minutes.
+You can't set the duration lower than that. `CONTRACT_PARENT` can set the specific start time, otherwise the auction starts as soon as the command is complete.
+There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
+The parameters `start_price`, `minimal_step` and `buy_out_price` do not include fees, to get the final amounts we can call `price_with_fees`.
 
 `CONTRACT_PARENT` can cancel his auction before it has reached its end. It is possible only in case there is no bid for this auction:
 ```bash
@@ -249,7 +271,7 @@ near view $MARKET_CONTRACT_ID get_auctions
 
 `ALICE` can create a bid on the ongoing auction:
 ```bash
-near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10400
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10300
 
 near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "1"}'
 ```
@@ -257,9 +279,9 @@ In our case, this call happens less than 15 minutes before the end of the auctio
 
 A bid for an auction can't be deleted.
 
-If `ALICE` had called `auction_add_bid` with deposit more or equal to `buy_out_price`, she would have automatically bought it. In this case the auction would have ended ahead of time.
+If `ALICE` calls `auction_add_bid` with deposit more or equal to buyout price (with fees), she automatically buys it. In this case the auction ends ahead of time.
 ```bash
-near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10400000000
+near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10300000000
 
 near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "2"}'
 ```
@@ -311,3 +333,8 @@ To get the amount of the latest bid (with protocol and origin fees):
 near view $MARKET_CONTRACT_ID get_current_bid '{"auction_id": "0"}'
 ```
 
+To get the full price with a protocol and origins fee:
+```bash
+near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
+```
+<sub> This method is not specific for auctions. Can be used in context of sales.
