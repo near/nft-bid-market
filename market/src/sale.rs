@@ -118,7 +118,7 @@ impl Market {
         nft_contract_id: AccountId,
     ) -> SaleJson {
         let SaleArgs {
-            mut sale_conditions,
+            sale_conditions,
             token_type,
             start,
             end,
@@ -127,7 +127,7 @@ impl Market {
 
         // check that the offered ft token is supported
 
-        for (ft_token_id, price) in sale_conditions.iter() {
+        for ft_token_id in sale_conditions.keys() {
             if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",

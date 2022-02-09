@@ -1,3 +1,4 @@
+use crate::*;
 use crate::{bid::Origins, common::*};
 use std::collections::HashMap;
 
@@ -32,6 +33,13 @@ pub fn calculate_price_with_fees(price: U128, origins: Option<&Origins>) -> u128
         0
     };
     price.0 * (PAYOUT_TOTAL_VALUE + PROTOCOL_FEE + total_origins as u128) / PAYOUT_TOTAL_VALUE
+}
+
+#[near_bindgen]
+impl Market {
+    pub fn price_with_fees(&self, price: U128, origins: Option<Origins>) -> U128 {
+        calculate_price_with_fees(price, origins.as_ref()).into()
+    }
 }
 
 // pub fn with_fees(price: u128) -> u128 {

@@ -43,7 +43,9 @@ impl Market {
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
         let min_deposit = if let Some(ref bid) = auction.bid {
-            bid.price.0 + auction.minimal_step
+            let total_origins = fee::calculate_origins(&bid.origins);
+            let actual_amount = fee::calculate_actual_amount(bid.price.0, total_origins); // TODO: need more tests here
+            actual_amount + auction.minimal_step
         } else {
             auction.start_price
         };
@@ -59,11 +61,7 @@ impl Market {
         auction.bid.map(|bid| bid.price)
     }
 
-    pub fn get_auctions(
-        &self,
-        from_index: Option<U128>,
-        limit: Option<u64>,
-    ) -> Vec<AuctionJson> {
+    pub fn get_auctions(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<AuctionJson> {
         let auctions = &self.market.auctions;
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
