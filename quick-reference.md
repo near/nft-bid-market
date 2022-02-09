@@ -166,6 +166,8 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 `CONTRACT_PARENT` can call `remove_sale` to remove his sale and refund all the bids:
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:3"}' --accountId $CONTRACT_PARENT --depositYocto 1
+
+near view $MARKET_CONTRACT_ID get_sales
 ```
 When the sale is in progress, only `CONTRACT_PARENT` can call it. 
 If the sale ends and no bid is accepted, anyone can call `remove_sale`.

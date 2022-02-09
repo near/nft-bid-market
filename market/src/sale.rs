@@ -140,8 +140,10 @@ impl Market {
         // Create a new sale with given arguments and empty list of bids
 
         let bids = HashMap::new();
-
         let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
+        let start = start
+            .map(|s| s.into())
+            .unwrap_or_else(env::block_timestamp);
         let sale = Sale {
             owner_id: owner_id.clone(),
             approval_id,
@@ -151,7 +153,7 @@ impl Market {
             bids,
             created_at: env::block_timestamp(),
             token_type: token_type.clone(),
-            start: start.map(|s| s.into()),
+            start: Some(start),
             end: end.map(|e| e.into()),
             origins: origins.unwrap_or_default(),
         };
