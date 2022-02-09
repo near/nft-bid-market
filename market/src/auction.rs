@@ -139,9 +139,11 @@ impl Market {
             self.refund_bid(ft_token_id, previous_bid.owner_id, previous_bid.price);
         }
         // If the price is bigger than the buy_out_price, the auction end is set to the current time
+        let mut bought_out = false;
         if let Some(buy_out_price) = auction.buy_out_price {
             if calculate_price_with_fees(buy_out_price.into(), origins.as_ref()) <= deposit {
                 auction.end = env::block_timestamp();
+                bought_out = true;
             }
         }
         // Create a bid
@@ -153,8 +155,9 @@ impl Market {
             origins: origins.unwrap_or_default(),
         };
         // Extend the auction if the bid is added EXTENSION_DURATION (15 min) before the auction end
+        // and the token is not bought out
         auction.bid = Some(bid);
-        if auction.end - env::block_timestamp() < EXTENSION_DURATION {
+        if auction.end - env::block_timestamp() < EXTENSION_DURATION && !bought_out {
             auction.end = env::block_timestamp() + EXTENSION_DURATION;
         }
         self.market.auctions.insert(&auction_id.into(), &auction);
