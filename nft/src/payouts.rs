@@ -151,7 +151,7 @@ impl Payouts for Nft {
         );
         payout.payout.insert(
             token_owner,
-            royalty_to_payout(ROYALTY_TOTAL_VALUE as u32 - total_payout, initial_price),
+            royalty_to_payout(max_payout - total_payout, initial_price),
         );
         self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         payout

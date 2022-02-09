@@ -62,10 +62,12 @@ impl Market {
         approval_id: u64,
         nft_contract_id: AccountId,
     ) -> (u128, AuctionJson) {
-
         require!(
             args.duration.0 >= EXTENSION_DURATION && args.duration.0 <= MAX_DURATION,
-            format!("Incorrect duration. Should be at least {}", EXTENSION_DURATION)
+            format!(
+                "Incorrect duration. Should be at least {}",
+                EXTENSION_DURATION
+            )
         );
         let ft_token_id = self.token_type_to_ft_token_type(args.token_type);
         let start = args
@@ -75,9 +77,7 @@ impl Market {
         require!(start >= env::block_timestamp(), "incorrect start time");
         let end = start + args.duration.0;
         let auction_id = self.market.next_auction_id;
-        let origins = args
-            .origins
-            .unwrap_or_default();
+        let origins = args.origins.unwrap_or_default();
         let auction = Auction {
             owner_id,
             approval_id,
@@ -86,9 +86,9 @@ impl Market {
             bid: None,
             created_at: env::block_timestamp(),
             ft_token_id,
-            minimal_step: calculate_price_with_fees(args.minimal_step, Some(&origins)),
-            start_price: calculate_price_with_fees(args.start_price, Some(&origins)),
-            buy_out_price: args.buy_out_price.map(|p| calculate_price_with_fees(p, Some(&origins))),
+            minimal_step: args.minimal_step.into(),
+            start_price: args.start_price.into(),
+            buy_out_price: args.buy_out_price.map(|p| p.into()),
             start,
             end,
             origins,
@@ -109,7 +109,7 @@ impl Market {
         &mut self,
         auction_id: U128,
         token_type: TokenType,
-        origins: Option<Origins>
+        origins: Option<Origins>,
     ) {
         let ft_token_id = self.token_type_to_ft_token_type(token_type);
         require!(
@@ -126,13 +126,24 @@ impl Market {
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("auction not active"));
         let deposit = env::attached_deposit();
-        let min_deposit = self.get_minimal_next_bid(auction_id).0;
+        let min_deposit =
+            calculate_price_with_fees(self.get_minimal_next_bid(auction_id), origins.as_ref());
 
         // Check that the bid is not smaller than the minimal allowed bid
         require!(
             deposit >= min_deposit,
             format!("Should bid at least {}", min_deposit)
         );
+        //Return previous bid
+        if let Some(previous_bid) = auction.bid {
+            self.refund_bid(ft_token_id, previous_bid.owner_id, previous_bid.price);
+        }
+        // If the price is bigger than the buy_out_price, the auction end is set to the current time
+        if let Some(buy_out_price) = auction.buy_out_price {
+            if calculate_price_with_fees(buy_out_price.into(), origins.as_ref()) <= deposit {
+                auction.end = env::block_timestamp();
+            }
+        }
         // Create a bid
         let bid = Bid {
             owner_id: env::predecessor_account_id(),
@@ -141,20 +152,10 @@ impl Market {
             end: None,
             origins: origins.unwrap_or_default(),
         };
-        //Return previous bid
-        if let Some(previous_bid) = auction.bid {
-            self.refund_bid(ft_token_id, previous_bid.owner_id, previous_bid.price);
-        }
         // Extend the auction if the bid is added EXTENSION_DURATION (15 min) before the auction end
         auction.bid = Some(bid);
         if auction.end - env::block_timestamp() < EXTENSION_DURATION {
             auction.end = env::block_timestamp() + EXTENSION_DURATION;
-        }
-        // If the price is bigger than the buy_out_price, the auction end is set to the current time
-        if let Some(buy_out_price) = auction.buy_out_price {
-            if buy_out_price <= deposit {
-                auction.end = env::block_timestamp();
-            }
         }
         self.market.auctions.insert(&auction_id.into(), &auction);
     }

@@ -127,14 +127,14 @@ impl Market {
 
         // check that the offered ft token is supported
 
-        for (ft_token_id, price) in sale_conditions.iter_mut() {
+        for (ft_token_id, price) in sale_conditions.iter() {
             if !self.market.ft_token_ids.contains(ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",
                     ft_token_id
                 ));
             }
-            *price = U128::from(calculate_price_with_fees(*price, origins.as_ref()));
+            //*price = U128::from(calculate_price_with_fees(*price, None));
         }
 
         // Create a new sale with given arguments and empty list of bids
@@ -275,7 +275,6 @@ impl Market {
                 ft_token_id
             ));
         }
-        let price = U128::from(calculate_price_with_fees(price, Some(&sale.origins)));
         sale.sale_conditions.insert(ft_token_id, price);
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
@@ -315,7 +314,7 @@ impl Market {
         let deposit = env::attached_deposit();
         assert!(deposit > 0, "Attached deposit must be greater than 0");
 
-        if deposit == price.0 {
+        if deposit == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(
                 contract_id,
                 token_id,

@@ -116,7 +116,7 @@ If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal 
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
 `ALICE` gets the second NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10400 --gas 200000000000000
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
