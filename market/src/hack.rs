@@ -27,10 +27,4 @@ impl Market {
         auction.end = env::block_timestamp();
         self.market.auctions.insert(&auction_id.into(), &auction);
     }
-
-    pub fn hack_finish_sale(&mut self, nft_contract_token: ContractAndTokenId) {
-        let mut sale = self.market.sales.get(&nft_contract_token).expect("no sale");
-        sale.end = Some(env::block_timestamp());
-        self.market.sales.insert(&nft_contract_token, &sale);
-    }
 }
