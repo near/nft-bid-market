@@ -65,6 +65,7 @@ pub struct SaleJson {
 
     pub start: Option<U64>,
     pub end: Option<U64>,
+    pub origins: Origins,
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]

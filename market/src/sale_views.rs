@@ -161,6 +161,7 @@ impl Market {
 
             start: sale.start.map(|s| s.into()),
             end: sale.end.map(|e| e.into()),
+            origins: sale.origins,
         }
     }
 }
