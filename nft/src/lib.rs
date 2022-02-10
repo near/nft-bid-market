@@ -2,18 +2,21 @@ mod nft_core;
 mod token;
 
 pub mod common;
-mod series_views;
 pub mod event;
+mod permissions;
+mod series_views;
+use crate::permissions::ContractAutorize;
 use common::*;
 
 mod token_series;
 use event::NearEvent;
 use near_contract_standards::non_fungible_token::refund_deposit_to_account;
 use near_sdk::{ext_contract, Gas, Promise};
+use permissions::ContractAuthorization;
 use token_series::{TokenSeries, TokenSeriesId, TokenSeriesSale, TOKEN_DELIMETER};
 
 mod payouts;
-use crate::{payouts::MAXIMUM_ROYALTY, event::NftMintData};
+use crate::{event::NftMintData, payouts::MAXIMUM_ROYALTY};
 
 use std::collections::HashMap;
 
@@ -31,6 +34,7 @@ pub struct Nft {
     private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
     market_id: AccountId,
+    contract_authorization: ContractAuthorization,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -43,6 +47,8 @@ enum StorageKey {
 
     TokensBySeriesInner { token_series: String },
     TokensPerOwner { account_hash: Vec<u8> },
+    Minters,
+    Authorizations,
 }
 
 #[near_bindgen]
@@ -74,7 +80,7 @@ impl Nft {
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
-        let mut minters = LookupSet::new(b"m");
+        let mut minters = LookupSet::new(StorageKey::Minters);
         minters.extend(private_minters);
         Self {
             tokens: NonFungibleToken::new(
@@ -88,6 +94,10 @@ impl Nft {
             private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
             market_id,
+            contract_authorization: ContractAuthorization::new(
+                false,
+                LookupMap::new(StorageKey::Authorizations),
+            ),
         }
     }
 
@@ -100,6 +110,7 @@ impl Nft {
         reciever_id: AccountId,
         refund_id: Option<AccountId>,
     ) -> TokenId {
+        self.contract_authorization.panic_if_not_allowed(&env::predecessor_account_id(), "mint");
         let refund_id = refund_id.unwrap_or_else(env::predecessor_account_id);
         let initial_storage_usage = env::storage_usage();
 
@@ -167,11 +178,11 @@ impl Nft {
             .insert(&token_series_id, &token_series);
 
         refund_deposit_to_account(env::storage_usage() - initial_storage_usage, refund_id);
-        
+
         // Event
         let mint_log = NftMintData::new(&reciever_id, vec![&token_id], None);
         NearEvent::nft_mint(vec![mint_log]).emit();
-        
+
         token_id
     }
 

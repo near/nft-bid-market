@@ -1,36 +1,39 @@
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::AccountId;
-use near_sdk::{collections::UnorderedMap, env};
+use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::LookupMap,
+    env, AccountId,
+};
 
 pub type ActionId = String;
 pub type PermissionId = String;
-pub type ContractId = AccountId;
+
+const DELIMETER: char = ':';
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct ContractPermission {
     permission_id: PermissionId,
-    contract_id: ContractId,
-    action_id: Option<ActionId>,
+    contract_id: AccountId,
+    action_id: ActionId,
 }
 
 pub trait ContractAutorize {
-    fn is_allowed(&self, contract_id: &ContractId, action_id: Option<&ActionId>) -> bool;
-    fn verify_allowed(&self, contract_id: &ContractId, action_id: Option<&ActionId>);
-    fn grant(&mut self, contract_id: ContractId, action_id: Option<ActionId>) -> bool;
-    fn deny(&mut self, contract_id: ContractId, action_id: Option<&ActionId>) -> bool;
+    fn is_allowed(&self, contract_id: &AccountId, action_id: &str) -> bool;
+    fn panic_if_not_allowed(&self, contract_id: &AccountId, action_id: &str);
+    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool;
+    fn deny(&mut self, contract_id: AccountId, action_id: &str) -> bool;
     fn grant_all(&mut self);
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct ContractAuthorization {
     enabled: bool,
-    granted_contracts: UnorderedMap<PermissionId, ContractPermission>,
+    granted_contracts: LookupMap<PermissionId, ContractPermission>, // shouldn't be set?
 }
 
 impl ContractAuthorization {
     pub fn new(
         enabled: bool,
-        granted_contracts: UnorderedMap<PermissionId, ContractPermission>,
+        granted_contracts: LookupMap<PermissionId, ContractPermission>,
     ) -> Self {
         Self {
             enabled,
@@ -40,46 +43,41 @@ impl ContractAuthorization {
 }
 
 impl ContractAutorize for ContractAuthorization {
-    fn is_allowed(&self, contract_id: &ContractId, action_id: Option<&ActionId>) -> bool {
-        if self.enabled == false {
+    fn is_allowed(&self, contract_id: &AccountId, action_id: &str) -> bool {
+        if !self.enabled {
             return true;
         }
 
-        let mut key: PermissionId = String::from(contract_id.clone());
-        if action_id.is_some() {
-            key = format!("{}{}", key, action_id.unwrap().clone());
-        }
-        return self.granted_contracts.get(&key).is_some();
+        let key = format!("{}{}{}", contract_id, DELIMETER, action_id);
+
+        self.granted_contracts.get(&key).is_some()
     }
 
-    fn panic_if_not_allowed(&self, contract_id: &ContractId, action_id: Option<&ActionId>) {
+    fn panic_if_not_allowed(&self, contract_id: &AccountId, action_id: &str) {
         if !self.is_allowed(contract_id, action_id) {
-            env::panic_str(format!("Access to \"{}\" denied for this contract",action_id.clone()));
+            env::panic_str(&format!(
+                "Access to \"{}\" denied for this contract",
+                action_id
+            ));
         }
     }
 
-    fn grant(&mut self, contract_id: ContractId, action_id: Option<ActionId>) -> bool {
-        let mut key: PermissionId = contract_id.to_string();
-        if action_id.is_some() {
-            key = format!("{}{}", key, action_id.as_ref().unwrap().clone());
-        };
+    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
+        let key = format!("{}{}{}", contract_id, DELIMETER, action_id,);
         self.granted_contracts
             .insert(
                 &key,
                 &ContractPermission {
                     permission_id: key.clone(),
-                    contract_id: contract_id,
-                    action_id: action_id,
+                    contract_id,
+                    action_id,
                 },
             )
             .is_none()
     }
 
-    fn deny(&mut self, contract_id: ContractId, action_id: Option<&ActionId>) -> bool {
-        let mut key: PermissionId = contract_id.to_string();
-        if action_id.is_some() {
-            key = format!("{}{}", key, action_id.unwrap());
-        }
+    fn deny(&mut self, contract_id: AccountId, action_id: &str) -> bool {
+        let key = format!("{}{}{}", contract_id, DELIMETER, action_id);
         self.granted_contracts.remove(&key).is_some()
     }
 
