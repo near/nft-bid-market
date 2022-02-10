@@ -214,6 +214,18 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_I
 ```
 > Here we called `hack_finish_sale` in order to finish the sale ahead of time. It is done for demonstration purposes. All content of `hack.rs` should be deleted later.
 
+If `ALICE` decides to sell one of her NFTs, the royalty fee will be taken from the price:
+```bash
+near call $MARKET_CONTRACT_ID storage_deposit --accountId $ALICE --deposit 0.1
+
+near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:1", "account_id": "'$MARKET_CONTRACT_ID'", 
+"msg": "{\"Sale\": {\"sale_conditions\": {\"near\": \"10000\"}, \"token_type\": \"1\", \"start\": null, \"end\": null, \"origins\": null} }"}' --accountId $ALICE --deposit 1
+near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_token": "'$NFT_CONTRACT_ID'||1:1"}'
+
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $NFT_CONTRACT_ID --depositYocto 10300 --gas 300000000000000
+near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
+```
+
 ### List of view methods for sales
 To find number of sales:
 ```bash
