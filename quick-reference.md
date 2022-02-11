@@ -60,7 +60,7 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:9"}'
 ```
 
-### Permissions 
+### Authorizing to mint NFTs
 
 By default, authorization is turned off.
 It means, that you only need to be approved through `nft_series_market_approve` to be able to call `nft_mint`.
