@@ -1,3 +1,23 @@
+# Setup
+
+## Installing the Rust toolchain
+
+Install Rustup, configure your current shell and add `wasm` target to your toolchain by running:
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+rustup target add wasm32-unknown-unknown
+```
+
+## Installing the `near-cli`
+
+Make sure you have the latest version of `npm` and `NodeJS` installed.
+
+Install near-cli globally by running:
+```bash
+npm install -g near-cli
+```
+
 # NFT bid market
 
 NFT bid market consists of two contracts: _NFT_ and _Market_.
