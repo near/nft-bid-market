@@ -85,6 +85,11 @@ near call $NFT_CONTRACT_ID deny '{"contract_id": "'$MARKET_CONTRACT_ID'", "actio
 Returns true if the contract has been removed from the grant list,
 false if the grant list doesn't contain the contract.
 
+If you want to turn off the authorization:
+```bash
+near call $NFT_CONTRACT_ID set_authorization '{"enabled": false}'  --accountId $CONTRACT_PARENT
+```
+
 To view whether `MARKET_CONTRACT_ID` has a permission to mint:
 ```bash
 near view $NFT_CONTRACT_ID is_allowed '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}'
