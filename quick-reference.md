@@ -60,6 +60,41 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:9"}'
 ```
 
+### Permissions 
+
+By default, authorization is turned off.
+It means, that you only need to be approved through `nft_series_market_approve` to be able to call `nft_mint`.
+When authorization is on, you also need to be granted permission by `CONTRACT_PARENT`.
+
+To turn on the authorization:
+```bash
+near call $NFT_CONTRACT_ID set_authorization '{"enabled": true}'  --accountId $CONTRACT_PARENT
+```
+
+To give a permission to mint NFTs the series owner calls:
+```bash
+near call $NFT_CONTRACT_ID grant '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}' --accountId $CONTRACT_PARENT
+```
+Returns true if the contract has been added to the grant list,
+false if the contract is already in the grant list.
+
+To deny a permission to mint NFTs the series owner calls:
+```bash
+near call $NFT_CONTRACT_ID deny '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}' --accountId $CONTRACT_PARENT
+```
+Returns true if the contract has been removed from the grant list,
+false if the grant list doesn't contain the contract.
+
+To turn off the authorization:
+```bash
+near call $NFT_CONTRACT_ID grant_all --accountId $CONTRACT_PARENT
+```
+
+To view whether `MARKET_CONTRACT_ID` has a permission to mint:
+```bash
+near view $NFT_CONTRACT_ID is_allowed '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}'
+```
+
 ### List of view methods for nft token series
 
 The contract supports methods for Metadata, Approval Management and Royalties according to the [standards](https://nomicon.io/Standards/NonFungibleToken/README.html). Below we list only additional methods.
