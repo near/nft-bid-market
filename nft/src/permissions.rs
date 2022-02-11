@@ -94,17 +94,17 @@ impl Nft {
         self.contract_authorization.is_allowed(&contract_id, action_id)
     }
 
-    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
+    pub fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
         require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
         self.contract_authorization.grant(contract_id, action_id)
     }
 
-    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
+    pub fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
         require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
         self.contract_authorization.deny(contract_id, action_id)
     }
 
-    fn set_authorization(&mut self, enabled: bool) {
+    pub fn set_authorization(&mut self, enabled: bool) {
         require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
         self.contract_authorization.set_authorization(enabled);
     }
