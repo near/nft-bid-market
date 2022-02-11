@@ -1,3 +1,4 @@
+use crate::*;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::LookupMap,
@@ -20,8 +21,8 @@ pub trait ContractAutorize {
     fn is_allowed(&self, contract_id: &AccountId, action_id: &str) -> bool;
     fn panic_if_not_allowed(&self, contract_id: &AccountId, action_id: &str);
     fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool;
-    fn deny(&mut self, contract_id: AccountId, action_id: &str) -> bool;
-    fn grant_all(&mut self);
+    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool;
+    fn set_authorization(&mut self, enabled: bool);
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -76,12 +77,35 @@ impl ContractAutorize for ContractAuthorization {
             .is_none()
     }
 
-    fn deny(&mut self, contract_id: AccountId, action_id: &str) -> bool {
+    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
         let key = format!("{}{}{}", contract_id, DELIMETER, action_id);
         self.granted_contracts.remove(&key).is_some()
     }
 
-    fn grant_all(&mut self) {
-        self.enabled = false;
+    fn set_authorization(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+}
+
+
+#[near_bindgen]
+impl Nft {
+    pub fn is_allowed(&self, contract_id: AccountId, action_id: &str) -> bool {
+        self.contract_authorization.is_allowed(&contract_id, action_id)
+    }
+
+    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
+        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
+        self.contract_authorization.grant(contract_id, action_id)
+    }
+
+    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
+        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
+        self.contract_authorization.deny(contract_id, action_id)
+    }
+
+    fn set_authorization(&mut self, enabled: bool) {
+        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
+        self.contract_authorization.set_authorization(enabled);
     }
 }
