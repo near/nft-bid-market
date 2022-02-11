@@ -90,8 +90,8 @@ impl ContractAutorize for ContractAuthorization {
 
 #[near_bindgen]
 impl Nft {
-    pub fn is_allowed(&self, contract_id: AccountId, action_id: &str) -> bool {
-        self.contract_authorization.is_allowed(&contract_id, action_id)
+    pub fn is_allowed(&self, contract_id: AccountId, action_id: ActionId) -> bool {
+        self.contract_authorization.is_allowed(&contract_id, &action_id)
     }
 
     pub fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
