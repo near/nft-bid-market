@@ -41,13 +41,6 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$
 ```
 Now he has eight NFTs.
 
-<!---
-`CONTRACT_PARENT` (the owner) can assign private minters
-```bash
-near call $NFT_CONTRACT_ID add_private_minter '{"account_id": "'$ALICE'"}' --accountId $CONTRACT_PARENT
-```
--->
-
 Instead of minting NFTs by himself, `CONTRACT_PARENT` can cover the storage for NFTs and give the market an approval to mint tokens.
 After this `MARKET_CONTRACT_ID` will be able to mint a new NFT.
 ```bash
@@ -58,41 +51,6 @@ near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID --deposit 1
 
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:9"}'
-```
-
-### Authorizing to mint NFTs
-
-By default, authorization is turned off.
-It means, that you only need to be approved through `nft_series_market_approve` to be able to call `nft_mint`.
-When authorization is on, you also need to be granted permission by `CONTRACT_PARENT`.
-
-To turn on the authorization:
-```bash
-near call $NFT_CONTRACT_ID set_authorization '{"enabled": true}'  --accountId $CONTRACT_PARENT
-```
-
-To give a permission to mint NFTs the series owner calls:
-```bash
-near call $NFT_CONTRACT_ID grant '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}' --accountId $CONTRACT_PARENT
-```
-Returns true if the contract has been added to the grant list,
-false if the contract is already in the grant list.
-
-To deny a permission to mint NFTs the series owner calls:
-```bash
-near call $NFT_CONTRACT_ID deny '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}' --accountId $CONTRACT_PARENT
-```
-Returns true if the contract has been removed from the grant list,
-false if the grant list doesn't contain the contract.
-
-If you want to turn off the authorization:
-```bash
-near call $NFT_CONTRACT_ID set_authorization '{"enabled": false}'  --accountId $CONTRACT_PARENT
-```
-
-To view whether `MARKET_CONTRACT_ID` has a permission to mint:
-```bash
-near view $NFT_CONTRACT_ID is_allowed '{"contract_id": "'$MARKET_CONTRACT_ID'", "action_id": "mint"}'
 ```
 
 ### List of view methods for nft token series
@@ -143,11 +101,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MAR
 
 near view $MARKET_CONTRACT_ID get_sales
 ```
-<!---
-`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. Fees are automatically added to this amount, thus the contract sets the price of two NFTs to `10300` due to 3% protocol fee.
-Only the first sale has origin fee. It might be paid to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee. Thus the first NFT costs `10400` (3% protocol fee + 1% origin fee).
-, "origins": {"'$NFT_CONTRACT_ID'": 150}
--->
+
 `CONTRACT_PARENT` could have set the specific start time, since he hadn't done it, the auction started as soon as the command was complete.
 Only the last sale has end time.
 Only the first sale has origin fee. It will be paid by `CONTRACT_PARENT` to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
@@ -330,12 +284,7 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:8", "account_id": "'$MAR
 near view $MARKET_CONTRACT_ID get_auctions
 near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
 ```
-<!---
-`CONTRACT_PARENT` specified the minimal price to be `10000`, minimal step `1000` and buyout price `10000000000`. The contract sets the price to `10400`, minimal step `1040` and buyout price `10400000000` (because it includes protocol fee 3% and origin fee 1%). 
-The duration `900000000000` corresponds to 15 minutes.
-You can't set the duration lower than that. `CONTRACT_PARENT` can set the specific start time, otherwise the auction starts as soon as the command is complete.
-There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
--->
+
 The duration `900000000000` corresponds to 15 minutes.
 You can't set the duration lower than that. `CONTRACT_PARENT` can set the specific start time, otherwise the auction starts as soon as the command is complete.
 There is a `buy_out_price`, meaning that anyone can buy the NFT for this price. `CONTRACT_PARENT` could have disabled this feature by setting `buy_out_price` to `null`.
