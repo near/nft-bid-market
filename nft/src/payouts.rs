@@ -145,13 +145,13 @@ impl Payouts for Nft {
                 total_payout += v;
             }
         }
-        require!(
-            total_payout <= max_payout as u32,
-            format!("Royalty total value should be < {}", max_payout)
-        );
         payout.payout.insert(
             token_owner,
             royalty_to_payout(max_payout - total_payout, initial_price),
+        );
+        require!(
+            total_payout <= max_payout as u32,
+            format!("Royalty total value should be < {}", max_payout)
         );
         self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         payout

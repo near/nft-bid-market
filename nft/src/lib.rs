@@ -12,7 +12,7 @@ mod token_series;
 use event::NearEvent;
 use near_contract_standards::non_fungible_token::refund_deposit_to_account;
 use near_sdk::{ext_contract, Gas, Promise};
-use permissions::ContractAuthorization;
+use permissions::PrivateMint;
 use token_series::{TokenSeries, TokenSeriesId, TokenSeriesSale, TOKEN_DELIMETER};
 
 mod payouts;
@@ -31,9 +31,8 @@ pub struct Nft {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
 
-    private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
-    contract_authorization: ContractAuthorization,
+    private_mint: PrivateMint,
 }
 
 #[derive(BorshSerialize, BorshStorageKey)]
@@ -47,7 +46,6 @@ enum StorageKey {
     TokensBySeriesInner { token_series: String },
     TokensPerOwner { account_hash: Vec<u8> },
     Minters,
-    Authorizations,
 }
 
 #[near_bindgen]
@@ -66,6 +64,7 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
+            false
         )
     }
 
@@ -74,6 +73,7 @@ impl Nft {
         owner_id: AccountId,
         metadata: NFTContractMetadata,
         private_minters: Vec<AccountId>,
+        private_minting_enabled: bool,
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
@@ -88,11 +88,10 @@ impl Nft {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
-            private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
-            contract_authorization: ContractAuthorization::new(
-                false,
-                LookupMap::new(StorageKey::Authorizations),
+            private_mint: PrivateMint::new(
+                private_minting_enabled,
+                minters,
             ),
         }
     }
@@ -106,7 +105,7 @@ impl Nft {
         reciever_id: AccountId,
         refund_id: Option<AccountId>,
     ) -> TokenId {
-        self.contract_authorization.panic_if_not_allowed(&env::predecessor_account_id(), "mint");
+        self.private_mint.panic_if_not_allowed(&env::predecessor_account_id());
         let refund_id = refund_id.unwrap_or_else(env::predecessor_account_id);
         let initial_storage_usage = env::storage_usage();
 
@@ -189,7 +188,7 @@ impl Nft {
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
     ) -> TokenSeriesId {
-        self.contract_authorization.panic_if_not_allowed(&env::predecessor_account_id(), "mint");
+        self.private_mint.panic_if_not_allowed(&env::predecessor_account_id());
         let initial_storage_usage = env::storage_usage();
         let owner_id = env::predecessor_account_id();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
@@ -229,11 +228,6 @@ impl Nft {
         refund_deposit(env::storage_usage() - initial_storage_usage);
 
         token_series_id
-    }
-
-    pub fn add_private_minter(&mut self, account_id: AccountId) {
-        require!(env::predecessor_account_id().eq(&self.tokens.owner_id));
-        self.private_minters.insert(&account_id);
     }
 
     #[payable]

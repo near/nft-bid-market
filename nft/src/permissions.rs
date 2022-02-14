@@ -1,85 +1,49 @@
 use crate::*;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::LookupMap,
     env, AccountId,
 };
 
-pub type ActionId = String;
-pub type PermissionId = String;
-
-const DELIMETER: char = ':';
-
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct ContractPermission {
-    permission_id: PermissionId,
-    contract_id: AccountId,
-    action_id: ActionId,
-}
-
 pub trait ContractAutorize {
-    fn is_allowed(&self, contract_id: &AccountId, action_id: &str) -> bool;
-    fn panic_if_not_allowed(&self, contract_id: &AccountId, action_id: &str);
-    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool;
-    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool;
+    fn is_allowed(&self, contract_id: &AccountId) -> bool;
+    fn panic_if_not_allowed(&self, contract_id: &AccountId);
+    fn grant(&mut self, contract_id: AccountId) -> bool;
+    fn deny(&mut self, contract_id: AccountId) -> bool;
     fn set_authorization(&mut self, enabled: bool);
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct ContractAuthorization {
+pub struct PrivateMint {
     enabled: bool,
-    granted_contracts: LookupMap<PermissionId, ContractPermission>, // shouldn't be set?
+    private_minters: LookupSet<AccountId>,
 }
 
-impl ContractAuthorization {
-    pub fn new(
-        enabled: bool,
-        granted_contracts: LookupMap<PermissionId, ContractPermission>,
-    ) -> Self {
+impl PrivateMint {
+    pub fn new(enabled: bool, private_minters: LookupSet<AccountId>) -> Self {
         Self {
             enabled,
-            granted_contracts,
+            private_minters,
         }
     }
 }
 
-impl ContractAutorize for ContractAuthorization {
-    fn is_allowed(&self, contract_id: &AccountId, action_id: &str) -> bool {
-        if !self.enabled {
-            return true;
-        }
-
-        let key = format!("{}{}{}", contract_id, DELIMETER, action_id);
-
-        self.granted_contracts.get(&key).is_some()
+impl ContractAutorize for PrivateMint {
+    fn is_allowed(&self, contract_id: &AccountId) -> bool {
+        !self.enabled || self.private_minters.contains(contract_id)
     }
 
-    fn panic_if_not_allowed(&self, contract_id: &AccountId, action_id: &str) {
-        if !self.is_allowed(contract_id, action_id) {
-            env::panic_str(&format!(
-                "Access to \"{}\" denied for this contract",
-                action_id
-            ));
+    fn panic_if_not_allowed(&self, contract_id: &AccountId) {
+        if !self.is_allowed(contract_id) {
+            env::panic_str("Access to mint is denied for this contract");
         }
     }
 
-    fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
-        let key = format!("{}{}{}", contract_id, DELIMETER, action_id,);
-        self.granted_contracts
-            .insert(
-                &key,
-                &ContractPermission {
-                    permission_id: key.clone(),
-                    contract_id,
-                    action_id,
-                },
-            )
-            .is_none()
+    fn grant(&mut self, contract_id: AccountId) -> bool {
+        self.private_minters.insert(&contract_id)
     }
 
-    fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
-        let key = format!("{}{}{}", contract_id, DELIMETER, action_id);
-        self.granted_contracts.remove(&key).is_some()
+    fn deny(&mut self, contract_id: AccountId) -> bool {
+        self.private_minters.remove(&contract_id)
     }
 
     fn set_authorization(&mut self, enabled: bool) {
@@ -87,25 +51,33 @@ impl ContractAutorize for ContractAuthorization {
     }
 }
 
-
 #[near_bindgen]
 impl Nft {
-    pub fn is_allowed(&self, contract_id: AccountId, action_id: ActionId) -> bool {
-        self.contract_authorization.is_allowed(&contract_id, &action_id)
+    pub fn is_allowed(&self, contract_id: AccountId) -> bool {
+        self.private_mint.is_allowed(&contract_id)
     }
 
-    pub fn grant(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
-        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
-        self.contract_authorization.grant(contract_id, action_id)
+    pub fn grant(&mut self, contract_id: AccountId) -> bool {
+        require!(
+            env::predecessor_account_id() == self.tokens.owner_id,
+            "only owner can grant"
+        );
+        self.private_mint.grant(contract_id)
     }
 
-    pub fn deny(&mut self, contract_id: AccountId, action_id: ActionId) -> bool {
-        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
-        self.contract_authorization.deny(contract_id, action_id)
+    pub fn deny(&mut self, contract_id: AccountId) -> bool {
+        require!(
+            env::predecessor_account_id() == self.tokens.owner_id,
+            "only owner can deny"
+        );
+        self.private_mint.deny(contract_id)
     }
 
-    pub fn set_authorization(&mut self, enabled: bool) {
-        require!(env::predecessor_account_id() == self.tokens.owner_id, "only owner can grant");
-        self.contract_authorization.set_authorization(enabled);
+    pub fn set_private_minting(&mut self, enabled: bool) {
+        require!(
+            env::predecessor_account_id() == self.tokens.owner_id,
+            "only owner can enable/disable private minting"
+        );
+        self.private_mint.set_authorization(enabled);
     }
 }
