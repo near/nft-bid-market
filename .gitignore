@@ -11,3 +11,6 @@ res/*.wasm
 res
 
 .env
+
+# workspaces credentials
+tests-workspaces/.near-credentials

@@ -102,7 +102,7 @@ impl Nft {
     pub fn nft_mint(
         &mut self,
         token_series_id: TokenSeriesId,
-        reciever_id: AccountId,
+        receiver_id: AccountId,
         refund_id: Option<AccountId>,
     ) -> TokenId {
         self.private_mint.panic_if_not_allowed(&env::predecessor_account_id());
@@ -149,7 +149,7 @@ impl Nft {
 
         // implementation from NonFungibleToken::internal_mint_with_refund()
         // Core behavior: every token must have an owner
-        self.tokens.owner_by_id.insert(&token_id, &reciever_id);
+        self.tokens.owner_by_id.insert(&token_id, &receiver_id);
         // Metadata extension: Save metadata, keep variable around to return later.
         // Note that check above already panicked if metadata extension in use but no metadata
         // provided to call.
@@ -160,13 +160,13 @@ impl Nft {
 
         // Enumeration extension: Record tokens_per_owner for use with enumeration view methods.
         if let Some(tokens_per_owner) = &mut self.tokens.tokens_per_owner {
-            let mut token_ids = tokens_per_owner.get(&reciever_id).unwrap_or_else(|| {
+            let mut token_ids = tokens_per_owner.get(&receiver_id).unwrap_or_else(|| {
                 UnorderedSet::new(StorageKey::TokensPerOwner {
-                    account_hash: env::sha256(reciever_id.as_bytes()),
+                    account_hash: env::sha256(receiver_id.as_bytes()),
                 })
             });
             token_ids.insert(&token_id);
-            tokens_per_owner.insert(&reciever_id, &token_ids);
+            tokens_per_owner.insert(&receiver_id, &token_ids);
         }
         token_series.tokens.insert(&token_id);
         self.token_series_by_id
@@ -175,7 +175,7 @@ impl Nft {
         refund_deposit_to_account(env::storage_usage() - initial_storage_usage, refund_id);
 
         // Event
-        let mint_log = NftMintData::new(&reciever_id, vec![&token_id], None);
+        let mint_log = NftMintData::new(&receiver_id, vec![&token_id], None);
         NearEvent::nft_mint(vec![mint_log]).emit();
 
         token_id

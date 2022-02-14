@@ -1,4 +1,5 @@
 use near_units::parse_gas;
+use near_units::parse_near;
 use serde_json::json;
 use workspaces::prelude::*;
 use workspaces::DevNetwork;
@@ -28,7 +29,7 @@ pub async fn init_nft(
 pub async fn init_market(
     worker: &workspaces::Worker<impl DevNetwork>,
     root_id: &workspaces::AccountId,
-    nft_ids: Vec<workspaces::AccountId>,
+    nft_ids: Vec<&workspaces::AccountId>,
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(MARKET_WASM_FILEPATH)?;
     let contract = worker.dev_deploy(wasm).await?;
@@ -42,4 +43,24 @@ pub async fn init_market(
         .transact()
         .await?;
     Ok(contract)
+}
+
+pub async fn mint_token(
+    worker: &workspaces::Worker<impl DevNetwork>,
+    nft_id: workspaces::AccountId,
+    minter_id: &workspaces::Account,
+    receiver_id: &workspaces::AccountId,
+    series: &str,
+) -> anyhow::Result<String> {
+    let token_id = minter_id
+    .call(worker, nft_id, "nft_mint")
+    .args_json(serde_json::json!({
+        "token_series_id": series, 
+        "receiver_id": receiver_id.as_ref()
+    }))?
+    .deposit(parse_near!("0.01 N"))
+    .transact()
+    .await?
+    .json()?;
+    Ok(token_id)
 }

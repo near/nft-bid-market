@@ -50,14 +50,14 @@ The first step is to create the series and mint several NFTs:
 ```bash
 near call $NFT_CONTRACT_ID nft_create_series '{"token_metadata": {"title": "some title", "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz", "copies": 10}, "royalty": {"'$CONTRACT_PARENT'": 500}}' --accountId $CONTRACT_PARENT --deposit 0.005
 
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
 ```
 Now he has eight NFTs.
 
@@ -68,7 +68,7 @@ near call $MARKET_CONTRACT_ID storage_deposit --accountId $CONTRACT_PARENT --dep
 
 near call $NFT_CONTRACT_ID nft_series_market_approve '{"token_series_id": "1", "sale_conditions": {"near": "1200"}, "copies": 1, "approved_market_id": "'$MARKET_CONTRACT_ID'"}' --accountId $CONTRACT_PARENT --deposit 1
 
-near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "reciever_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID --deposit 1
+near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $MARKET_CONTRACT_ID --deposit 1
 
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:9"}'
 ```

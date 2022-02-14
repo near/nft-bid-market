@@ -559,6 +559,6 @@ trait ExtContract {
         max_len_payout: u32,
     );
     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
-    fn nft_mint(&mut self, token_series_id: TokenSeriesId, reciever_id: AccountId);
+    fn nft_mint(&mut self, token_series_id: TokenSeriesId, receiver_id: AccountId);
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout;
 }
