@@ -109,29 +109,54 @@
 ## lib
 
 ### nft_create_series
-- Can only be called by the autorized user
+- Can only be called by the autorized account
 - Panics if the title of the series is not specified
 - Panics if the total royalty payout exceeds 50%
 - Creates a new series with given metadata and royalty
 - Refunds a deposit
 ### nft_mint
+- Can only be called by the autorized account
+- Panics if there is no series `token_series_id`
+- Panics if the maximum number of tokens have already been minted
+- Mints a new token
+- Refunds a deposit
 ### nft_series_market_approve
-- Panics if there is no series
+- Panics if there is no series `token_series_id`
 - Can only be called by the owner of the series
 - Panics if the number of copies (including already minted tokens) exceeds the maximum number of copies
-- 
+- Refunds a deposit
+- Creates a cross contract call to `nft_on_series_approve`
 
 ## payouts
 
 ### nft_payout
+- Panics if `token_id` contains `token_series_id`, which doesn't exist
+- Panics if the number of royalties exceeds `max_len_payout`
+- Panics if royalty exceeds 10000 yoctoNEAR?
+- Splits the `balance` among royalties and owner, returns payout
 ### nft_transfer_payout
+- Should panic unless 1 yoctoNEAR is attached
+- Panics if `token_id` contains `token_series_id`, which doesn't exist
+- Panics if the number of royalties exceeds `max_len_payout`
+- Panics if invalid `memo` is provided
+- Panics if total payout exceeds `ROYALTY_TOTAL_VALUE`
+- Returns payout, which contains royalties and payouts from `memo`
 
 ## permissions
 
 ### grant
+- Can only be called by the owner
+- Adds a given account to the list of the autorized accounts
 ### deny
-### set_authorization
+- Can only be called by the owner
+- Removes a given account from the list of the autorized accounts
+### set_private_minting
+- Can only be called by the owner
+- If `enabled` is true, turns on private minting
+- If `enabled` is false, turns off private minting
 ### is_allowed
+- Returns true if private minting is not enabled
+- If private minting is enabled, returns whether an account is among private minters
 
 ## series_views
 
