@@ -100,3 +100,36 @@
 ### get_minimal_next_bid
 
 # NFT
+
+## lib
+
+### nft_create_series
+- Can only be called by the autorized user
+- Panics if the title of the series is not specified
+- Panics if the total royalty payout exceeds 50%
+- Creates a new series with given metadata and royalty
+- Refunds a deposit
+### nft_mint
+### nft_series_market_approve
+- Panics if there is no series
+- Can only be called by the owner of the series
+- Panics if the number of copies (including already minted tokens) exceeds the maximum number of copies
+- 
+
+## payouts
+
+### nft_payout
+### nft_transfer_payout
+
+## permissions
+
+### grant
+### deny
+### set_authorization
+### is_allowed
+
+## series_views
+
+### nft_get_series_json
+### nft_series
+### nft_supply_for_series
