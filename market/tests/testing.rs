@@ -50,7 +50,7 @@ pub fn init() -> (
         bytes: &NFT_WASM_BYTES,
         signer_account: root,
         deposit: to_yocto("200"),
-        init_method: new_default_meta(root.account_id(), market.account_id())
+        init_method: new_default_meta(root.account_id())
     );
 
     (root, market, nft)
