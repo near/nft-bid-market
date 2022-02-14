@@ -9,6 +9,11 @@
 - Panics if the given `ft_token_id` is not supported by the market
 - Start time is set to `block_timestamp` if it is not specified explicitly
 - Creates a new sale/auction
+### nft_on_series_approve
+- Can only be called via cross-contract call
+- `owner_id` must be the signer
+- Panics if `owner_id` didn't pay for one more sale/auction
+- Panics if the given `ft_token_id` is not supported by the market
 
 ## sale
 
