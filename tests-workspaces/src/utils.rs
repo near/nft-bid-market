@@ -15,7 +15,7 @@ pub async fn init_nft(
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(NFT_WASM_FILEPATH)?;
     let contract = worker.dev_deploy(wasm).await?;
-    contract
+    let outcome = contract
         .call(worker, "new_default_meta")
         .args_json(serde_json::json!({
             "owner_id": root_id,
@@ -23,6 +23,10 @@ pub async fn init_nft(
         .gas(parse_gas!("150 Tgas") as u64)
         .transact()
         .await?;
+    match outcome.status {
+        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
+        _ => panic!(),
+    };
     Ok(contract)
 }
 
@@ -33,8 +37,8 @@ pub async fn init_market(
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(MARKET_WASM_FILEPATH)?;
     let contract = worker.dev_deploy(wasm).await?;
-    contract
-        .call(worker, "new_default_meta")
+    let outcome = contract
+        .call(worker, "new")
         .args_json(serde_json::json!({
             "nft_ids": nft_ids,
             "owner_id": root_id,
@@ -42,6 +46,10 @@ pub async fn init_market(
         .gas(parse_gas!("150 Tgas") as u64)
         .transact()
         .await?;
+    match outcome.status {
+        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
+        _ => panic!(),
+    };
     Ok(contract)
 }
 
@@ -53,14 +61,14 @@ pub async fn mint_token(
     series: &str,
 ) -> anyhow::Result<String> {
     let token_id = minter_id
-    .call(worker, nft_id, "nft_mint")
-    .args_json(serde_json::json!({
-        "token_series_id": series, 
-        "receiver_id": receiver_id.as_ref()
-    }))?
-    .deposit(parse_near!("0.01 N"))
-    .transact()
-    .await?
-    .json()?;
+        .call(worker, nft_id, "nft_mint")
+        .args_json(serde_json::json!({
+            "token_series_id": series,
+            "receiver_id": receiver_id.as_ref()
+        }))?
+        .deposit(parse_near!("0.01 N"))
+        .transact()
+        .await?
+        .json()?;
     Ok(token_id)
 }
