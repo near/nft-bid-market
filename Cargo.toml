@@ -1,5 +1,6 @@
 [workspace]
-members = ["market", "nft"]
+members = ["market", "nft", "tests-workspaces"]
+exclude = []
 
 [profile.release]
 codegen-units = 1
@@ -9,3 +10,4 @@ lto = true
 debug = false
 panic = "abort"
 overflow-checks = true
+

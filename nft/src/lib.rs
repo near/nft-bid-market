@@ -33,7 +33,6 @@ pub struct Nft {
 
     private_minters: LookupSet<AccountId>,
     token_series_by_id: UnorderedMap<TokenSeriesId, TokenSeries>,
-    market_id: AccountId,
     contract_authorization: ContractAuthorization,
 }
 
@@ -54,7 +53,7 @@ enum StorageKey {
 #[near_bindgen]
 impl Nft {
     #[init]
-    pub fn new_default_meta(owner_id: AccountId, market_id: AccountId) -> Self {
+    pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
             owner_id,
             NFTContractMetadata {
@@ -67,7 +66,6 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
-            market_id,
         )
     }
 
@@ -76,7 +74,6 @@ impl Nft {
         owner_id: AccountId,
         metadata: NFTContractMetadata,
         private_minters: Vec<AccountId>,
-        market_id: AccountId,
     ) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
@@ -93,7 +90,6 @@ impl Nft {
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             private_minters: minters,
             token_series_by_id: UnorderedMap::new(b"s"),
-            market_id,
             contract_authorization: ContractAuthorization::new(
                 false,
                 LookupMap::new(StorageKey::Authorizations),
@@ -193,6 +189,7 @@ impl Nft {
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
     ) -> TokenSeriesId {
+        self.contract_authorization.panic_if_not_allowed(&env::predecessor_account_id(), "mint");
         let initial_storage_usage = env::storage_usage();
         let owner_id = env::predecessor_account_id();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
@@ -276,10 +273,7 @@ impl Nft {
             env::prepaid_gas() - GAS_FOR_NFT_APPROVE,
         )
     }
-    // TODO:
 
-    // private minting
-    // pub fn private_mint()
 }
 
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);
