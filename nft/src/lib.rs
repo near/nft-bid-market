@@ -20,6 +20,8 @@ use crate::{event::NftMintData, payouts::MAXIMUM_ROYALTY};
 
 use std::collections::HashMap;
 
+pub use token_series::TokenSeriesJson;
+
 const GAS_FOR_NFT_APPROVE: Gas = Gas(10_000_000_000_000);
 
 // Since Near doesn't support multitoken(yet) by default we need to create some workaround

@@ -42,7 +42,7 @@ impl Market {
     // Refunds the previous bid (of this ft_token_id)
     #[allow(clippy::too_many_arguments)]
     #[private]
-    pub fn add_bid(
+    pub (crate) fn add_bid(
         &mut self,
         contract_and_token_id: ContractAndTokenId,
         amount: Balance,

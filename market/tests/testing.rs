@@ -100,7 +100,7 @@ fn test_fees_transfers() {
             .to_string()
             .contains("Auction can be finalized only after the end time"));
     } else {
-        unreachable!();
+        panic!("Expected failure");
     }
     let auction_json: AuctionJson = view!(market.get_auction_json(1.into())).unwrap_json();
     assert!(auction_json.end.0 - time_during_bid == EXTENSION_DURATION);

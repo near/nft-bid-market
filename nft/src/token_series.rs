@@ -21,6 +21,7 @@ pub struct TokenSeries {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(not(target_arch = "wasm32"), derive(Debug, PartialEq))]
 #[serde(crate = "near_sdk::serde")]
 pub struct TokenSeriesJson {
     pub metadata: TokenMetadata,
