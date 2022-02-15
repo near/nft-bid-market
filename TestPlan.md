@@ -158,6 +158,7 @@ Creates a series.
 Mints a token from the series.
 - Can only be called by the autorized account (if authorization enabled)
 - Panics if there is no series `token_series_id`
+- Panics if called not by the owner of the series or the approved account to mint this specific series
 - Panics if the maximum number of tokens have already been minted
 - Mints a new token
 - Refunds a deposit
