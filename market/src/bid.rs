@@ -117,7 +117,7 @@ impl Market {
             &ft_token_id,
             token_id,
             &owner_id,
-            price.clone()
+            price
         );
         self.refund_bid(ft_token_id, owner_id, price);
     }
@@ -135,7 +135,7 @@ impl Market {
         let bid = self.internal_remove_bid(
             nft_contract_id,
             &ft_token_id, token_id,
-            &owner_id, price.clone()
+            &owner_id, price
         ).expect("No such bid");
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
@@ -198,14 +198,14 @@ impl Market {
     pub(crate) fn refund_all_bids(&mut self, bids_map: &Bids) {
         for (ft, bids) in bids_map {
             for bid in bids {
-                self.refund_bid((*ft).clone(), bid.owner_id.clone(), bid.price.clone());
+                self.refund_bid((*ft).clone(), bid.owner_id.clone(), bid.price);
             }
         }
     }
 
     pub(crate) fn refund_bid(&mut self, bid_ft: FungibleTokenId, owner_id: AccountId, price: U128) {
         if bid_ft.as_str() == "near" {
-            Promise::new(owner_id.clone()).transfer(u128::from(price));
+            Promise::new(owner_id).transfer(u128::from(price));
         } else {
             ext_contract::ft_transfer(
                 owner_id,

@@ -327,7 +327,7 @@ impl Market {
                 origins.unwrap_or_default(),
             );
         } else {
-            let start = start.unwrap_or(U64(env::block_timestamp()));
+            let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
             self.add_bid(
                 contract_and_token_id,

@@ -137,14 +137,14 @@ Cancels an auction if it's finished.
 
 ### nft_create_series
 Creates a series.
-- Can only be called by the autorized account
+- Can only be called by the autorized account (if authorization enabled)
 - Panics if the title of the series is not specified
 - Panics if the total royalty payout exceeds 50%
 - Creates a new series with given metadata and royalty
 - Refunds a deposit
 ### nft_mint
 Mints a token from the series.
-- Can only be called by the autorized account
+- Can only be called by the autorized account (if authorization enabled)
 - Panics if there is no series `token_series_id`
 - Panics if the maximum number of tokens have already been minted
 - Mints a new token

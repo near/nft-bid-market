@@ -166,7 +166,7 @@ async fn nft_on_approve_positive() -> anyhow::Result<()> {
         .deposit(parse_near!("1 N"))
         .transact()
         .await?;
-    let outcome = user1
+    user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,

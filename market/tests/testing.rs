@@ -1,67 +1,12 @@
 #![allow(clippy::ref_in_deref)]
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
-
 use near_contract_standards::non_fungible_token::metadata::TokenMetadata;
-use near_sdk::{
-    env,
-    json_types::U128,
-    serde_json::{self, json},
-    AccountId,
-};
-use near_sdk_sim::{
-    call, deploy, init_simulator,
-    runtime::{init_runtime, GenesisConfig, RuntimeStandalone},
-    to_yocto,
-    transaction::ExecutionStatus,
-    view, ContractAccount, UserAccount, STORAGE_AMOUNT,
-};
-use nft_bid_market::{AuctionJson, MarketContract, EXTENSION_DURATION};
-use nft_contract::NftContract;
-near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
-    MARKET_WASM_BYTES => "../res/nft_bid_market.wasm",
-    NFT_WASM_BYTES => "../res/nft_contract.wasm",
-}
+use near_sdk::serde_json::json;
+use near_sdk_sim::{call, to_yocto, transaction::ExecutionStatus, view};
+use nft_bid_market::{AuctionJson, EXTENSION_DURATION};
+use std::collections::HashMap;
 
-const NFT_ID: &str = "nft";
-const MARKET_ID: &str = "market";
-
-pub fn init() -> (
-    UserAccount,
-    ContractAccount<MarketContract>,
-    ContractAccount<NftContract>,
-) {
-    let g_config = GenesisConfig {
-        block_prod_time: 1_000_000_000 * 60, // 1 mins/block
-        ..Default::default()
-    };
-    let root = init_simulator(Some(g_config));
-
-    let market = deploy!(
-        contract: MarketContract,
-        contract_id: MARKET_ID,
-        bytes: &MARKET_WASM_BYTES,
-        signer_account: root,
-        init_method: new(vec![NFT_ID.parse().unwrap()], root.account_id())
-    );
-
-    let nft = deploy!(
-        contract: NftContract,
-        contract_id: NFT_ID,
-        bytes: &NFT_WASM_BYTES,
-        signer_account: root,
-        deposit: to_yocto("200"),
-        init_method: new_default_meta(root.account_id())
-    );
-
-    (root, market, nft)
-}
-
-fn prod_block(root: &UserAccount) {
-    let mut runtime = root.borrow_runtime_mut();
-    // println!("time: {}", runtime.current_block().block_timestamp);
-    runtime.produce_block().unwrap();
-    // println!("time: {}", runtime.current_block().block_timestamp);
-}
+mod utils;
+use utils::{init, prod_block};
 
 #[test]
 fn test_fees_transfers() {
@@ -139,7 +84,8 @@ fn test_fees_transfers() {
     }
 
     call!(user1, market.cancel_auction(0.into()), deposit = 1).assert_success();
-    let time_during_bid = root.borrow_runtime().current_block().block_timestamp + root.borrow_runtime().genesis.block_prod_time; // +1 block
+    let time_during_bid = root.borrow_runtime().current_block().block_timestamp
+        + root.borrow_runtime().genesis.block_prod_time; // +1 block
     call!(
         user2,
         market.auction_add_bid(1.into(), Some("near".to_string()), None),
@@ -158,7 +104,9 @@ fn test_fees_transfers() {
     }
     let auction_json: AuctionJson = view!(market.get_auction_json(1.into())).unwrap_json();
     assert!(auction_json.end.0 - time_during_bid == EXTENSION_DURATION);
-    let blocks_needed = (auction_json.end.0 - root.borrow_runtime().current_block().block_timestamp) / root.borrow_runtime().genesis.block_prod_time;
+    let blocks_needed = (auction_json.end.0
+        - root.borrow_runtime().current_block().block_timestamp)
+        / root.borrow_runtime().genesis.block_prod_time;
     let mut i = 0;
     while root.borrow_runtime().current_block().block_timestamp < auction_json.end.0 {
         i += 1;
@@ -166,5 +114,4 @@ fn test_fees_transfers() {
     }
     call!(user1, market.finish_auction(1.into())).assert_success();
     assert!(i == blocks_needed);
-    println!("{}", serde_json::to_string_pretty(&auction_json).unwrap());
 }
