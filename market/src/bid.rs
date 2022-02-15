@@ -132,12 +132,18 @@ impl Market {
         owner_id: AccountId,
         price: U128
     ) {
-        let bid = self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &owner_id, price.clone()).expect("No such bid");
+        let bid = self.internal_remove_bid(
+            nft_contract_id,
+            &ft_token_id, token_id,
+            &owner_id, price.clone()
+        ).expect("No such bid");
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
             require!(is_finished, "The bid hasn't ended yet");
+            self.refund_bid(ft_token_id, owner_id, price);
+        } else {
+            panic!("The bid doesn't have an end");
         }
-        self.refund_bid(ft_token_id, owner_id, price);
     }
     
     // Cancel all expired bids
