@@ -8,6 +8,7 @@ Creates a sale or an auction.
 - `owner_id` must be the signer
 - Panics if `owner_id` didn't pay for one more sale/auction
 - Panics if the given `ft_token_id` is not supported by the market
+- Panics if `msg` doesn't contain valid parameters for sale or auction
 - Start time is set to `block_timestamp` if it is not specified explicitly
 - Creates a new sale/auction
 ### nft_on_series_approve
@@ -20,32 +21,41 @@ Gives an approval to the market to mint the series.
 ## sale
 
 ### offer
-Creates an offer to buy NFT. If `attached_deposit` is sufficient, the purchase is made. Otherwise, the bid is created.
+Creates an offer to buy NFT. If `attached_deposit` is sufficient, the purchase is made. Otherwise, the bid is created (if it exceeds the previous bid).
 - Should panic if there is no sale with given `contract_and_token_id`
 - Should panic if the sale is not in progress
 - Should panic if the NFT owner tries to make a bid on his own sale
 - Should panic if the deposit equal to 0
 - Should panic if the NFT can't be bought by `ft_token_id`
 - If the `attached_deposit` is equal to the price + fees
+  -  panics if number of payouts plus number of bids exceeds 10
   -  NFT is transferred to the buyer 
   -  ft transferred to the previous owner
-  -  protocol and origins fees are paid
+  -  protocol and origin fees are paid
   -  the previous owner also pays royalty
-  -  The sale is removed from list of sales
+  -  the sale is removed from the list of sales
+  -  previous bids should be refunded
 - If the `attached_deposit` is not equal to the price + fees
   - should panic if `ft_token_id` is not supported 
+  - panics if the bid smaller that the previous one
   - calculate a total origin fee
   - panic if origin fee exceeds 47%
   - a new bid should be added
-  - refunds the previous bid
-  - if the number of stored bids exceeds `bid_history_length`, the earliest bid is removed and refunded?
+  - if the number of stored bids exceeds `bid_history_length`, the earliest bid is removed and refunded
 ### accept_offer
 Accepts the last offer for the particular sale and given `ft_token_id`.
 - Should panic if there is no sale with the given `nft_contract_id` and `token_id`
 - Should panic if the sale is not in progress
 - Should panic if there are no bids with given fungible token
 - Should panic if the last bid is out of time
-- The purchase should be made. NFT is transferred to the buyer, ft transferred to the previous owner, protocol and origins fees are paid, the previous owner also pays royalty. The sale is removed from list of sales
+- If none of this happens, the purchase should be made:
+  - panic if number of payouts plus number of bids exceeds 10
+  - NFT is transferred to the buyer
+  - ft transferred to the previous owner
+  - protocol and origins fees are paid
+  - the previous owner also pays royalty
+  - the sale is removed from list of sales
+  - previous bids should be refunded
 ### update_price
 Changes the price of the sale.
 - Should panic unless 1 yoctoNEAR is attached
@@ -61,11 +71,6 @@ Removes the sale and refunds all bids.
 
 ## bids
 
-### add_bid?
-Adds a bid.
-- Private method
-- Should panic if `ft_token_id` is not supported
-- Should panic if the `attached_deposit` less than the previous bid
 ### remove_bid
 Allows a user to remove his bid.
 - Should panic unless 1 yoctoNEAR is attached
@@ -92,8 +97,9 @@ Cancels all expired bids for the given sale and `ft_token_id`.
 Adds a bid for the auction.
 - Should panic if `ft_token_id` is not supported
 - Should panic if the auction is not in progress
-- Should panic if the bid is smaller than the minimal bid
+- Should panic if the bid is smaller than the minimal deposit
 - Should panic if the bid is smaller than the previous one
+- Refunds a previous bid (if it exists)
 - Extends an auction if the bid is added less than 15 minutes before the end
 - The auction ends if the `attached_deposit` is bigger than the `buy_out_price` (plus fees)
 ### cancel_auction
@@ -105,10 +111,16 @@ Called by the owner to cancel the auction if it doesn't have bids.
 - Removes the auction
 ### finish_auction
 Cancels an auction if it's finished.
-- Panics if auction is not active
+- Panics if the auction is not active
 - Should panic if called before the auction ends
 - Panics if there is no bid
-- The purchase should be made. NFT is transferred to the buyer, ft transferred to the previous owner, protocol and origins fees are paid, the previous owner also pays royalty. The auction is removed from list of auctions
+- If none the above happens, the purchase should be made:
+  -  panic if number of payouts plus number of bids exceeds 10
+  -  NFT is transferred to the buyer
+  -  ft transferred to the previous owner
+  -  protocol and origins fees are paid
+  -  the previous owner also pays royalty
+  -  the auction is removed from list of auctions
 
 ## sale_views
 
@@ -163,7 +175,7 @@ Gives an approval to mint a series.
 Payout mapping for the given token, based on 'balance' and royalty
 - Panics if `token_id` contains `token_series_id`, which doesn't exist
 - Panics if the number of royalties exceeds `max_len_payout`
-- Panics if royalty exceeds 10000 yoctoNEAR?
+- Panics if the total royalty exceeds 100%
 - Splits the `balance` among royalties and owner, returns payout
 ### nft_transfer_payout
 `nft_transfer` with 'balance' for calculation of Payout mapping for the given token.

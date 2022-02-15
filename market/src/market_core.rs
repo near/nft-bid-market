@@ -54,8 +54,7 @@ pub enum ArgsKind {
 
 #[near_bindgen]
 impl NonFungibleTokenApprovalReceiver for Market {
-    // nft_on_approve is called via cross-contract call in order to create a new sale or auction.
-    // TODO: need to log?
+    // nft_on_approve is called via cross-contract call in order to create a new sale or auction
     fn nft_on_approve(
         &mut self,
         token_id: TokenId,
