@@ -15,3 +15,5 @@ near-units = "0.1.0"
 serde_json = { version = "1.0", features = ["arbitrary_precision"] }
 tokio = { version = "1.10.0", features = ["full"] }
 nft-bid-market = { path = "../market"}
+nft-contract = { path = "../nft" }
+near-contract-standards = "4.0.0-pre.5"
