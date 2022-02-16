@@ -4,6 +4,8 @@ use serde_json::json;
 use workspaces::prelude::*;
 use workspaces::DevNetwork;
 
+use near_primitives::views::FinalExecutionStatus;
+
 const NFT_WASM_FILEPATH: &str = "../res/nft_contract.wasm";
 const MARKET_WASM_FILEPATH: &str = "../res/nft_bid_market.wasm";
 
@@ -71,4 +73,24 @@ pub async fn mint_token(
         .await?
         .json()?;
     Ok(token_id)
+}
+
+pub async fn check_outcome_success(status: FinalExecutionStatus) {
+    match status {
+        near_primitives::views::FinalExecutionStatus::Failure(err) => {
+            panic!("Panic: {:?}", err);
+        }
+        _ => {},
+    };
+}
+
+pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str) {
+    match status {
+        near_primitives::views::FinalExecutionStatus::Failure(err) => {
+            assert!(err
+                .to_string()
+                .contains(expected_err))
+        }
+        _ => panic!("Shouldn't have succeeded"),
+    };
 }

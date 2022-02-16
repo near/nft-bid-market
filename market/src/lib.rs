@@ -18,7 +18,7 @@ use crate::sale::{Sale, SaleConditions, TokenType, SeriesSale, BID_HISTORY_LENGT
     ContractAndTokenId, FungibleTokenId, ContractAndSeriesId};
 use crate::auction::Auction;
 pub use crate::sale::SaleJson;
-pub use crate::market_core::{ArgsKind, SaleArgs};
+pub use crate::market_core::{ArgsKind, SaleArgs, AuctionArgs};
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
