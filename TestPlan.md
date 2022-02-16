@@ -98,7 +98,7 @@ Adds a bid for the auction.
 - Should panic if `ft_token_id` is not supported
 - Should panic if the auction is not in progress
 - Should panic if the bid is smaller than the minimal deposit
-- Should panic if the bid is smaller than the previous one
+- Should panic if the bid is smaller than the previous one + minimal step + fees
 - Refunds a previous bid (if it exists)
 - Extends an auction if the bid is added less than 15 minutes before the end
 - The auction ends if the `attached_deposit` is bigger than the `buy_out_price` (plus fees)
