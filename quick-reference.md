@@ -60,7 +60,7 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$
 near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$CONTRACT_PARENT'"}' --accountId $CONTRACT_PARENT --deposit 0.01
 ```
 Now he has eight NFTs.
-
+<!--
 Instead of minting NFTs by himself, `CONTRACT_PARENT` can cover the storage for NFTs and give the market an approval to mint tokens.
 After this `MARKET_CONTRACT_ID` will be able to mint a new NFT.
 ```bash
@@ -72,7 +72,7 @@ near call $NFT_CONTRACT_ID nft_mint '{"token_series_id": "1", "receiver_id": "'$
 
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:9"}'
 ```
-
+-->
 ### List of view methods for nft token series
 
 The contract supports methods for Metadata, Approval Management and Royalties according to the [standards](https://nomicon.io/Standards/NonFungibleToken/README.html). Below we list only additional methods.

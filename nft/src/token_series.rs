@@ -17,7 +17,6 @@ pub struct TokenSeries {
     pub owner_id: AccountId,
     pub tokens: UnorderedSet<TokenId>,
     pub royalty: HashMap<AccountId, u32>,
-    pub approved_market_id: Option<AccountId>,
 }
 
 #[derive(Serialize, Deserialize)]

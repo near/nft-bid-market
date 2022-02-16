@@ -66,7 +66,7 @@ impl Nft {
                 reference_hash: None,
             },
             Default::default(),
-            false
+            false,
         )
     }
 
@@ -91,10 +91,7 @@ impl Nft {
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             token_series_by_id: UnorderedMap::new(b"s"),
-            private_mint: PrivateMint::new(
-                private_minting_enabled,
-                minters,
-            ),
+            private_mint: PrivateMint::new(private_minting_enabled, minters),
         }
     }
 
@@ -107,7 +104,8 @@ impl Nft {
         receiver_id: AccountId,
         refund_id: Option<AccountId>,
     ) -> TokenId {
-        self.private_mint.panic_if_not_allowed(&env::predecessor_account_id());
+        self.private_mint
+            .panic_if_not_allowed(&env::predecessor_account_id());
         let refund_id = refund_id.unwrap_or_else(env::predecessor_account_id);
         let initial_storage_usage = env::storage_usage();
 
@@ -116,12 +114,7 @@ impl Nft {
             .get(&token_series_id)
             .expect("Token series does not exist");
         require!(
-            env::predecessor_account_id().eq(&token_series.owner_id)
-                || if let Some(ref approved_market_id) = token_series.approved_market_id {
-                    env::predecessor_account_id().eq(approved_market_id)
-                } else {
-                    false
-                },
+            env::predecessor_account_id().eq(&token_series.owner_id),
             "permission denied"
         );
         require!(
@@ -190,7 +183,8 @@ impl Nft {
         token_metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
     ) -> TokenSeriesId {
-        self.private_mint.panic_if_not_allowed(&env::predecessor_account_id());
+        self.private_mint
+            .panic_if_not_allowed(&env::predecessor_account_id());
         let initial_storage_usage = env::storage_usage();
         let owner_id = env::predecessor_account_id();
         let token_series_id = (self.token_series_by_id.len() + 1).to_string();
@@ -223,7 +217,6 @@ impl Nft {
                     .unwrap(),
                 ),
                 royalty: royalty_res,
-                approved_market_id: None,
             },
         );
 
@@ -232,44 +225,45 @@ impl Nft {
         token_series_id
     }
 
-    #[payable]
-    pub fn nft_series_market_approve(
-        &mut self,
-        token_series_id: TokenId,
-        sale_conditions: token_series::SaleConditions,
-        copies: u64,
-        approved_market_id: AccountId,
-    ) -> Promise {
-        let initial_storage_usage = env::storage_usage();
-        let mut token_series = self
-            .token_series_by_id
-            .get(&token_series_id)
-            .expect("Series not found");
-        require!(
-            env::predecessor_account_id().eq(&token_series.owner_id),
-            "Not token owner"
-        );
-        require!(
-            token_series.metadata.copies.unwrap_or(u64::MAX) - token_series.tokens.len() >= copies,
-            "Too many copies"
-        );
-        token_series.approved_market_id = Some(approved_market_id.clone());
-        self.token_series_by_id
-            .insert(&token_series_id, &token_series);
-        refund_deposit(env::storage_usage() - initial_storage_usage);
-        ext_contract::nft_on_series_approve(
-            TokenSeriesSale {
-                sale_conditions,
-                series_id: token_series_id,
-                owner_id: token_series.owner_id,
-                copies,
-            },
-            approved_market_id,
-            0,
-            env::prepaid_gas() - GAS_FOR_NFT_APPROVE,
-        )
-    }
-
+    /* Lazy_mint if needed
+       #[payable]
+       pub fn nft_series_market_approve(
+           &mut self,
+           token_series_id: TokenId,
+           sale_conditions: token_series::SaleConditions,
+           copies: u64,
+           approved_market_id: AccountId,
+       ) -> Promise {
+           let initial_storage_usage = env::storage_usage();
+           let mut token_series = self
+               .token_series_by_id
+               .get(&token_series_id)
+               .expect("Series not found");
+           require!(
+               env::predecessor_account_id().eq(&token_series.owner_id),
+               "Not token owner"
+           );
+           require!(
+               token_series.metadata.copies.unwrap_or(u64::MAX) - token_series.tokens.len() >= copies,
+               "Too many copies"
+           );
+           token_series.approved_market_id = Some(approved_market_id.clone());
+           self.token_series_by_id
+               .insert(&token_series_id, &token_series);
+           refund_deposit(env::storage_usage() - initial_storage_usage);
+           ext_contract::nft_on_series_approve(
+               TokenSeriesSale {
+                   sale_conditions,
+                   series_id: token_series_id,
+                   owner_id: token_series.owner_id,
+                   copies,
+               },
+               approved_market_id,
+               0,
+               env::prepaid_gas() - GAS_FOR_NFT_APPROVE,
+           )
+       }
+    */
 }
 
 near_contract_standards::impl_non_fungible_token_approval!(Nft, tokens);

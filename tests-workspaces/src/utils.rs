@@ -80,7 +80,8 @@ pub async fn check_outcome_success(status: FinalExecutionStatus) {
         near_primitives::views::FinalExecutionStatus::Failure(err) => {
             panic!("Panic: {:?}", err);
         }
-        _ => {},
+        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => {},
+        ref outcome => panic!("Panic: {:?}", outcome),
     };
 }
 

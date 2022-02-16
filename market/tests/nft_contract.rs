@@ -135,7 +135,7 @@ fn nft_create_series_positive() {
 
 #[test]
 fn nft_mint_negative() {
-    let (root, market, nft) = init();
+    let (root, _, nft) = init();
     let user1 = root.create_user("user1".parse().unwrap(), to_yocto("1000"));
     let user2 = root.create_user("user2".parse().unwrap(), to_yocto("1000"));
     let token_metadata = TokenMetadata {
@@ -192,17 +192,7 @@ fn nft_mint_negative() {
         panic!("Expected failure");
     }
 
-    // only allowed to mint this series is allowed to mint
-    call!(
-        user1,
-        nft.nft_series_market_approve(
-            series_id.clone(),
-            HashMap::from([("near".parse().unwrap(), 420.into())]),
-            1,
-            market.account_id()
-        ),
-        deposit = to_yocto("1")
-    );
+    // only owner allowed to mint this series
     let res = call!(
         user2,
         nft.nft_mint(series_id.clone(), user1.account_id(), None),

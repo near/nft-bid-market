@@ -162,6 +162,7 @@ Mints a token from the series.
 - Panics if the maximum number of tokens have already been minted
 - Mints a new token
 - Refunds a deposit
+<!--
 ### nft_series_market_approve
 Gives an approval to mint a series.
 - Panics if there is no series `token_series_id`
@@ -169,7 +170,7 @@ Gives an approval to mint a series.
 - Panics if the number of copies (including already minted tokens) exceeds the maximum number of copies
 - Refunds a deposit
 - Creates a cross contract call to `nft_on_series_approve`
-
+-->
 ## payouts
 
 ### nft_payout
