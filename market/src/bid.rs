@@ -9,6 +9,7 @@ use crate::sale::{
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[cfg_attr(not(target_arch = "wasm32"), derive(Debug, PartialEq))]
 #[serde(crate = "near_sdk::serde")]
 pub struct Bid {
     pub owner_id: AccountId,
@@ -42,7 +43,7 @@ impl Market {
     // Refunds the previous bid (of this ft_token_id)
     #[allow(clippy::too_many_arguments)]
     #[private]
-    pub (crate) fn add_bid(
+    pub(crate) fn add_bid(
         &mut self,
         contract_and_token_id: ContractAndTokenId,
         amount: Balance,
@@ -63,7 +64,7 @@ impl Market {
             0
         };
 
-        require!(total_origins < 4_700); // TODO: FINDOUT MAX ORIGINS
+        require!(total_origins < 4_700, "Max origins exceeded"); // TODO: FINDOUT MAX ORIGINS
         let actual_amount = calculate_actual_amount(amount, total_origins);
 
         // store a bid and refund any current bid lower
@@ -108,17 +109,11 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: TokenId,
         ft_token_id: AccountId,
-        price: U128
+        price: U128,
     ) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
-        self.internal_remove_bid(
-            nft_contract_id,
-            &ft_token_id,
-            token_id,
-            &owner_id,
-            price
-        );
+        self.internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &owner_id, price);
         self.refund_bid(ft_token_id, owner_id, price);
     }
 
@@ -130,13 +125,11 @@ impl Market {
         token_id: TokenId,
         ft_token_id: AccountId,
         owner_id: AccountId,
-        price: U128
+        price: U128,
     ) {
-        let bid = self.internal_remove_bid(
-            nft_contract_id,
-            &ft_token_id, token_id,
-            &owner_id, price
-        ).expect("No such bid");
+        let bid = self
+            .internal_remove_bid(nft_contract_id, &ft_token_id, token_id, &owner_id, price)
+            .expect("No such bid");
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
             require!(is_finished, "The bid hasn't ended yet");
@@ -145,7 +138,7 @@ impl Market {
             panic!("The bid doesn't have an end");
         }
     }
-    
+
     // Cancel all expired bids
     pub fn cancel_expired_bids(
         &mut self,
@@ -159,10 +152,7 @@ impl Market {
             .sales
             .get(&contract_and_token_id)
             .expect("No sale");
-        let bid_vec = sale
-            .bids
-            .get_mut(&ft_token_id)
-            .expect("No token");
+        let bid_vec = sale.bids.get_mut(&ft_token_id).expect("No token");
         let mut sale = self
             .market
             .sales
@@ -176,7 +166,7 @@ impl Market {
                     self.refund_bid(
                         ft_token_id.clone(),
                         bid_from_vec.owner_id.clone(),
-                        bid_from_vec.price
+                        bid_from_vec.price,
                     );
                     not_finished = false;
                 };
@@ -188,7 +178,7 @@ impl Market {
             sale.bids.remove(&ft_token_id);
         } else {
             // If there are some bids left, add a vector of valid bids
-            sale.bids.insert(ft_token_id.clone(),  bid_vec.to_vec());
+            sale.bids.insert(ft_token_id.clone(), bid_vec.to_vec());
         };
         self.market.sales.insert(&contract_and_token_id, &sale);
     }
@@ -207,14 +197,7 @@ impl Market {
         if bid_ft.as_str() == "near" {
             Promise::new(owner_id).transfer(u128::from(price));
         } else {
-            ext_contract::ft_transfer(
-                owner_id,
-                price,
-                None,
-                bid_ft,
-                1,
-                GAS_FOR_FT_TRANSFER,
-            );
+            ext_contract::ft_transfer(owner_id, price, None, bid_ft, 1, GAS_FOR_FT_TRANSFER);
         }
     }
 }

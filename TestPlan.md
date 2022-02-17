@@ -11,13 +11,14 @@ Creates a sale or an auction.
 - Panics if `msg` doesn't contain valid parameters for sale or auction
 - Start time is set to `block_timestamp` if it is not specified explicitly
 - Creates a new sale/auction
+<!--
 ### nft_on_series_approve
 Gives an approval to the market to mint the series.
 - Can only be called via cross-contract call
 - `owner_id` must be the signer
 - Panics if `owner_id` didn't pay for one more sale/auction
 - Panics if the given `ft_token_id` is not supported by the market
-
+-->
 ## sale
 
 ### offer
@@ -30,16 +31,15 @@ Creates an offer to buy NFT. If `attached_deposit` is sufficient, the purchase i
 - If the `attached_deposit` is equal to the price + fees
   -  panics if number of payouts plus number of bids exceeds 10
   -  NFT is transferred to the buyer 
-  -  ft transferred to the previous owner
-  -  protocol and origin fees are paid
-  -  the previous owner also pays royalty
   -  the sale is removed from the list of sales
-  -  previous bids should be refunded
+  -  ft transferred to the previous owner
+  -  protocol, royalty and origin fees are paid
+  -  royalty paid from seller side
+  -  previous bids refunded
 - If the `attached_deposit` is not equal to the price + fees
   - should panic if `ft_token_id` is not supported 
-  - panics if the bid smaller that the previous one
-  - calculate a total origin fee
-  - panic if origin fee exceeds 47%
+  - panics if the bid smaller or equal to the previous one
+  - panic if origin fee exceeds ORIGIN_FEE_MAX
   - a new bid should be added
   - if the number of stored bids exceeds `bid_history_length`, the earliest bid is removed and refunded
 ### accept_offer

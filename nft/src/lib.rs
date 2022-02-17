@@ -11,7 +11,7 @@ use common::*;
 mod token_series;
 use event::NearEvent;
 use near_contract_standards::non_fungible_token::refund_deposit_to_account;
-use near_sdk::{ext_contract, Gas, Promise};
+use near_sdk::{ext_contract, Promise};
 use permissions::PrivateMint;
 use token_series::{TokenSeries, TokenSeriesId, TokenSeriesSale, TOKEN_DELIMETER};
 
@@ -21,8 +21,6 @@ use crate::{event::NftMintData, payouts::MAXIMUM_ROYALTY};
 use std::collections::HashMap;
 
 pub use token_series::TokenSeriesJson;
-
-const GAS_FOR_NFT_APPROVE: Gas = Gas(10_000_000_000_000);
 
 // Since Near doesn't support multitoken(yet) by default we need to create some workaround
 // In this nft implementation every token is part of TokenSeries

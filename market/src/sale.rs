@@ -31,7 +31,6 @@ pub struct Payout {
 
 pub type ContractAndTokenId = String;
 pub type FungibleTokenId = AccountId;
-pub type ContractAndSeriesId = String;
 pub type TokenType = Option<String>;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
@@ -142,9 +141,7 @@ impl Market {
 
         let bids = HashMap::new();
         let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
-        let start = start
-            .map(|s| s.into())
-            .unwrap_or_else(env::block_timestamp);
+        let start = start.map(|s| s.into()).unwrap_or_else(env::block_timestamp);
         let sale = Sale {
             owner_id: owner_id.clone(),
             approval_id,
@@ -158,10 +155,7 @@ impl Market {
             end: end.map(|e| e.into()),
             origins: origins.unwrap_or_default(),
         };
-        self.market.sales.insert(
-            &contract_and_token_id,
-            &sale,
-        );
+        self.market.sales.insert(&contract_and_token_id, &sale);
 
         // extra for views
 
@@ -312,10 +306,10 @@ impl Market {
         let price = *sale
             .sale_conditions
             .get(&ft_token_id)
-            .expect("Not for sale in NEAR");
+            .unwrap_or_else(|| env::panic_str("Not supported ft"));
 
         let deposit = env::attached_deposit();
-        assert!(deposit > 0, "Attached deposit must be greater than 0");
+        require!(deposit > 0, "Attached deposit must be greater than 0");
 
         if deposit == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(
@@ -557,7 +551,7 @@ trait ExtContract {
         memo: Option<String>,
         balance: U128,
         max_len_payout: u32,
-    );
+    ) -> Promise;
     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
     fn nft_mint(&mut self, token_series_id: TokenSeriesId, receiver_id: AccountId);
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: u32) -> Payout;

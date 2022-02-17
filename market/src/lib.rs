@@ -14,10 +14,10 @@ mod hack; // TODO: remove
 use common::*;
 
 use crate::fee::PROTOCOL_FEE;
-use crate::sale::{Sale, SaleConditions, TokenType, SeriesSale, BID_HISTORY_LENGTH_DEFAULT,
-    ContractAndTokenId, FungibleTokenId, ContractAndSeriesId};
+use crate::sale::{Sale, SaleConditions, TokenType,
+    ContractAndTokenId, FungibleTokenId};
 use crate::auction::Auction;
-pub use crate::sale::SaleJson;
+pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 pub use crate::market_core::{ArgsKind, SaleArgs, AuctionArgs};
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
 
@@ -28,7 +28,6 @@ const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 pub enum StorageKey {
     Sales,
     ByOwnerId,
-    TokenSeries,
     ByOwnerIdInner { account_id_hash: CryptoHash },
     ByNFTContractId,
     ByNFTContractIdInner { account_id_hash: CryptoHash },
@@ -45,7 +44,6 @@ pub enum StorageKey {
 pub struct MarketSales {
     pub owner_id: AccountId,
     pub sales: UnorderedMap<ContractAndTokenId, Sale>,
-    pub series_sales: UnorderedMap<ContractAndSeriesId, SeriesSale>,
     pub by_owner_id: LookupMap<AccountId, UnorderedSet<ContractAndTokenId>>,
     pub by_nft_contract_id: LookupMap<AccountId, UnorderedSet<TokenId>>,
     pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
@@ -74,7 +72,6 @@ impl Market {
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
         let market = MarketSales {
             owner_id,
-            series_sales: UnorderedMap::new(StorageKey::TokenSeries),
             sales: UnorderedMap::new(StorageKey::Sales),
             by_owner_id: LookupMap::new(StorageKey::ByOwnerId),
             by_nft_contract_id: LookupMap::new(StorageKey::ByNFTContractId),
