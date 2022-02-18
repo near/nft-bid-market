@@ -92,6 +92,6 @@ pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str
                 .to_string()
                 .contains(expected_err))
         }
-        _ => panic!("Shouldn't have succeeded"),
+        _ => panic!("Expected failure"),
     };
 }
