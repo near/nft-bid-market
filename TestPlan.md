@@ -97,6 +97,7 @@ Cancels all expired bids for the given sale and `ft_token_id`.
 Adds a bid for the auction.
 - Should panic if `ft_token_id` is not supported
 - Should panic if the auction is not in progress
+- Panics if auction is not active
 - Should panic if the bid is smaller than the minimal deposit
 - Should panic if the bid is smaller than the previous one + minimal step + fees
 - Refunds a previous bid (if it exists)
