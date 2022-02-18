@@ -77,6 +77,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
     /*
     - Should panic if `ft_token_id` is not supported
     - TODO: Should panic if the auction is not in progress
+    - Panics if auction is not active
     - Should panic if the bid is smaller than the minimal deposit
     - Should panic if the bid is smaller than the previous one + minimal step + fees
 
@@ -155,6 +156,17 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_fail(outcome.status, "token not supported").await;
+
+    // Panics if auction is not active
+    let outcome = user2
+        .call(&worker, market.id().clone(), "auction_add_bid")
+        .args_json(serde_json::json!({
+            "auction_id": "1".to_string(),
+        }))?
+        .deposit(10300)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Auction does not exist").await;
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
@@ -347,7 +359,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
     /*
     - Should panic unless 1 yoctoNEAR is attached
     - Can only be called by the creator of the auction
-    - TODO: Panics if auction is not active
+    - Panics if auction is not active
     - Panics if the auction already has a bid
     */
     let worker = workspaces::sandbox();
@@ -423,6 +435,18 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_fail(outcome.status, "Requires attached deposit of exactly 1 yoctoNEAR").await;
+
+    // Panics if auction is not active
+    let outcome = user1
+        .call(&worker, market.id().clone(), "cancel_auction")
+        .args_json(serde_json::json!({
+            "auction_id": "1".to_string()
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Auction is not active").await;
 
     // Can only be called by the creator of the auction
     let outcome = user2
@@ -553,3 +577,174 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+async fn finish_auction_positive() -> anyhow::Result<()> {
+    /*
+    -  TODO: NFT is transferred to the buyer
+    -  TODO: ft transferred to the previous owner
+    -  TODO: protocol and origins fees are paid
+    -  TODO: the previous owner also pays royalty
+    -  TODO: the auction is removed from list of auctions
+    */
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let series: String = user1
+        .call(&worker, nft.id().clone(), "nft_create_series")
+        .args_json(serde_json::json!({
+        "token_metadata":
+        {
+            "title": "some title",
+            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
+            "copies": 10
+        },
+        "royalty":
+        {
+            owner.id().as_ref(): 1000
+        }}))?
+        .deposit(parse_near!("0.005 N"))
+        .transact()
+        .await?
+        .json()?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+
+    user1
+        .call(&worker, market.id().clone(), "storage_deposit")
+        .deposit(parse_near!("1 N"))
+        .transact()
+        .await?;
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Auction(AuctionArgs {
+                token_type: None,
+                minimal_step: 100.into(),
+                start_price: 10000.into(),
+                start: None,
+                duration: 900000000000.into(),
+                buy_out_price: Some(10000000000.into()),
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+
+    let outcome = user1
+        .call(&worker, market.id().clone(), "finish_auction")
+        .args_json(serde_json::json!({
+            "auction_id": "1".to_string()
+        }))?
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    println!("{:?}", outcome.status);
+    check_outcome_fail(outcome.status, "Auction is not active").await;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn finish_auction_negative() -> anyhow::Result<()> {
+    /*
+    - Panics if the auction is not active
+    - Should panic if called before the auction ends
+    - TODO: Panics if there is no bid
+    - TODO: panic if number of payouts plus number of bids exceeds 10
+    */
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let series: String = user1
+        .call(&worker, nft.id().clone(), "nft_create_series")
+        .args_json(serde_json::json!({
+        "token_metadata":
+        {
+            "title": "some title",
+            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
+            "copies": 10
+        },
+        "royalty":
+        {
+            owner.id().as_ref(): 1000
+        }}))?
+        .deposit(parse_near!("0.005 N"))
+        .transact()
+        .await?
+        .json()?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+
+    user1
+        .call(&worker, market.id().clone(), "storage_deposit")
+        .deposit(parse_near!("1 N"))
+        .transact()
+        .await?;
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Auction(AuctionArgs {
+                token_type: None,
+                minimal_step: 100.into(),
+                start_price: 10000.into(),
+                start: None,
+                duration: 900000000000.into(),
+                buy_out_price: Some(10000000000.into()),
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+
+    // Panics if the auction is not active
+    let outcome = user1
+        .call(&worker, market.id().clone(), "finish_auction")
+        .args_json(serde_json::json!({
+            "auction_id": "1".to_string()
+        }))?
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    println!("{:?}", outcome.status);
+    check_outcome_fail(outcome.status, "Auction is not active").await;
+
+    // Should panic if called before the auction ends
+    let outcome = user1
+        .call(&worker, market.id().clone(), "finish_auction")
+        .args_json(serde_json::json!({
+            "auction_id": "0".to_string()
+        }))?
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    println!("{:?}", outcome.status);
+    check_outcome_fail(outcome.status, "Auction can be finalized only after the end time").await;
+
+    // Panics if there is no bid
+
+    Ok(())
+}
