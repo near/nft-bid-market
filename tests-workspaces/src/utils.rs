@@ -225,3 +225,28 @@ pub async fn offer(
         .await
         .unwrap();
 }
+
+pub async fn offer_with_duration(
+    worker: &Worker<impl DevNetwork>,
+    nft: workspaces::AccountId,
+    market: workspaces::AccountId,
+    user: &Account,
+    token: String,
+    price: U128,
+    duration: U64
+) {
+    user
+        .call(&worker, market.clone(), "offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft,
+            "token_id": token,
+            "ft_token_id": "near",
+            "duration": duration
+        }))
+        .unwrap()
+        .deposit(price.into())
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await
+        .unwrap();
+}
