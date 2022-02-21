@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use near_units::parse_gas;
 use near_units::parse_near;
+use nft_contract::common::TokenMetadata;
 use serde_json::json;
 use workspaces::prelude::*;
 use workspaces::{Contract, Account, Worker, DevNetwork};
@@ -224,4 +225,37 @@ pub async fn offer(
         .transact()
         .await
         .unwrap();
+}
+
+pub async fn create_series_raw(
+    worker: &Worker<impl DevNetwork>,
+    nft: workspaces::AccountId,
+    owner: &Account,
+    copies: Option<u64>,
+    royalty: HashMap<&workspaces::AccountId, u64>,
+) -> anyhow::Result<String> {
+    let token_metadata = TokenMetadata {
+        title: Some("some title".to_string()),
+        description: None,
+        media: Some("ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz".to_string()),
+        media_hash: None,
+        copies,
+        issued_at: None,
+        expires_at: None,
+        starts_at: None,
+        updated_at: None,
+        extra: None,
+        reference: None,
+        reference_hash: None,
+    };
+    Ok(owner
+        .call(worker, nft, "nft_create_series")
+        .args_json(serde_json::json!({
+                "token_metadata": token_metadata,
+                "royalty": royalty
+        }))?
+        .deposit(parse_near!("0.005 N"))
+        .transact()
+        .await?
+        .json()?)
 }

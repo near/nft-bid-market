@@ -3,7 +3,10 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use crate::utils::{init_market, init_nft, mint_token};
+use crate::utils::{
+    check_outcome_fail, create_series, create_series_raw, deposit, init_market, init_nft,
+    mint_token, offer,
+};
 use near_contract_standards::non_fungible_token::Token;
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT};
@@ -278,7 +281,6 @@ async fn offer_negative() -> anyhow::Result<()> {
     let since_the_epoch = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
-
     let waiting_time = Duration::from_secs(15);
     let epoch_plus_waiting_time = (since_the_epoch + waiting_time).as_nanos();
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
@@ -757,5 +759,410 @@ async fn offer_positive() -> anyhow::Result<()> {
         .get(&AccountId::new_unchecked("near".to_string()))
         .unwrap();
     assert_ne!(bids.get(0).unwrap(), first_bid);
+    Ok(())
+}
+
+/*
+- Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+- Should panic if there are no bids with given fungible token
+- Should panic if the sale is not in progress
+- Should panic if the last bid is out of time
+ */
+#[tokio::test]
+async fn accept_offer_negative() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let series = create_series_raw(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        Some(4),
+        HashMap::from([(user1.id(), 500)]),
+    )
+    .await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
+    // No sale with the given `nft_contract_id` and `token_id`
+    let outcome = user1
+        .call(&worker, market.id().clone(), "accept_offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No sale").await;
+
+    // no bids with given fungible token
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
+    let since_the_epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    let waiting_time = Duration::from_secs(10);
+    let epoch_plus_waiting_time = (since_the_epoch + waiting_time).as_nanos();
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Sale(SaleArgs {
+                sale_conditions: sale_conditions.clone(),
+                token_type: Some(series.clone()),
+                start: None,
+                end: Some(U64(epoch_plus_waiting_time as u64)),
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    let outcome = user1
+        .call(&worker, market.id().clone(), "accept_offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No bids").await;
+
+    // last bid is out of time
+    user2
+        .call(&worker, market.id().clone(), "offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "duration": "1",
+        }))?
+        .deposit(200)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    tokio::time::sleep(Duration::from_nanos(1)).await;
+    let outcome = user1
+        .call(&worker, market.id().clone(), "accept_offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Out of time limit of the bid").await;
+    // Sale is not in progress
+    tokio::time::sleep(waiting_time).await;
+    let outcome = user1
+        .call(&worker, market.id().clone(), "accept_offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(
+        outcome.status,
+        "Either the sale is finished or it hasn't started yet",
+    )
+    .await;
+    Ok(())
+}
+
+// - Nft transfered to the buyer
+#[tokio::test]
+async fn accept_offer_positive() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let series = create_series_raw(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        Some(4),
+        HashMap::from([(user1.id(), 500)]),
+    )
+    .await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Sale(SaleArgs {
+                sale_conditions: sale_conditions.clone(),
+                token_type: Some(series.clone()),
+                start: None,
+                end: None,
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    user2
+        .call(&worker, market.id().clone(), "offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .deposit(200)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    user1
+        .call(&worker, market.id().clone(), "accept_offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    let token_data: Token = nft
+        .view(
+            &worker,
+            "nft_token",
+            serde_json::json!({ "token_id": token1 })
+                .to_string()
+                .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert_eq!(token_data.owner_id.as_ref(), user2.id().as_ref());
+    Ok(())
+}
+
+/*
+- Should panic unless 1 yoctoNEAR is attached
+- Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+- Should panic unless it is called by the creator of the sale
+- Should panic if `ft_token_id` is not supported
+*/
+#[tokio::test]
+async fn update_price_negative() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let series = create_series_raw(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        Some(4),
+        HashMap::from([(user1.id(), 500)]),
+    )
+    .await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Sale(SaleArgs {
+                sale_conditions: sale_conditions.clone(),
+                token_type: Some(series.clone()),
+                start: None,
+                end: None,
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+
+    // not attaching 1 yocto
+    let outcome = user1
+        .call(&worker, market.id().clone(), "update_price")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "price": "10000",
+        }))?
+        .transact()
+        .await?;
+    check_outcome_fail(
+        outcome.status,
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+    )
+    .await;
+
+    // no sale with given nft_contract_id:token_id
+    let outcome = user1
+        .call(&worker, market.id().clone(), "update_price")
+        .args_json(serde_json::json!({
+            "nft_contract_id": market.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "price": "10000",
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No sale").await;
+
+    // called not by the owner
+    let outcome = user2
+        .call(&worker, market.id().clone(), "update_price")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "price": "10000",
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Must be sale owner").await;
+
+    // ft must be supported
+    let outcome = user1
+        .call(&worker, market.id().clone(), "update_price")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "nearcoin",
+            "price": "10000",
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "is not supported by this market").await;
+    Ok(())
+}
+
+#[tokio::test]
+async fn update_price_positive() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let series = create_series_raw(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        Some(4),
+        HashMap::from([(user1.id(), 500)]),
+    )
+    .await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!(ArgsKind::Sale(SaleArgs {
+                sale_conditions: sale_conditions.clone(),
+                token_type: Some(series.clone()),
+                start: None,
+                end: None,
+                origins: None,
+            })).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    user1
+        .call(&worker, market.id().clone(), "update_price")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "price": "10000",
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    
+    let sale_json: SaleJson = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({ "nft_contract_token": format!("{}||{}", nft.id(), token1) })
+                .to_string()
+                .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert_eq!(sale_json.sale_conditions.get(&"near".parse().unwrap()), Some(&U128(10000)));
     Ok(())
 }
