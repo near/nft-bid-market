@@ -67,6 +67,7 @@ Changes the price of the sale.
 Removes the sale and refunds all bids.
 - Should panic unless 1 yoctoNEAR is attached
 - If the sale in progress, only the sale creator can remove the sale
+- Sale removed
 - Refunds all bids
 
 ## bids

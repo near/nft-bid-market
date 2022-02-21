@@ -1,20 +1,21 @@
-use crate::*;
 use crate::common::*;
+use crate::*;
 
+use crate::sale::{ContractAndTokenId, SaleJson, DELIMETER};
 use std::cmp::min;
-use crate::sale::{DELIMETER, ContractAndTokenId, SaleJson};
 
 #[near_bindgen]
 impl Market {
-
     /// views
-    pub fn get_supply_sales(
-        &self,
-    ) -> U64 {
+    pub fn get_supply_sales(&self) -> U64 {
         U64(self.market.sales.len())
     }
 
-    pub fn get_sales(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<(ContractAndTokenId, SaleJson)> {
+    pub fn get_sales(
+        &self,
+        from_index: Option<U128>,
+        limit: Option<u64>,
+    ) -> Vec<(ContractAndTokenId, SaleJson)> {
         let sales = &self.market.sales;
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
@@ -25,11 +26,8 @@ impl Market {
             .map(|(contract_and_token_id, sale)| (contract_and_token_id, self.json_from_sale(sale)))
             .collect()
     }
-    
-    pub fn get_supply_by_owner_id(
-        &self,
-        account_id: AccountId,
-    ) -> U64 {
+
+    pub fn get_supply_by_owner_id(&self, account_id: AccountId) -> U64 {
         let by_owner_id = self.market.by_owner_id.get(&account_id);
         if let Some(by_owner_id) = by_owner_id {
             U64(by_owner_id.len())
@@ -55,20 +53,13 @@ impl Market {
         let start = u64::from(from_index);
         let end = min(start + limit, sales.len());
         for i in start..end {
-            let sale = self
-                .market
-                .sales
-                .get(&keys.get(i).unwrap())
-                .unwrap();
+            let sale = self.market.sales.get(&keys.get(i).unwrap()).unwrap();
             tmp.push(self.json_from_sale(sale));
         }
         tmp
     }
 
-    pub fn get_supply_by_nft_contract_id(
-        &self,
-        nft_contract_id: AccountId,
-    ) -> U64 {
+    pub fn get_supply_by_nft_contract_id(&self, nft_contract_id: AccountId) -> U64 {
         let by_nft_contract_id = self.market.by_nft_contract_id.get(&nft_contract_id);
         if let Some(by_nft_contract_id) = by_nft_contract_id {
             U64(by_nft_contract_id.len())
@@ -97,7 +88,12 @@ impl Market {
             let sale = self
                 .market
                 .sales
-                .get(&format!("{}{}{}", &nft_contract_id, DELIMETER, &keys.get(i).unwrap()))
+                .get(&format!(
+                    "{}{}{}",
+                    &nft_contract_id,
+                    DELIMETER,
+                    &keys.get(i).unwrap()
+                ))
                 .unwrap();
             let sale_json = self.json_from_sale(sale);
             tmp.push(sale_json);
@@ -105,10 +101,7 @@ impl Market {
         tmp
     }
 
-    pub fn get_supply_by_nft_token_type(
-        &self,
-        token_type: String,
-    ) -> U64 {
+    pub fn get_supply_by_nft_token_type(&self, token_type: String) -> U64 {
         let by_nft_token_type = self.market.by_nft_token_type.get(&token_type);
         if let Some(by_nft_token_type) = by_nft_token_type {
             U64(by_nft_token_type.len())
@@ -134,22 +127,22 @@ impl Market {
         let start = u64::from(from_index);
         let end = min(start + limit, sales.len());
         for i in start..end {
-            let sale = self
-                .market
-                .sales
-                .get(&keys.get(i).unwrap())
-                .unwrap();
+            let sale = self.market.sales.get(&keys.get(i).unwrap()).unwrap();
             let sale_json = self.json_from_sale(sale);
             tmp.push(sale_json);
         }
         tmp
     }
 
-    pub fn get_sale(&self, nft_contract_token: ContractAndTokenId) -> Option<SaleJson> {
-        self.market.sales.get(&nft_contract_token).map(|sale| self.json_from_sale(sale))
+    pub fn get_sale(&self, nft_contract_id: AccountId, token_id: TokenId) -> Option<SaleJson> {
+        let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
+        self.market
+            .sales
+            .get(&contract_and_token_id)
+            .map(|sale| self.json_from_sale(sale))
     }
-    
-    pub fn json_from_sale(&self, sale: Sale) -> SaleJson {
+
+    pub(crate) fn json_from_sale(&self, sale: Sale) -> SaleJson {
         SaleJson {
             owner_id: sale.owner_id,
             nft_contract_id: sale.nft_contract_id,

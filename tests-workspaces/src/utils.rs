@@ -1,9 +1,9 @@
-use std::collections::HashMap;
 use near_units::parse_gas;
 use near_units::parse_near;
 use nft_contract::common::TokenMetadata;
+use std::collections::HashMap;
 use workspaces::prelude::*;
-use workspaces::{Contract, Account, Worker, DevNetwork};
+use workspaces::{Account, Contract, DevNetwork, Worker};
 
 use nft_bid_market::{ArgsKind, SaleArgs};
 use nft_contract::common::{AccountId, U128, U64};
@@ -78,30 +78,28 @@ pub async fn mint_token(
 }
 
 pub async fn check_outcome_success(status: FinalExecutionStatus) {
-    match status {
-        near_primitives::views::FinalExecutionStatus::Failure(err) => {
-            panic!("Panic: {:?}", err);
-        }
-        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => {},
-        ref outcome => panic!("Panic: {:?}", outcome),
-    };
+    assert!(
+        matches!(
+            status,
+            near_primitives::views::FinalExecutionStatus::SuccessValue(_)
+        ),
+        "Panic: {:?}",
+        status
+    );
 }
 
 pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str) {
-    match status {
-        near_primitives::views::FinalExecutionStatus::Failure(err) => {
-            assert!(err
-                .to_string()
-                .contains(expected_err))
-        }
-        _ => panic!("Expected failure"),
+    if let near_primitives::views::FinalExecutionStatus::Failure(err) = status {
+        assert!(err.to_string().contains(expected_err))
+    } else {
+        panic!("Expected failure, got: {:?}", status);
     };
 }
 
 pub async fn create_subaccount(
     worker: &Worker<impl DevNetwork>,
     owner: &Account,
-    user_id: &str
+    user_id: &str,
 ) -> anyhow::Result<Account> {
     let user = owner
         .create_subaccount(worker, user_id)
@@ -116,7 +114,7 @@ pub async fn create_series(
     worker: &Worker<impl DevNetwork>,
     nft: workspaces::AccountId,
     user: &Account,
-    owner: workspaces::AccountId
+    owner: workspaces::AccountId,
 ) -> anyhow::Result<String> {
     let series: String = user
         .call(worker, nft, "nft_create_series")
@@ -141,10 +139,9 @@ pub async fn create_series(
 pub async fn deposit(
     worker: &Worker<impl DevNetwork>,
     market: workspaces::AccountId,
-    user: &Account
+    user: &Account,
 ) {
-    user
-        .call(worker, market, "storage_deposit")
+    user.call(worker, market, "storage_deposit")
         .deposit(parse_near!("1 N"))
         .transact()
         .await
@@ -158,10 +155,9 @@ pub async fn nft_approve(
     user: &Account,
     token: String,
     sale_conditions: HashMap<AccountId, U128>,
-    series: String
+    series: String,
 ) {
-    user
-        .call(worker, nft.clone(), "nft_approve")
+    user.call(worker, nft.clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token,
             "account_id": market,
@@ -184,7 +180,7 @@ pub async fn nft_approve(
 pub async fn price_with_fees(
     worker: &Worker<impl DevNetwork>,
     market: &Contract,
-    sale_conditions: HashMap<AccountId, U128>
+    sale_conditions: HashMap<AccountId, U128>,
 ) -> anyhow::Result<U128> {
     let price: U128 = market
         .view(
@@ -207,10 +203,9 @@ pub async fn offer(
     market: workspaces::AccountId,
     user: &Account,
     token: String,
-    price: U128
+    price: U128,
 ) {
-    user
-        .call(worker, market.clone(), "offer")
+    user.call(worker, market.clone(), "offer")
         .args_json(serde_json::json!({
             "nft_contract_id": nft,
             "token_id": token,
@@ -255,7 +250,7 @@ pub async fn create_series_raw(
         .transact()
         .await?
         .json()?)
-    }
+}
 
 pub async fn offer_with_duration(
     worker: &Worker<impl DevNetwork>,
@@ -264,10 +259,9 @@ pub async fn offer_with_duration(
     user: &Account,
     token: String,
     price: U128,
-    duration: U64
+    duration: U64,
 ) {
-    user
-        .call(worker, market.clone(), "offer")
+    user.call(worker, market.clone(), "offer")
         .args_json(serde_json::json!({
             "nft_contract_id": nft,
             "token_id": token,
