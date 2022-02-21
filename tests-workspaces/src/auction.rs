@@ -3,8 +3,12 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
+//use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
 use near_units::{parse_gas, parse_near};
+use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
+    mint_token, nft_approve, price_with_fees, offer, offer_with_duration,
+    check_outcome_success, check_outcome_fail
+};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 //use workspaces::{Contract, Account, Worker};
 
@@ -16,39 +20,29 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
     let outcome = user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -72,9 +66,7 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn auction_add_bid_negative() -> anyhow::Result<()> {
-    /*
+/*
     - Should panic if `ft_token_id` is not supported
     - TODO: Should panic if the auction is not in progress
     - Panics if auction is not active
@@ -82,49 +74,36 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
     - Should panic if the bid is smaller than the previous one + minimal step + fees
 
     - can bid on its own auction?
-    */
+*/
+#[tokio::test]
+async fn auction_add_bid_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
-    let user2 = owner
-        .create_subaccount(&worker, "user2")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -202,55 +181,41 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn auction_add_bid_positive() -> anyhow::Result<()> {
-    /*
+/*
     - TODO: Refunds a previous bid (if it exists)
     - Extends an auction if the bid is added less than 15 minutes before the end
     - The auction ends if the `attached_deposit` is bigger than the `buy_out_price` (plus fees)
-    */
+*/
+#[tokio::test]
+async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
-    let user2 = owner
-        .create_subaccount(&worker, "user2")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -354,56 +319,42 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn cancel_auction_negative() -> anyhow::Result<()> {
-    /*
+/*
     - Should panic unless 1 yoctoNEAR is attached
     - Can only be called by the creator of the auction
     - Panics if auction is not active
     - Panics if the auction already has a bid
-    */
+*/
+#[tokio::test]
+async fn cancel_auction_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
-    let user2 = owner
-        .create_subaccount(&worker, "user2")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -493,47 +444,38 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
     Ok(())
 }
 
+/*
+    - Removes the auction
+*/
 #[tokio::test]
 async fn cancel_auction_positive() -> anyhow::Result<()> {
-    /*
-    - Removes the auction
-    */
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -577,51 +519,42 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn finish_auction_positive() -> anyhow::Result<()> {
-    /*
+/*
     -  TODO: NFT is transferred to the buyer
     -  TODO: ft transferred to the previous owner
     -  TODO: protocol and origins fees are paid
     -  TODO: the previous owner also pays royalty
     -  TODO: the auction is removed from list of auctions
-    */
+*/
+#[tokio::test]
+async fn finish_auction_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
@@ -656,50 +589,41 @@ async fn finish_auction_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn finish_auction_negative() -> anyhow::Result<()> {
-    /*
+/*
     - Panics if the auction is not active
     - Should panic if called before the auction ends
     - TODO: Panics if there is no bid
     - TODO: panic if number of payouts plus number of bids exceeds 10
-    */
+*/
+#[tokio::test]
+async fn finish_auction_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+    let market = init_market(
+        &worker,
+        worker.root_account().id(),
+        vec![nft.id()]
+    ).await?;
 
-    let user1 = owner
-        .create_subaccount(&worker, "user1")
-        .initial_balance(parse_near!("10 N"))
-        .transact()
-        .await?
-        .unwrap();
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
-        .args_json(serde_json::json!({
-        "token_metadata":
-        {
-            "title": "some title",
-            "media": "ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz",
-            "copies": 10
-        },
-        "royalty":
-        {
-            owner.id().as_ref(): 1000
-        }}))?
-        .deposit(parse_near!("0.005 N"))
-        .transact()
-        .await?
-        .json()?;
-    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    let series = create_series(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        owner.id().clone()
+    ).await?;
+    let token1 = mint_token(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        user1.id(),
+        &series
+    ).await?;
 
-    user1
-        .call(&worker, market.id().clone(), "storage_deposit")
-        .deposit(parse_near!("1 N"))
-        .transact()
-        .await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+
     user1
         .call(&worker, nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
