@@ -60,6 +60,25 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
         price.clone()
     ).await;
 
+    // Check that one bid is removed after `remove_bid` 
+    let nft_contract_token = format!("{}||{}", nft.id(), token1);
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        "No bids"
+    );
+
     let outcome = user2
         .call(&worker, market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
@@ -73,6 +92,24 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
+
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).is_none(),
+        "Bid is not removed"
+    );
+
     Ok(())
 }
 
@@ -244,6 +281,26 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         U64(100000000)
     ).await;
 
+    // Check that one bid is removed after `cancel_bid` 
+    let nft_contract_token = format!("{}||{}", nft.id(), token1);
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        "No bids"
+    );
+
+
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
@@ -257,6 +314,24 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
+
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).is_none(),
+        "Bid is not removed"
+    );
+
 
     Ok(())
 }
@@ -508,6 +583,25 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         U64(100000000)
     ).await;
 
+    // check that two bids are removed after `cancel_expired_bids`
+    let nft_contract_token = format!("{}||{}", nft.id(), token1);
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 3,
+        "No bids"
+    );
+
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_expired_bids")
         .args_json(serde_json::json!({
@@ -519,6 +613,23 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
+
+    let sale: Option<SaleJson> = market
+        .view(
+            &worker,
+            "get_sale",
+            serde_json::json!({
+                "nft_contract_token": nft_contract_token,
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        "Had to remove 2 bids"
+    );
 
     Ok(())
 }
