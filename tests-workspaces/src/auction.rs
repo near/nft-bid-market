@@ -1,13 +1,11 @@
 use std::{
-    collections::HashMap,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 //use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
 use near_units::{parse_gas, parse_near};
 use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
-    mint_token, nft_approve, price_with_fees, offer, offer_with_duration,
-    check_outcome_success, check_outcome_fail
+    mint_token, check_outcome_success, check_outcome_fail
 };
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 //use workspaces::{Contract, Account, Worker};

@@ -1,14 +1,11 @@
-use std::{
-    collections::HashMap,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::collections::HashMap;
 
-use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
-    mint_token, nft_approve, price_with_fees, offer, offer_with_duration,
-    check_outcome_success, check_outcome_fail
+use crate::utils::{
+    check_outcome_fail, check_outcome_success, create_series, create_subaccount, deposit,
+    init_market, init_nft, mint_token, nft_approve, offer, offer_with_duration,
 };
-use near_units::{parse_gas, parse_near};
-use nft_bid_market::{ArgsKind, SaleArgs, SaleJson};
+use near_units::parse_gas;
+use nft_bid_market::SaleJson;
 use nft_contract::common::{AccountId, U128, U64};
 
 /*
@@ -19,55 +16,44 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
-        nft.id().clone(), 
+        nft.id().clone(),
         market.id().clone(),
-        &user1, token1.clone(),
+        &user1,
+        token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
+        series.clone(),
+    )
+    .await;
     let price: U128 = 900.into();
-    offer(&worker,
+    offer(
+        &worker,
         nft.id().clone(),
         market.id().clone(),
         &user2,
         token1.clone(),
-        price.clone()
-    ).await;
+        price,
+    )
+    .await;
 
-    // Check that one bid is removed after `remove_bid` 
-    let nft_contract_token = format!("{}||{}", nft.id(), token1);
+    // Check that one bid is removed after `remove_bid`
     let sale: Option<SaleJson> = market
         .view(
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+                "nft_contract_id": nft.id(),
+                "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -75,7 +61,12 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .unwrap()
+            .len()
+            == 1,
         "No bids"
     );
 
@@ -85,7 +76,7 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
             "ft_token_id": "near",
-            "price": price.clone(),
+            "price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -98,7 +89,8 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+                "nft_contract_id": nft.id(),
+                "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -106,7 +98,10 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).is_none(),
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .is_none(),
         "Bid is not removed"
     );
 
@@ -123,28 +118,13 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
@@ -154,8 +134,9 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         &user1,
         token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
+        series.clone(),
+    )
+    .await;
     let price: U128 = 900.into();
     offer(
         &worker,
@@ -163,8 +144,9 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         market.id().clone(),
         &user2,
         token1.clone(),
-        price.clone()
-    ).await;
+        price,
+    )
+    .await;
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user2
@@ -173,13 +155,17 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
             "ft_token_id": "near",
-            "price": price.clone(),
+            "price": price,
         }))?
         .deposit(2)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "Requires attached deposit of exactly 1 yoctoNEAR").await;
+    check_outcome_fail(
+        outcome.status,
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+    )
+    .await;
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user2
@@ -188,7 +174,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "nft_contract_id": "some_other_nft_contract".to_string(),
             "token_id": token1.clone(),
             "ft_token_id": "near",
-            "price": price.clone(),
+            "price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -202,7 +188,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "nft_contract_id": nft.id().clone(),
             "token_id": "1:10",
             "ft_token_id": "near",
-            "price": price.clone(),
+            "price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -217,7 +203,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
             "ft_token_id": "not_near",
-            "price": price.clone(),
+            "price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -236,29 +222,14 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
     let user3 = create_subaccount(&worker, &owner, "user3").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
@@ -268,8 +239,9 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         &user1,
         token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
+        series.clone(),
+    )
+    .await;
     let price: U128 = 900.into();
     offer_with_duration(
         &worker,
@@ -277,18 +249,19 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         market.id().clone(),
         &user2,
         token1.clone(),
-        price.clone(),
-        U64(100000000)
-    ).await;
+        price,
+        U64(100000000),
+    )
+    .await;
 
-    // Check that one bid is removed after `cancel_bid` 
-    let nft_contract_token = format!("{}||{}", nft.id(), token1);
+    // Check that one bid is removed after `cancel_bid`
     let sale: Option<SaleJson> = market
         .view(
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+                "nft_contract_id": nft.id(),
+                "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -296,10 +269,14 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .unwrap()
+            .len()
+            == 1,
         "No bids"
     );
-
 
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
@@ -308,7 +285,7 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -320,7 +297,8 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+                "nft_contract_id": nft.id(),
+                "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -328,10 +306,12 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).is_none(),
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .is_none(),
         "Bid is not removed"
     );
-
 
     Ok(())
 }
@@ -348,43 +328,39 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
     let user3 = create_subaccount(&worker, &owner, "user3").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
         nft.id().clone(),
         market.id().clone(),
-        &user1, token1.clone(),
+        &user1,
+        token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
-    
+        series.clone(),
+    )
+    .await;
+
     // Should panic if the bid isn't finished yet
     let price: U128 = 900.into();
-    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), price.clone(), U64(1000000000000)).await;
+    offer_with_duration(
+        &worker,
+        nft.id().clone(),
+        market.id().clone(),
+        &user2,
+        token1.clone(),
+        price,
+        U64(1000000000000),
+    )
+    .await;
 
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
@@ -393,7 +369,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -402,7 +378,15 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if the bid doesn't have end time
     let price: U128 = 950.into();
-    offer(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), price.clone()).await;
+    offer(
+        &worker,
+        nft.id().clone(),
+        market.id().clone(),
+        &user2,
+        token1.clone(),
+        price,
+    )
+    .await;
 
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
@@ -411,7 +395,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -420,7 +404,16 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if the bid isn't finished yet
     let price: U128 = 900.into();
-    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), price.clone(), U64(1000000000000)).await;
+    offer_with_duration(
+        &worker,
+        nft.id().clone(),
+        market.id().clone(),
+        &user2,
+        token1.clone(),
+        price,
+        U64(1000000000000),
+    )
+    .await;
 
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
@@ -429,7 +422,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -438,7 +431,16 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let price: U128 = 1000.into();
-    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), price.clone(), U64(100000000)).await;
+    offer_with_duration(
+        &worker,
+        nft.id().clone(),
+        market.id().clone(),
+        &user2,
+        token1.clone(),
+        price,
+        U64(100000000),
+    )
+    .await;
 
     let outcome = user3
         .call(&worker, market.id().clone(), "cancel_bid")
@@ -447,7 +449,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -461,7 +463,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": "another_token_id".to_string(),
             "ft_token_id": "near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -476,7 +478,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "not_near",
             "owner_id": user2.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -491,7 +493,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "owner_id": user1.id(),
-            "price": price.clone(),
+            "price": price,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -523,39 +525,26 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
     let user3 = create_subaccount(&worker, &owner, "user3").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
         nft.id().clone(),
         market.id().clone(),
-        &user1, token1.clone(),
+        &user1,
+        token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
+        series.clone(),
+    )
+    .await;
     offer_with_duration(
         &worker,
         nft.id().clone(),
@@ -563,16 +552,18 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         &user2,
         token1.clone(),
         U128(900),
-        U64(100000000)
-    ).await;
+        U64(100000000),
+    )
+    .await;
     offer(
         &worker,
         nft.id().clone(),
         market.id().clone(),
         &user2,
         token1.clone(),
-        U128(950)
-    ).await;
+        U128(950),
+    )
+    .await;
     offer_with_duration(
         &worker,
         nft.id().clone(),
@@ -580,17 +571,18 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         &user2,
         token1.clone(),
         U128(1000),
-        U64(100000000)
-    ).await;
+        U64(100000000),
+    )
+    .await;
 
     // check that two bids are removed after `cancel_expired_bids`
-    let nft_contract_token = format!("{}||{}", nft.id(), token1);
     let sale: Option<SaleJson> = market
         .view(
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+               "nft_contract_id": nft.id(),
+               "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -598,7 +590,12 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 3,
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .unwrap()
+            .len()
+            == 3,
         "No bids"
     );
 
@@ -619,7 +616,8 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
             &worker,
             "get_sale",
             serde_json::json!({
-                "nft_contract_token": nft_contract_token,
+                "nft_contract_id": nft.id(),
+                "token_id": token1
             })
             .to_string()
             .into_bytes(),
@@ -627,7 +625,12 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap().bids.get(&AccountId::new_unchecked("near".to_owned())).unwrap().len() == 1,
+        sale.unwrap()
+            .bids
+            .get(&AccountId::new_unchecked("near".to_owned()))
+            .unwrap()
+            .len()
+            == 1,
         "Had to remove 2 bids"
     );
 
@@ -643,39 +646,26 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
     let user3 = create_subaccount(&worker, &owner, "user3").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id().clone(), &user1).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
         nft.id().clone(),
         market.id().clone(),
-        &user1, token1.clone(),
+        &user1,
+        token1.clone(),
         sale_conditions.clone(),
-        series.clone()
-    ).await;
+        series.clone(),
+    )
+    .await;
     offer_with_duration(
         &worker,
         nft.id().clone(),
@@ -683,16 +673,18 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         &user2,
         token1.clone(),
         U128(900),
-        U64(100000000)
-    ).await;
+        U64(100000000),
+    )
+    .await;
     offer(
         &worker,
         nft.id().clone(),
         market.id().clone(),
         &user2,
         token1.clone(),
-        U128(950)
-    ).await;
+        U128(950),
+    )
+    .await;
     offer_with_duration(
         &worker,
         nft.id().clone(),
@@ -700,8 +692,9 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         &user2,
         token1.clone(),
         U128(1000),
-        U64(100000000)
-    ).await;
+        U64(100000000),
+    )
+    .await;
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user3
