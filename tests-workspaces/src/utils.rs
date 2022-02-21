@@ -2,19 +2,16 @@ use std::collections::HashMap;
 use near_units::parse_gas;
 use near_units::parse_near;
 use nft_contract::common::TokenMetadata;
-use serde_json::json;
 use workspaces::prelude::*;
 use workspaces::{Contract, Account, Worker, DevNetwork};
 
-use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT};
+use nft_bid_market::{ArgsKind, SaleArgs};
 use nft_contract::common::{AccountId, U128, U64};
 
 use near_primitives::views::FinalExecutionStatus;
 
 const NFT_WASM_FILEPATH: &str = "../res/nft_contract.wasm";
 const MARKET_WASM_FILEPATH: &str = "../res/nft_bid_market.wasm";
-
-pub const STORAGE_PRICE_PER_BYTE: u128 = 10_000_000_000_000_000_000;
 
 pub async fn init_nft(
     worker: &workspaces::Worker<impl DevNetwork>,
@@ -107,7 +104,7 @@ pub async fn create_subaccount(
     user_id: &str
 ) -> anyhow::Result<Account> {
     let user = owner
-        .create_subaccount(&worker, user_id)
+        .create_subaccount(worker, user_id)
         .initial_balance(parse_near!("10 N"))
         .transact()
         .await?
@@ -122,7 +119,7 @@ pub async fn create_series(
     owner: workspaces::AccountId
 ) -> anyhow::Result<String> {
     let series: String = user
-        .call(&worker, nft, "nft_create_series")
+        .call(worker, nft, "nft_create_series")
         .args_json(serde_json::json!({
         "token_metadata":
         {
@@ -147,7 +144,7 @@ pub async fn deposit(
     user: &Account
 ) {
     user
-        .call(&worker, market, "storage_deposit")
+        .call(worker, market, "storage_deposit")
         .deposit(parse_near!("1 N"))
         .transact()
         .await
@@ -164,12 +161,12 @@ pub async fn nft_approve(
     series: String
 ) {
     user
-        .call(&worker, nft.clone(), "nft_approve")
+        .call(worker, nft.clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token,
             "account_id": market,
             "msg": serde_json::json!(ArgsKind::Sale(SaleArgs {
-                sale_conditions: sale_conditions,
+                sale_conditions,
                 token_type: Some(series),
                 start: None,
                 end: None,
@@ -191,7 +188,7 @@ pub async fn price_with_fees(
 ) -> anyhow::Result<U128> {
     let price: U128 = market
         .view(
-            &worker,
+            worker,
             "price_with_fees",
             serde_json::json!({
                 "price": sale_conditions.get(&AccountId::new_unchecked("near".to_string())).unwrap(),
@@ -213,7 +210,7 @@ pub async fn offer(
     price: U128
 ) {
     user
-        .call(&worker, market.clone(), "offer")
+        .call(worker, market.clone(), "offer")
         .args_json(serde_json::json!({
             "nft_contract_id": nft,
             "token_id": token,
@@ -258,4 +255,29 @@ pub async fn create_series_raw(
         .transact()
         .await?
         .json()?)
+    }
+
+pub async fn offer_with_duration(
+    worker: &Worker<impl DevNetwork>,
+    nft: workspaces::AccountId,
+    market: workspaces::AccountId,
+    user: &Account,
+    token: String,
+    price: U128,
+    duration: U64
+) {
+    user
+        .call(worker, market.clone(), "offer")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft,
+            "token_id": token,
+            "ft_token_id": "near",
+            "duration": duration
+        }))
+        .unwrap()
+        .deposit(price.into())
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await
+        .unwrap();
 }
