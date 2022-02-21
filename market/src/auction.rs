@@ -307,7 +307,7 @@ impl Market {
         token_type
     }
 
-    pub fn json_from_auction(&self, auction: Auction) -> AuctionJson {
+    pub(crate) fn json_from_auction(&self, auction: Auction) -> AuctionJson {
         AuctionJson {
             owner_id: auction.owner_id,
             nft_contract_id: auction.nft_contract_id,
