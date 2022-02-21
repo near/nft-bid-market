@@ -336,14 +336,100 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
+    let user3 = create_subaccount(&worker, &owner, "user3").await?;
+
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
+    nft_approve(&worker, nft.id().clone(), market.id().clone(), &user1, token1.clone(), sale_conditions.clone(), series.clone()).await;
+    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(900), U64(100000000)).await;
+    offer(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(950)).await;
+    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(1000), U64(100000000)).await;
+
+    let outcome = user3
+        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id().clone(),
+            "token_id": token1.clone(),
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_success(outcome.status).await;
+
     Ok(())
 }
 
 /*
-- TODO: Should panic if there is no sale with the given `nft_contract_id` and `token_id`
-- TODO: Should panic if there is no bids with `ft_token_id`
+- Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+- Should panic if there is no bids with `ft_token_id`
 */
 #[tokio::test]
 async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
+    let user3 = create_subaccount(&worker, &owner, "user3").await?;
+
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id().clone(), &user1).await;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
+    nft_approve(&worker, nft.id().clone(), market.id().clone(), &user1, token1.clone(), sale_conditions.clone(), series.clone()).await;
+    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(900), U64(100000000)).await;
+    offer(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(950)).await;
+    offer_with_duration(&worker, nft.id().clone(), market.id().clone(), &user2, token1.clone(), U128(1000), U64(100000000)).await;
+
+    // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+    let outcome = user3
+        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .args_json(serde_json::json!({
+            "nft_contract_id": "another_nft_contract".to_string(),
+            "token_id": token1.clone(),
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No sale").await;
+
+    let outcome = user3
+        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id().clone(),
+            "token_id": "another_token".to_string(),
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No sale").await;
+
+    // Should panic if there is no bids with `ft_token_id`
+    let outcome = user3
+        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .args_json(serde_json::json!({
+            "nft_contract_id": nft.id().clone(),
+            "token_id": token1.clone(),
+            "ft_token_id": "not_near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "No token").await;
+
     Ok(())
 }
