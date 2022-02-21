@@ -19,6 +19,23 @@ Gives an approval to the market to mint the series.
 - Panics if `owner_id` didn't pay for one more sale/auction
 - Panics if the given `ft_token_id` is not supported by the market
 -->
+
+## lib
+
+### storage_deposit
+Locks the deposit
+- Must attach at least `STORAGE_PER_SALE`
+- Adds the attached deposit
+
+### storage_withdraw
+Withdraws the deposit
+- Panics unless 1 yoctoNEAR is attached
+- Returns any spare storage deposit
+- Saves the remaining deposit
+
+### storage_amount
+- Returns the minimal deposit for one sale (`STORAGE_PER_SALE`)
+
 ## sale
 
 ### offer
@@ -196,10 +213,12 @@ Payout mapping for the given token, based on 'balance' and royalty
 Gives an approval to mint.
 - Can only be called by the owner
 - Adds a given account to the list of the autorized accounts
+- Returns `true` if the new account has been added to the list, `false` otherwise
 ### deny
 Takes back a permission to mint.
 - Can only be called by the owner
 - Removes a given account from the list of the autorized accounts
+- Returns `true` if the account has been removed from the list, `false` if it hadn't been in the list
 ### set_private_minting
 Turns on and off the private minting.
 - Can only be called by the owner
