@@ -13,7 +13,7 @@ use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 use nft_contract::common::{AccountId, U128, U64};
 
 #[tokio::test]
-async fn nft_on_approve_negative_tests() -> anyhow::Result<()> {
+async fn nft_on_approve_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
