@@ -118,6 +118,22 @@ async fn nft_on_approve_negative() -> anyhow::Result<()> {
         .await?;
     check_outcome_fail(outcome.status, "Token ft.near not supported by this market").await;
 
+    // bad message, sale/auction shouldn't be added
+    let outcome = user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": market.id(),
+            "msg": serde_json::json!({
+                    "a": "b"
+            }).to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Not valid args").await;
+
     Ok(())
 }
 
