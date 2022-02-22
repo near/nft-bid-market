@@ -26,7 +26,7 @@ impl Market {
         auction.end >= env::block_timestamp() && auction.start < env::block_timestamp()
     }
 
-    pub fn get_auction_json(&self, auction_id: U128) -> AuctionJson {
+    pub fn get_auction(&self, auction_id: U128) -> AuctionJson {
         let auction = self
             .market
             .auctions

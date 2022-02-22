@@ -156,7 +156,7 @@ Cancels an auction if it's finished.
 
 ## auction_views
 
-### get_auction_json
+### get_auction
 ### get_auctions
 ### get_current_buyer
 ### get_current_bid

@@ -248,7 +248,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let auction: AuctionJson = market
         .view(
             &worker,
-            "get_auction_json",
+            "get_auction",
             serde_json::json!({ "auction_id": "0".to_string() })
                 .to_string()
                 .into_bytes(),
@@ -269,7 +269,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let auction_bought_out: AuctionJson = market
         .view(
             &worker,
-            "get_auction_json",
+            "get_auction",
             serde_json::json!({ "auction_id": "0".to_string() })
                 .to_string()
                 .into_bytes(),
@@ -283,7 +283,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let auction: AuctionJson = market
         .view(
             &worker,
-            "get_auction_json",
+            "get_auction",
             serde_json::json!({ "auction_id": "0".to_string() })
                 .to_string()
                 .into_bytes(),
@@ -304,7 +304,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let auction_bought_out: AuctionJson = market
         .view(
             &worker,
-            "get_auction_json",
+            "get_auction",
             serde_json::json!({ "auction_id": "0".to_string() })
                 .to_string()
                 .into_bytes(),

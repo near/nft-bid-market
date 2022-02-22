@@ -102,7 +102,7 @@ fn test_fees_transfers() {
     } else {
         panic!("Expected failure");
     }
-    let auction_json: AuctionJson = view!(market.get_auction_json(1.into())).unwrap_json();
+    let auction_json: AuctionJson = view!(market.get_auction(1.into())).unwrap_json();
     assert!(auction_json.end.0 - time_during_bid == EXTENSION_DURATION);
     let blocks_needed = (auction_json.end.0
         - root.borrow_runtime().current_block().block_timestamp)

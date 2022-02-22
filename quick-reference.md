@@ -321,7 +321,7 @@ near view $MARKET_CONTRACT_ID get_auctions
 ```bash
 near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "1", "token_type": "near"}' --accountId $ALICE --depositYocto 10300
 
-near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "1"}'
+near view $MARKET_CONTRACT_ID get_auction '{"auction_id": "1"}'
 ```
 In our case, this call happens less than 15 minutes before the end of the auction, thus the auction is extended.
 
@@ -331,7 +331,7 @@ If `ALICE` calls `auction_add_bid` with deposit more or equal to buyout price (w
 ```bash
 near call $MARKET_CONTRACT_ID auction_add_bid '{"auction_id": "2", "token_type": "near"}' --accountId $ALICE --depositYocto 10300000000
 
-near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "2"}'
+near view $MARKET_CONTRACT_ID get_auction '{"auction_id": "2"}'
 ```
 
 After auction ends anyone can finish it. It will transfer NFTs to those who bought it:
@@ -358,7 +358,7 @@ near view $MARKET_CONTRACT_ID get_auctions
 
 To get the auction:
 ```bash
-near view $MARKET_CONTRACT_ID get_auction_json '{"auction_id": "0"}'
+near view $MARKET_CONTRACT_ID get_auction '{"auction_id": "0"}'
 ```
 
 To get the creator of the latest bid:
