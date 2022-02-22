@@ -7,3 +7,4 @@ mod auction;
 mod bid;
 mod market;
 mod permissions;
+mod auction_views;
