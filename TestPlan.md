@@ -56,7 +56,7 @@ Creates an offer to buy NFT. If `attached_deposit` is sufficient, the purchase i
 - If the `attached_deposit` is not equal to the price + fees
   - should panic if `ft_token_id` is not supported 
   - panics if the bid smaller or equal to the previous one
-  - panic if origin fee exceeds ORIGIN_FEE_MAX
+  - panic if origin fee exceeds `ORIGIN_FEE_MAX`
   - a new bid should be added
   - if the number of stored bids exceeds `bid_history_length`, the earliest bid is removed and refunded
 ### accept_offer
@@ -116,6 +116,7 @@ Adds a bid for the auction.
 - Should panic if `ft_token_id` is not supported
 - Should panic if the auction is not in progress
 - Panics if auction is not active
+- Should panic if the owner tries to bid on his own auction
 - Should panic if the bid is smaller than the minimal deposit
 - Should panic if the bid is smaller than the previous one + minimal step + fees
 - Refunds a previous bid (if it exists)
