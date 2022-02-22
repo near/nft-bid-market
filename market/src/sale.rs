@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 
 use near_sdk::ext_contract;
+use near_sdk::serde_json::json;
 use near_sdk::{promise_result_as_success, Gas};
 
 use crate::fee::calculate_price_with_fees;
@@ -451,9 +452,23 @@ impl Market {
             payout_option
         } else {
             if ft_token_id == "near".parse().unwrap() {
-                Promise::new(buyer_id).transfer(u128::from(price));
+                Promise::new(buyer_id.clone()).transfer(u128::from(price));
             }
             // leave function and return all FTs in ft_resolve_transfer
+            env::log_str(
+                &json!({
+                    "type": "resolve_purchase_fail",
+                    "params": {
+                        "owner_id": sale.owner_id,
+                        "nft_contract_id": sale.nft_contract_id,
+                        "token_id": sale.token_id,
+                        "ft_token_id": ft_token_id,
+                        "price": price,
+                        "buyer_id": buyer_id,
+                    }
+                })
+                .to_string(),
+            );
             return price;
         };
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
