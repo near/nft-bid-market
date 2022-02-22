@@ -68,10 +68,9 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
     - Should panic if `ft_token_id` is not supported
     - TODO: Should panic if the auction is not in progress
     - Panics if auction is not active
+    - Should panic if the owner tries to bid on his own auction
     - Should panic if the bid is smaller than the minimal deposit
     - Should panic if the bid is smaller than the previous one + minimal step + fees
-
-    - can bid on its own auction?
 */
 #[tokio::test]
 async fn auction_add_bid_negative() -> anyhow::Result<()> {
@@ -144,6 +143,17 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_fail(outcome.status, "Auction does not exist").await;
+
+    // Should panic if the owner tries to bid on his own auction
+    let outcome = user1
+        .call(&worker, market.id().clone(), "auction_add_bid")
+        .args_json(serde_json::json!({
+            "auction_id": "0".to_string(),
+        }))?
+        .deposit(10300)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Cannot bid on your own auction").await;
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
