@@ -1,12 +1,14 @@
+use near_contract_standards::non_fungible_token::Token;
 use near_units::parse_gas;
 use near_units::parse_near;
+use nft_bid_market::Fees;
+use nft_bid_market::{ArgsKind, SaleArgs};
 use nft_contract::common::TokenMetadata;
+use nft_contract::common::{AccountId, U128, U64};
+use nft_contract::Payout;
 use std::collections::HashMap;
 use workspaces::prelude::*;
 use workspaces::{Account, Contract, DevNetwork, Worker};
-
-use nft_bid_market::{ArgsKind, SaleArgs};
-use nft_contract::common::{AccountId, U128, U64};
 
 use near_primitives::views::FinalExecutionStatus;
 
@@ -90,7 +92,11 @@ pub async fn check_outcome_success(status: FinalExecutionStatus) {
 
 pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str) {
     if let near_primitives::views::FinalExecutionStatus::Failure(err) = status {
-        assert!(err.to_string().contains(expected_err))
+        assert!(
+            err.to_string().contains(expected_err),
+            "actual error: {}",
+            err
+        )
     } else {
         panic!("Expected failure, got: {:?}", status);
     };
@@ -274,4 +280,69 @@ pub async fn offer_with_duration(
         .transact()
         .await
         .unwrap();
+}
+
+pub async fn nft_transfer_payout_helper(
+    worker: &Worker<impl DevNetwork>,
+    nft: &Contract,
+    user1: &Account,
+    user2: &Account,
+    user3: &Account,
+    royalty: HashMap<&workspaces::AccountId, u64>,
+    fees: Fees,
+    balance: U128
+) -> Payout {
+    let series = create_series_raw(worker, nft.id().clone(), user1, Some(4), royalty)
+        .await
+        .unwrap();
+
+    let token_id = mint_token(worker, nft.id().clone(), user1, user1.id(), &series)
+        .await
+        .unwrap();
+    user1
+        .call(worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token_id,
+            "account_id": user2.id(),
+        }))
+        .unwrap()
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await
+        .unwrap();
+    let approval_id: u64 = {
+        let token: Token = nft
+            .view(
+                worker,
+                "nft_token",
+                serde_json::json!({ "token_id": token_id })
+                    .to_string()
+                    .into_bytes(),
+            )
+            .await
+            .unwrap()
+            .json()
+            .unwrap();
+        let approval_account_ids = token.approved_account_ids.unwrap();
+        *approval_account_ids
+            .get(&user2.id().as_ref().parse().unwrap())
+            .unwrap()
+    };
+    user2
+        .call(worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": token_id,
+            "approval_id": approval_id,
+            "memo": serde_json::json!(fees).to_string(),
+            "balance": balance,
+            "max_len_payout": 10,
+        }))
+        .unwrap()
+        .transact()
+        .await
+        .unwrap()
+        .json()
+        .unwrap()
 }

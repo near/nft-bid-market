@@ -202,7 +202,7 @@ Payout mapping for the given token, based on 'balance' and royalty
 ### nft_transfer_payout
 `nft_transfer` with 'balance' for calculation of Payout mapping for the given token.
 - Should panic unless 1 yoctoNEAR is attached
-- Panics if `token_id` contains `token_series_id`, which doesn't exist
+- Panics if `token_id` doesn't exist
 - Panics if the number of royalties exceeds `max_len_payout`
 - Panics if invalid `memo` is provided
 - Panics if total payout exceeds `ROYALTY_TOTAL_VALUE`

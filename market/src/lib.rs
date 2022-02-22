@@ -20,6 +20,7 @@ use crate::auction::Auction;
 pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 pub use crate::market_core::{ArgsKind, SaleArgs, AuctionArgs};
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
+pub use crate::fee::Fees;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 

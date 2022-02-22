@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
-use crate::utils::init_nft;
+use crate::utils::{
+    check_outcome_fail, create_series_raw, init_nft, mint_token, nft_approve,
+    nft_transfer_payout_helper,
+};
 use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, Token};
-use near_units::parse_near;
+use near_units::{parse_gas, parse_near};
+use nft_bid_market::Fees;
 use nft_contract::TokenSeriesJson;
 
 /*
@@ -438,6 +442,225 @@ async fn nft_mint_positive() -> anyhow::Result<()> {
             metadata: Some(token_metadata),
             approved_account_ids: Some(Default::default())
         }
+    );
+    Ok(())
+}
+
+/*
+- Should panic unless 1 yoctoNEAR is attached
+- Panics if `token_id` which doesn't exist
+- Panics if the number of royalties exceeds `max_len_payout`
+- Panics if invalid `memo` is provided
+- Panics if total payout exceeds `ROYALTY_TOTAL_VALUE`
+*/
+#[tokio::test]
+async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user3 = owner
+        .create_subaccount(&worker, "user3")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let series = create_series_raw(
+        &worker,
+        nft.id().clone(),
+        &user1,
+        Some(4),
+        HashMap::from([
+            (user1.id(), 500),
+            (&"acc1.near".parse().unwrap(), 100),
+            (&"acc2.near".parse().unwrap(), 100),
+            (&"acc3.near".parse().unwrap(), 100),
+            (&"acc4.near".parse().unwrap(), 100),
+            (&"acc5.near".parse().unwrap(), 100),
+            (&"acc6.near".parse().unwrap(), 100),
+        ]),
+    )
+    .await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
+    user1
+        .call(&worker, nft.id().clone(), "nft_approve")
+        .args_json(serde_json::json!({
+            "token_id": token1,
+            "account_id": user2.id(),
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+
+    let approval_id: u64 = {
+        let token: Token = nft
+            .view(
+                &worker,
+                "nft_token",
+                serde_json::json!({ "token_id": token1 })
+                    .to_string()
+                    .into_bytes(),
+            )
+            .await?
+            .json()?;
+        let approval_account_ids = token.approved_account_ids.unwrap();
+        *approval_account_ids
+            .get(&user2.id().as_ref().parse().unwrap())
+            .unwrap()
+    };
+    // 1 yoctoNEAR not attached
+    let outcome = user2
+        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": token1,
+            "approval_id": approval_id,
+            "balance": "10000",
+            "max_len_payout": 10,
+        }))?
+        .transact()
+        .await?;
+    check_outcome_fail(
+        outcome.status,
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+    )
+    .await;
+
+    // `token_id` contains `token_series_id`, which doesn't exist
+    let outcome = user2
+        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": "2:1",
+            "approval_id": approval_id,
+            "balance": "10000",
+            "max_len_payout": 10,
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "no token id").await;
+
+    // number of royalties exceeds `max_len_payout`
+    let outcome = user2
+        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": token1,
+            "approval_id": approval_id,
+            "balance": "10000",
+            "max_len_payout": 5,
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Too many recievers").await;
+
+    // invalid `memo` is provided
+    let outcome = user2
+        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": token1,
+            "approval_id": approval_id,
+            "memo": "some_wrong_memo",
+            "balance": "10000",
+            "max_len_payout": 10,
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "invalid FeesArgs").await;
+
+    // if total payout exceeds `ROYALTY_TOTAL_VALUE`
+    let fees = Fees {
+        buyer: HashMap::from([
+            ("acc1.near".parse().unwrap(), 100),
+            ("acc2.near".parse().unwrap(), 100),
+            ("acc3.near".parse().unwrap(), 100),
+            ("acc4.near".parse().unwrap(), 100),
+            ("acc5.near".parse().unwrap(), 100),
+            ("acc6.near".parse().unwrap(), 100),
+        ]),
+        seller: HashMap::from([
+            ("acc7.near".parse().unwrap(), 100),
+            ("acc8.near".parse().unwrap(), 100),
+            ("acc9.near".parse().unwrap(), 100),
+            ("acc10.near".parse().unwrap(), 100),
+            ("acc11.near".parse().unwrap(), 100),
+            ("acc12.near".parse().unwrap(), 100),
+        ]),
+    };
+    let outcome = user2
+        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .args_json(serde_json::json!({
+            "receiver_id": user3.id(),
+            "token_id": token1,
+            "approval_id": approval_id,
+            "memo": serde_json::json!(fees).to_string(),
+            "balance": "10000",
+            "max_len_payout": 10,
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    check_outcome_fail(outcome.status, "Too many recievers").await;
+    Ok(())
+}
+
+// - Returns payout, which contains royalties and payouts from `memo`
+// Checking calculations here
+#[tokio::test]
+async fn nft_transfer_payout_positive() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox();
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let user1 = owner
+        .create_subaccount(&worker, "user1")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+    let user2 = owner
+        .create_subaccount(&worker, "user2")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let user3 = owner
+        .create_subaccount(&worker, "user3")
+        .initial_balance(parse_near!("10 N"))
+        .transact()
+        .await?
+        .unwrap();
+
+    let payouts = nft_transfer_payout_helper(
+        &worker,
+        &nft,
+        &user1,
+        &user2,
+        &user3,
+        HashMap::from([]),
+        Fees {
+            buyer: HashMap::from([]),
+            seller: HashMap::from([]),
+        },
+        parse_near!("2 N").into(),
     );
     Ok(())
 }
