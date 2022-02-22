@@ -5,6 +5,11 @@ use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, Token
 use near_units::parse_near;
 use nft_contract::TokenSeriesJson;
 
+/*
+- Can only be called by the autorized account (if authorization enabled)
+- Panics if the title of the series is not specified
+- Panics if the total royalty payout exceeds 50%
+*/
 #[tokio::test]
 async fn nft_create_series_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -108,6 +113,10 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
     Ok(())
 }
 
+/*
+- Creates a new series with given metadata and royalty
+- Refunds a deposit
+ */
 #[tokio::test]
 async fn nft_create_series_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -204,6 +213,12 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
     Ok(())
 }
 
+/*
+- Can only be called by the autorized account (if authorization enabled)
+- Panics if there is no series `token_series_id`
+- Panics if called not by the owner of the series or the approved account to mint this specific series
+- Panics if the maximum number of tokens have already been minted
+ */
 #[tokio::test]
 async fn nft_mint_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -345,6 +360,10 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
     Ok(())
 }
 
+/*
+- Mints a new token
+- Refunds a deposit
+ */
 #[tokio::test]
 async fn nft_mint_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -398,15 +417,16 @@ async fn nft_mint_positive() -> anyhow::Result<()> {
         .transact()
         .await?
         .json()?;
-    let minted_token: Token = nft.view(
-        &worker,
-        "nft_token",
-        serde_json::json!({ "token_id": token_id })
-            .to_string()
-            .into_bytes(),
-    )
-    .await?
-    .json()?;
+    let minted_token: Token = nft
+        .view(
+            &worker,
+            "nft_token",
+            serde_json::json!({ "token_id": token_id })
+                .to_string()
+                .into_bytes(),
+        )
+        .await?
+        .json()?;
     let minted_token_metadata = minted_token.metadata.as_ref().unwrap();
     token_metadata.issued_at = minted_token_metadata.issued_at.clone();
     token_metadata.copies = None;

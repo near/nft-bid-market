@@ -12,6 +12,13 @@ use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 use nft_contract::common::{AccountId, U128, U64};
 
+/*
+- Can only be called via cross-contract call
+- `owner_id` must be the signer
+- Panics if `owner_id` didn't pay for one more sale/auction
+- Panics if the given `ft_token_id` is not supported by the market
+- Panics if `msg` doesn't contain valid parameters for sale or auction
+ */
 #[tokio::test]
 async fn nft_on_approve_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -114,6 +121,10 @@ async fn nft_on_approve_negative() -> anyhow::Result<()> {
     Ok(())
 }
 
+/*
+- Start time is set to `block_timestamp` if it is not specified explicitly
+- Creates a new sale/auction
+ */
 #[tokio::test]
 async fn nft_on_approve_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
@@ -661,7 +672,6 @@ async fn offer_positive() -> anyhow::Result<()> {
         .bids
         .get(&AccountId::new_unchecked("near".to_string()))
         .unwrap();
-    
 
     assert_ne!(bids.get(0).unwrap(), first_bid);
     Ok(())
