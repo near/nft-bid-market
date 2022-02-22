@@ -340,6 +340,7 @@ pub async fn nft_transfer_payout_helper(
             "max_len_payout": 10,
         }))
         .unwrap()
+        .deposit(1)
         .transact()
         .await
         .unwrap()

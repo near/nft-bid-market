@@ -661,6 +661,6 @@ async fn nft_transfer_payout_positive() -> anyhow::Result<()> {
             seller: HashMap::from([]),
         },
         parse_near!("2 N").into(),
-    );
+    ).await;
     Ok(())
 }
