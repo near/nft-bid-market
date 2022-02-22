@@ -188,7 +188,7 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
     let series1_json: TokenSeriesJson = nft
         .view(
             &worker,
-            "nft_get_series_json",
+            "nft_get_series",
             serde_json::json!({ "token_series_id": series1 })
                 .to_string()
                 .into_bytes(),
@@ -199,7 +199,7 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
     let series2_json: TokenSeriesJson = nft
         .view(
             &worker,
-            "nft_get_series_json",
+            "nft_get_series",
             serde_json::json!({ "token_series_id": series2 })
                 .to_string()
                 .into_bytes(),

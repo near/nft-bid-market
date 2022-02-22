@@ -231,6 +231,6 @@ Tells whether an account has a permission to mint tokens.
 
 ## series_views
 
-### nft_get_series_json
+### nft_get_series
 ### nft_series
 ### nft_supply_for_series

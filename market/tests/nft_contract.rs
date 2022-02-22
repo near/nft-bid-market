@@ -121,7 +121,7 @@ fn nft_create_series_positive() {
     )
     .unwrap_json();
     assert!(user2.account().unwrap().amount > to_yocto("999")); // make sure that deposit is refunded
-    let series_json: TokenSeriesJson = view!(nft.nft_get_series_json(series_id)).unwrap_json();
+    let series_json: TokenSeriesJson = view!(nft.nft_get_series(series_id)).unwrap_json();
     //assert_eq!(series_json.royalty, royalty);
     assert_eq!(
         series_json,

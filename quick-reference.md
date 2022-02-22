@@ -79,7 +79,7 @@ The contract supports methods for Metadata, Approval Management and Royalties ac
 
 To get metadata, owner_id and royalty of the series:
 ```bash
-near view $NFT_CONTRACT_ID nft_get_series_json '{"token_series_id": "1"}'
+near view $NFT_CONTRACT_ID nft_get_series '{"token_series_id": "1"}'
 ```
 
 To get the number of NFTs which have alredy been minted from the series:
