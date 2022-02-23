@@ -59,12 +59,11 @@ impl Market {
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
-        let min_step = auction.minimal_step;
         auction.bid.map(|bid| {
             {
                 let total_origins = fee::calculate_origins(&bid.origins);
                 let actual_amount = fee::calculate_actual_amount(bid.price.0, total_origins);
-                actual_amount + min_step
+                actual_amount
             }
             .into()
         })

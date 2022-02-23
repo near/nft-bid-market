@@ -71,6 +71,12 @@ async fn permissions_grant() -> anyhow::Result<()> {
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     
     set_private_minting(&worker, nft.id().clone(), &owner, true).await;
+    /*owner.call(&worker, nft.id().clone(), "set_private_minting")
+        .args_json(serde_json::json!({
+            "enabled": true,
+        }))?
+        .transact()
+        .await?;*/
 
     // Can only be called by the owner
     let outcome = user1.call(&worker, nft.id().clone(), "grant")

@@ -410,7 +410,8 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
         .json()?;
     assert!(current_bid.is_none(), "Should not be any bids");
 
-    // add a bid 
+    // add a bid with deposit 10300
+    // 300 yocto is protocol see
     let outcome = user2
         .call(&worker, market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
@@ -433,7 +434,7 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
     assert!(current_bid.is_some(), "Should be a bid");
     assert_eq!(
         current_bid.unwrap().0, 
-        10300,
+        10000,
         "wrong amount"
     );
 
@@ -522,17 +523,19 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
         .json()?;
     assert_eq!(min_bid.0, 10000, "Should be initial price");
 
-    // add a bid 
+    // add a bid with deposit 103000
+    // this bid without fees is equal to 100000
+    // the next bid (without fees) is equal to 100100
     let outcome = user2
         .call(&worker, market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
-        .deposit(100000)
+        .deposit(103000)
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
-    /*let min_bid: U128 = market
+    let min_bid: U128 = market
         .view(
             &worker,
             "get_minimal_next_bid",
@@ -542,7 +545,7 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert_eq!(min_bid.0, 100100, "wrong next bid");*/
+    assert_eq!(min_bid.0, 100100, "wrong next bid");
 
     Ok(())
 }
