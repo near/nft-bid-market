@@ -52,13 +52,22 @@ impl Market {
         U128(min_deposit)
     }
 
+    // Returns current bid amount (not including fees)
     pub fn get_current_bid(&self, auction_id: U128) -> Option<U128> {
         let auction = self
             .market
             .auctions
             .get(&auction_id.into())
             .unwrap_or_else(|| env::panic_str("Auction does not exist"));
-        auction.bid.map(|bid| bid.price)
+        let min_step = auction.minimal_step;
+        auction.bid.map(|bid| {
+            {
+                let total_origins = fee::calculate_origins(&bid.origins);
+                let actual_amount = fee::calculate_actual_amount(bid.price.0, total_origins);
+                actual_amount + min_step
+            }
+            .into()
+        })
     }
 
     pub fn get_auctions(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<AuctionJson> {
