@@ -252,5 +252,11 @@ Tells whether an account has a permission to mint tokens.
 ## series_views
 
 ### nft_get_series
+- Panics if the series wasn't found
+- Returns the series with given `token_series_id`
 ### nft_series
+- Panics in case of incorrect `from_index` or `limit`
+- Returns a vector of series
 ### nft_supply_for_series
+- Panics if the series wasn't found
+- Returns the number of tokens in the series

@@ -9,3 +9,4 @@ mod market;
 mod permissions;
 mod auction_views;
 mod sale_views;
+mod series_views;
