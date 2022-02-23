@@ -192,6 +192,21 @@ async fn sale_views() -> anyhow::Result<()> {
     // check if removing also works correct
     {
         // case1: removed after sale
+        let removed_token = tokens_series1[1].clone();
+        let sale_json: Option<SaleJson> = market
+            .view(
+                &worker,
+                "get_sale",
+                serde_json::json!({
+                   "nft_contract_id": nft.id(),
+                   "token_id": removed_token
+                })
+                .to_string()
+                .into_bytes(),
+            )
+            .await?
+            .json()?;
+        assert!(sale_json.is_some());
         offer(
             &worker,
             nft.id().clone(),
@@ -212,6 +227,20 @@ async fn sale_views() -> anyhow::Result<()> {
             .transact()
             .await?;
         tokens_series1.remove(1);
+        let sale_json: Option<SaleJson> = market
+            .view(
+                &worker,
+                "get_sale",
+                serde_json::json!({
+                   "nft_contract_id": nft.id(),
+                   "token_id": removed_token
+                })
+                .to_string()
+                .into_bytes(),
+            )
+            .await?
+            .json()?;
+        assert!(sale_json.is_none());
         // case2: removed after sale removed
         user2
             .call(&worker, market.id().clone(), "remove_sale")

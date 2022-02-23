@@ -145,15 +145,23 @@ Cancels an auction if it's finished.
 ## sale_views
 
 ### get_sale
+- Returns sale if its active or nothing if not
 ### get_supply_sales
+- Returns total amount of active sales
 ### get_sales
+- Returns list of active sales
 ### get_supply_by_owner_id
+- Returns total amount of active sales owned by owner_id
 ### get_sales_by_owner_id
+- Returns list of active sales owned by owner_id
 ### get_supply_by_nft_contract_id
+- Returns total amount of active sales of tokens from nft_contract_id
 ### get_sales_by_nft_contract_id
+- Returns list of active sales of tokens from nft_contract_id
 ### get_supply_by_nft_token_type
+- Returns total amount of active sales of tokens from nft_contract_id token series
 ### get_sales_by_nft_token_type
-
+- Returns list of active sales of tokens from nft_contract_id token series
 ## auction_views
 
 ### get_auction
