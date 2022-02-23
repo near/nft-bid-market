@@ -290,7 +290,7 @@ pub async fn nft_transfer_payout_helper(
     user3: &Account,
     royalty: HashMap<&workspaces::AccountId, u64>,
     fees: Fees,
-    balance: U128
+    balance: U128,
 ) -> Payout {
     let series = create_series_raw(worker, nft.id().clone(), user1, Some(4), royalty)
         .await

@@ -15,15 +15,15 @@ impl Market {
         &self,
         from_index: Option<U128>,
         limit: Option<u64>,
-    ) -> Vec<(ContractAndTokenId, SaleJson)> {
+    ) -> Vec<SaleJson> {
         let sales = &self.market.sales;
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
         sales
-            .iter()
+            .values()
             .skip(start_index as usize)
             .take(limit)
-            .map(|(contract_and_token_id, sale)| (contract_and_token_id, self.json_from_sale(sale)))
+            .map(|sale| self.json_from_sale(sale))
             .collect()
     }
 

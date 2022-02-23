@@ -8,3 +8,4 @@ mod bid;
 mod market;
 mod permissions;
 mod auction_views;
+mod sale_views;
