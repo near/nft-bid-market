@@ -157,11 +157,22 @@ Cancels an auction if it's finished.
 ## auction_views
 
 ### get_auction
+- Panics in case of incorrect `auction_id`
+- Returns info about the auction
 ### get_auctions
+- Returns vector of all auctions
 ### get_current_buyer
+- Panics in case of incorrect `auction_id`
+- Returns `None` if there is no bid, otherwise returns the current buyer
 ### get_current_bid
+- Panics in case of incorrect `auction_id`
+- Returns `None` if there is no bid, otherwise returns the amount of the last bid (with fees)
 ### check_auction_in_progress
+- Panics in case of incorrect `auction_id`
+- Returns `true` if the auction in progress, `false` otherwise
 ### get_minimal_next_bid
+- Panics in case of incorrect `auction_id`
+- Returns minimal next bid (without fees)
 
 # NFT
 
