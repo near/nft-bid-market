@@ -1,9 +1,7 @@
-use near_units::{parse_gas, parse_near};
 use workspaces::{Account, DevNetwork, Worker, Contract};
 use nft_contract::common::AccountId;
 
-use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
-    mint_token, nft_approve, price_with_fees, offer, offer_with_duration,
+use crate::utils::{init_nft, create_subaccount, 
     check_outcome_success, check_outcome_fail
 };
 
@@ -81,7 +79,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "only owner can grant");
+    check_outcome_fail(outcome.status, "only owner can grant").await;
     
     // Adds a given account to the list of the autorized accounts
     let outcome = owner.call(&worker, nft.id().clone(), "grant")
@@ -90,7 +88,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.clone().status);
+    check_outcome_success(outcome.clone().status).await;
 
     // Returns `true` if the new account has been added to the list
     assert!(outcome.json()?, "Returned false");
@@ -110,7 +108,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.clone().status);
+    check_outcome_success(outcome.clone().status).await;
     assert!(!outcome.json()?, "Returned true");
 
     Ok(())
@@ -144,7 +142,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "only owner can deny");
+    check_outcome_fail(outcome.status, "only owner can deny").await;
 
     // Called by the owner
     let outcome = owner.call(&worker, nft.id().clone(), "deny")
@@ -153,7 +151,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.clone().status);
+    check_outcome_success(outcome.clone().status).await;
 
     // Returns `true` if the account has been removed from the list
     assert!(outcome.json()?, "Returned false");
@@ -171,7 +169,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.clone().status);
+    check_outcome_success(outcome.clone().status).await;
     assert!(!outcome.json()?, "Returned true");
 
     Ok(())
@@ -200,7 +198,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
     check_outcome_fail(
         outcome.status,
         "only owner can enable/disable private minting"
-    );
+    ).await;
     assert!(
         is_allowed(
             &worker,
@@ -217,7 +215,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.status);
+    check_outcome_success(outcome.status).await;
     assert!(
         !is_allowed(
             &worker,
@@ -234,7 +232,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
         }))?
         .transact()
         .await?;
-    check_outcome_success(outcome.status);
+    check_outcome_success(outcome.status).await;
     assert!(
         is_allowed(
             &worker,

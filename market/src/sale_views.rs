@@ -1,7 +1,7 @@
 use crate::common::*;
 use crate::*;
 
-use crate::sale::{ContractAndTokenId, SaleJson, DELIMETER};
+use crate::sale::{SaleJson, DELIMETER};
 use std::cmp::min;
 
 #[near_bindgen]

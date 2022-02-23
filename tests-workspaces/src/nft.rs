@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::utils::{
-    check_outcome_fail, create_series_raw, init_nft, mint_token, nft_approve,
+    check_outcome_fail, create_series_raw, init_nft, mint_token,
     nft_transfer_payout_helper,
 };
 use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, Token};

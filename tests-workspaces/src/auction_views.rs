@@ -2,10 +2,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-//use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
 use near_units::{parse_gas, parse_near};
 use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
-    mint_token, check_outcome_success, check_outcome_fail
+    mint_token, check_outcome_success
 };
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 use nft_contract::common::AccountId;
@@ -23,7 +22,6 @@ async fn view_auction_get_auction() -> anyhow::Result<()> {
     ).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
-    let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
     let series = create_series(
         &worker,
@@ -561,7 +559,6 @@ async fn view_auction_check_auction_in_progress() -> anyhow::Result<()> {
     ).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
-    let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
     let series = create_series(
         &worker,
