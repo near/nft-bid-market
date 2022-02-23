@@ -649,18 +649,61 @@ async fn nft_transfer_payout_positive() -> anyhow::Result<()> {
         .await?
         .unwrap();
 
+    let parsed_near = parse_near!("2.01 N").into();
     let payouts = nft_transfer_payout_helper(
         &worker,
         &nft,
         &user1,
         &user2,
         &user3,
-        HashMap::from([]),
+        HashMap::from([(user1.id(), 500)]),
         Fees {
-            buyer: HashMap::from([]),
-            seller: HashMap::from([]),
+            buyer: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
+            seller: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
         },
-        parse_near!("2 N").into(),
-    ).await;
+        parsed_near,
+    )
+    .await;
+
+    let sum: u128 = payouts.payout.values().map(|val| val.0).sum();
+    assert!(parsed_near.0 - sum <= 1);
+
+    let parsed_near = parse_near!("1.23 N").into();
+    let payouts = nft_transfer_payout_helper(
+        &worker,
+        &nft,
+        &user1,
+        &user2,
+        &user3,
+        HashMap::from([(user1.id(), 500)]),
+        Fees {
+            buyer: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
+            seller: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
+        },
+        parsed_near,
+    )
+    .await;
+
+    let sum: u128 = payouts.payout.values().map(|val| val.0).sum();
+    assert!(parsed_near.0 - sum <= 1);
+
+    let parsed_near = parse_near!("3.45 N").into();
+    let payouts = nft_transfer_payout_helper(
+        &worker,
+        &nft,
+        &user1,
+        &user2,
+        &user3,
+        HashMap::from([(user1.id(), 500)]),
+        Fees {
+            buyer: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300), (user1.id().as_ref().parse().unwrap(), 500)]),
+            seller: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
+        },
+        parsed_near,
+    )
+    .await;
+
+    let sum: u128 = payouts.payout.values().map(|val| val.0).sum();
+    assert!(parsed_near.0 - sum <= 1);
     Ok(())
 }
