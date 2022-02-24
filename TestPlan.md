@@ -182,6 +182,11 @@ Cancels an auction if it's finished.
 - Panics in case of incorrect `auction_id`
 - Returns minimal next bid (without fees)
 
+## fee
+
+### price_with_fees
+- Calculates the total price including the protocol and origin fees
+
 # NFT
 
 ## lib
