@@ -10,15 +10,15 @@ pub async fn set_private_minting(
     nft: workspaces::AccountId,
     user: &Account,
     enabled: bool 
-) -> anyhow::Result<bool> {
-    let result = user.call(worker, nft, "set_private_minting")
+) {
+    user.call(worker, nft, "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": enabled,
-        }))?
+        }))
+        .unwrap()
         .transact()
-        .await?
-        .json()?;
-    Ok(result)
+        .await
+        .unwrap();
 }
 
 pub async fn grant(
@@ -71,12 +71,6 @@ async fn permissions_grant() -> anyhow::Result<()> {
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     
     set_private_minting(&worker, nft.id().clone(), &owner, true).await;
-    /*owner.call(&worker, nft.id().clone(), "set_private_minting")
-        .args_json(serde_json::json!({
-            "enabled": true,
-        }))?
-        .transact()
-        .await?;*/
 
     // Can only be called by the owner
     let outcome = user1.call(&worker, nft.id().clone(), "grant")
