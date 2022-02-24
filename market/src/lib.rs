@@ -13,14 +13,13 @@ mod hack; // TODO: remove
 
 use common::*;
 
-use crate::fee::PROTOCOL_FEE;
 use crate::sale::{Sale, SaleConditions, TokenType,
     ContractAndTokenId, FungibleTokenId};
 use crate::auction::Auction;
 pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 pub use crate::market_core::{ArgsKind, SaleArgs, AuctionArgs};
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
-pub use crate::fee::Fees;
+pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
