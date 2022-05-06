@@ -129,7 +129,7 @@ impl Market {
             auction.owner_id != env::predecessor_account_id(),
             "Cannot bid on your own auction"
         );
-            let deposit = env::attached_deposit();
+        let deposit = env::attached_deposit();
         let min_deposit =
             calculate_price_with_fees(self.get_minimal_next_bid(auction_id), origins.as_ref());
 

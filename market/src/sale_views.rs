@@ -11,11 +11,7 @@ impl Market {
         U64(self.market.sales.len())
     }
 
-    pub fn get_sales(
-        &self,
-        from_index: Option<U128>,
-        limit: Option<u64>,
-    ) -> Vec<SaleJson> {
+    pub fn get_sales(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<SaleJson> {
         let sales = &self.market.sales;
         let start_index: u128 = from_index.map(From::from).unwrap_or_default();
         let limit = limit.map(|v| v as usize).unwrap_or(usize::MAX);
@@ -148,7 +144,6 @@ impl Market {
             nft_contract_id: sale.nft_contract_id,
             token_id: sale.token_id,
             sale_conditions: sale.sale_conditions,
-            bids: sale.bids,
             created_at: sale.created_at.into(),
             token_type: sale.token_type,
 

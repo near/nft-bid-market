@@ -20,8 +20,8 @@ use crate::{event::NftMintData, payouts::MAXIMUM_ROYALTY};
 
 use std::collections::HashMap;
 
-pub use token_series::TokenSeriesJson;
 pub use payouts::Payout;
+pub use token_series::TokenSeriesJson;
 
 // Since Near doesn't support multitoken(yet) by default we need to create some workaround
 // In this nft implementation every token is part of TokenSeries

@@ -13,13 +13,13 @@ mod hack; // TODO: remove
 
 use common::*;
 
-use crate::sale::{Sale, SaleConditions, TokenType,
-    ContractAndTokenId, FungibleTokenId};
 use crate::auction::Auction;
-pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
-pub use crate::market_core::{ArgsKind, SaleArgs, AuctionArgs};
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
+use crate::bid::Bids;
 pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
+pub use crate::market_core::{ArgsKind, AuctionArgs, SaleArgs};
+use crate::sale::{ContractAndTokenId, FungibleTokenId, Sale, SaleConditions, TokenType};
+pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
@@ -35,6 +35,7 @@ pub enum StorageKey {
     ByNFTTokenTypeInner { token_type_hash: CryptoHash },
     FTTokenIds,
     StorageDeposits,
+    Bids,
     OriginFees,
     Auctions,
     AuctionId,
@@ -49,6 +50,7 @@ pub struct MarketSales {
     pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
+    pub bids: LookupMap<ContractAndTokenId, Bids>,
     pub bid_history_length: u8,
 
     pub auctions: UnorderedMap<u128, Auction>,
@@ -78,6 +80,7 @@ impl Market {
             by_nft_token_type: LookupMap::new(StorageKey::ByNFTTokenType),
             ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
+            bids: LookupMap::new(StorageKey::Bids),
             bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
             auctions: UnorderedMap::new(StorageKey::Auctions),
             next_auction_id: 0,

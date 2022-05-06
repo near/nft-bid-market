@@ -49,7 +49,7 @@ impl Market {
         amount: Balance,
         ft_token_id: AccountId,
         buyer_id: AccountId,
-        sale: &mut Sale,
+        sale: &mut Sale, //TODO: remove it
         start: U64,
         end: Option<U64>,
         origins: Option<Origins>,
@@ -75,11 +75,8 @@ impl Market {
             end,
             origins: origins.unwrap_or_default(),
         };
-
-        let bids_for_token_id = sale
-            .bids
-            .entry(ft_token_id.clone())
-            .or_insert_with(Vec::new);
+        let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
+        let bids_for_token_id = bids.entry(ft_token_id.clone()).or_insert_with(Vec::new);
         if let Some(current_bid) = bids_for_token_id.last() {
             let current_origins = calculate_origins(&current_bid.origins);
             let current_amount = calculate_actual_amount(current_bid.price.0, current_origins);
@@ -100,7 +97,7 @@ impl Market {
             bids_for_token_id.remove(0);
         }
 
-        self.market.sales.insert(&contract_and_token_id, sale);
+        //self.market.sales.insert(&contract_and_token_id, sale);
     }
 
     #[payable]
@@ -147,17 +144,8 @@ impl Market {
         ft_token_id: AccountId,
     ) {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let mut sale = self
-            .market
-            .sales
-            .get(&contract_and_token_id)
-            .expect("No sale");
-        let bid_vec = sale.bids.get_mut(&ft_token_id).expect("No token");
-        let mut sale = self
-            .market
-            .sales
-            .get(&contract_and_token_id)
-            .expect("No sale");
+        let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
+        let mut bid_vec = bids.get(&ft_token_id).expect("No token").clone();
         bid_vec.retain(|bid_from_vec| {
             let mut not_finished = true;
             if let Some(end) = bid_from_vec.end {
@@ -175,12 +163,12 @@ impl Market {
         });
         if bid_vec.is_empty() {
             // If there is no bids left, should remove ft_token_id from the HashMap
-            sale.bids.remove(&ft_token_id);
+            bids.remove(&ft_token_id);
         } else {
             // If there are some bids left, add a vector of valid bids
-            sale.bids.insert(ft_token_id.clone(), bid_vec.to_vec());
+            bids.insert(ft_token_id, bid_vec.to_vec());
         };
-        self.market.sales.insert(&contract_and_token_id, &sale);
+        self.market.bids.insert(&contract_and_token_id, &bids);
     }
 }
 

@@ -11,7 +11,7 @@ use crate::*;
 use common::*;
 use near_contract_standards::non_fungible_token::hash_account_id;
 
-use bid::{Bids, Origins};
+use bid::Origins;
 pub type TokenSeriesId = String;
 
 pub const GAS_FOR_FT_TRANSFER: Gas = Gas(5_000_000_000_000);
@@ -42,7 +42,7 @@ pub struct Sale {
     pub nft_contract_id: AccountId,
     pub token_id: String,
     pub sale_conditions: SaleConditions,
-    pub bids: Bids,
+    //pub bids: Bids,
     pub created_at: u64,
     pub token_type: TokenType,
 
@@ -59,7 +59,6 @@ pub struct SaleJson {
     pub nft_contract_id: AccountId,
     pub token_id: String,
     pub sale_conditions: SaleConditions,
-    pub bids: Bids,
     pub created_at: U64,
     pub token_type: TokenType,
 
@@ -140,7 +139,6 @@ impl Market {
 
         // Create a new sale with given arguments and empty list of bids
 
-        let bids = HashMap::new();
         let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
         let start = start.map(|s| s.into()).unwrap_or_else(env::block_timestamp);
         let sale = Sale {
@@ -149,7 +147,6 @@ impl Market {
             nft_contract_id: nft_contract_id.clone(),
             token_id: token_id.clone(),
             sale_conditions,
-            bids,
             created_at: env::block_timestamp(),
             token_type: token_type.clone(),
             start: Some(start),
@@ -243,7 +240,7 @@ impl Market {
                 "Until the sale is finished, it can only be removed by the sale owner"
             );
         };
-        self.refund_all_bids(&sale.bids);
+        //self.refund_all_bids(&sale.bids); TODO: refactor the bids so that funds are not taken before the sale is made
     }
 
     #[payable]
@@ -347,7 +344,7 @@ impl Market {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         // Check that the sale is in progress and remove bid before proceeding to process purchase
-        let mut sale = self
+        let sale = self
             .market
             .sales
             .get(&contract_and_token_id)
@@ -356,7 +353,14 @@ impl Market {
             sale.in_limits(),
             "Either the sale is finished or it hasn't started yet"
         );
-        let bids_for_token_id = sale.bids.remove(&ft_token_id).expect("No bids");
+        //let bids_for_token_id = self.market.bids.remove()
+        let bids_for_token_id = self
+            .market
+            .bids
+            .get(&contract_and_token_id)
+            .unwrap()
+            .remove(&ft_token_id)
+            .expect("No bids");
         let bid = &bids_for_token_id[bids_for_token_id.len() - 1];
         require!(bid.in_limits(), "Out of time limit of the bid");
         self.market.sales.insert(&contract_and_token_id, &sale);
@@ -424,6 +428,10 @@ impl Market {
         sale: Sale,
         price: U128,
     ) -> U128 {
+        //TODO: should take ContractAndTokenId instead of Sale
+        let contract_and_token_id: ContractAndTokenId =
+            format!("{}{}{}", &sale.nft_contract_id, DELIMETER, sale.token_id);
+        let bids_for_contract_and_token_id = self.market.bids.get(&contract_and_token_id).unwrap();
         // checking for payout information
         let payout_option = promise_result_as_success().and_then(|value| {
             // None means a bad payout from bad NFT contract
@@ -431,7 +439,9 @@ impl Market {
                 .ok()
                 .and_then(|payout| {
                     // gas to do 10 FT transfers (and definitely 10 NEAR transfers)
-                    if payout.payout.len() + sale.bids.len() > 10 || payout.payout.is_empty() {
+                    if payout.payout.len() + bids_for_contract_and_token_id.len() > 10
+                        || payout.payout.is_empty()
+                    {
                         env::log_str("Cannot have more than 10 royalties and sale.bids refunds");
                         None
                     } else {
@@ -472,7 +482,7 @@ impl Market {
             return price;
         };
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
-        self.refund_all_bids(&sale.bids); // TODO: maybe should do this outside of this call, to lower gas for this call
+        self.refund_all_bids(&bids_for_contract_and_token_id); // TODO: maybe should do this outside of this call, to lower gas for this call
 
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {

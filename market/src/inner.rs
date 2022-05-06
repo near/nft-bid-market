@@ -68,35 +68,27 @@ impl Market {
         ft_token_id: &AccountId,
         token_id: TokenId,
         owner_id: &AccountId,
-        price: U128
+        price: U128,
     ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let sale = self
+        let mut bids = self
             .market
-            .sales
+            .bids
             .get(&contract_and_token_id)
-            .expect("No sale");
-        let bid_vec = sale.bids.get(ft_token_id).expect("No token");
+            .expect("No bid");
+        let bid_vec = bids.get(ft_token_id).expect("No token").clone();
 
-        let mut sale = self
-            .market
-            .sales
-            .get(&contract_and_token_id)
-            .expect("No sale");
         for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if &(bid_from_vec.owner_id) == owner_id && bid_from_vec.price == price {
                 if bid_vec.len() == 1 {
                     //If the vector contained only one bid, should remove ft_token_id from the HashMap
-                    sale.bids.remove(ft_token_id);
+                    bids.remove(ft_token_id);
                 } else {
                     //If there are several bids for this ft_token_id, should remove one bid
-                    sale.bids
-                        .get_mut(ft_token_id)
-                        .expect("No token")
-                        .remove(index);
+                    bids.get_mut(ft_token_id).expect("No token").remove(index);
                 };
-                self.market.sales.insert(&contract_and_token_id, &sale);
-                //break; // shouldn't allow bids with equal price 
+                self.market.bids.insert(&contract_and_token_id, &bids);
+                //break; // shouldn't allow bids with equal price
                 return Some((*bid_from_vec).clone());
             };
         }

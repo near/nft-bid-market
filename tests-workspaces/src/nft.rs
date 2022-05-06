@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::utils::{
-    check_outcome_fail, create_series_raw, init_nft, mint_token,
-    nft_transfer_payout_helper,
+    check_outcome_fail, create_series_raw, init_nft, mint_token, nft_transfer_payout_helper,
 };
 use near_contract_standards::non_fungible_token::{metadata::TokenMetadata, Token};
 use near_units::{parse_gas, parse_near};
@@ -696,7 +695,10 @@ async fn nft_transfer_payout_positive() -> anyhow::Result<()> {
         &user3,
         HashMap::from([(user1.id(), 500)]),
         Fees {
-            buyer: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300), (user1.id().as_ref().parse().unwrap(), 500)]),
+            buyer: HashMap::from([
+                (user2.id().as_ref().parse().unwrap(), 300),
+                (user1.id().as_ref().parse().unwrap(), 500),
+            ]),
             seller: HashMap::from([(user2.id().as_ref().parse().unwrap(), 300)]),
         },
         parsed_near,

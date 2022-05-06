@@ -1,12 +1,11 @@
-use std::{
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 //use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
-use near_units::{parse_gas, parse_near};
-use crate::utils::{init_market, init_nft, create_subaccount, create_series, deposit,
-    mint_token, check_outcome_success, check_outcome_fail
+use crate::utils::{
+    check_outcome_fail, check_outcome_success, create_series, create_subaccount, deposit,
+    init_market, init_nft, mint_token,
 };
+use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 //use workspaces::{Contract, Account, Worker};
 
@@ -18,27 +17,12 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
     let outcome = user1
@@ -77,28 +61,13 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
@@ -199,28 +168,13 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
 
@@ -276,8 +230,14 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(auction.end.0 < auction_bought_out.end.0, "The auction wasn't extended");
-    assert!(Duration::from_nanos(auction_bought_out.end.0) - (right_before_bid  + FIFTEEN_MINUTES) < THIRTY_SECONDS);
+    assert!(
+        auction.end.0 < auction_bought_out.end.0,
+        "The auction wasn't extended"
+    );
+    assert!(
+        Duration::from_nanos(auction_bought_out.end.0) - (right_before_bid + FIFTEEN_MINUTES)
+            < THIRTY_SECONDS
+    );
 
     // The auction ends if the `attached_deposit` is bigger than the `buy_out_price` (plus fees)
     let auction: AuctionJson = market
@@ -321,7 +281,10 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(auction.end.0 > auction_bought_out.end.0, "The end time wasn't decreased");
+    assert!(
+        auction.end.0 > auction_bought_out.end.0,
+        "The end time wasn't decreased"
+    );
     assert!(!in_progress, "The auction didn't end");
     assert!(Duration::from_nanos(auction_bought_out.end.0) - right_before_bid < THIRTY_SECONDS);
     Ok(())
@@ -338,28 +301,13 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
 
@@ -382,7 +330,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
-    
+
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user1
         .call(&worker, market.id().clone(), "cancel_auction")
@@ -393,7 +341,11 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "Requires attached deposit of exactly 1 yoctoNEAR").await;
+    check_outcome_fail(
+        outcome.status,
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+    )
+    .await;
 
     // Panics if auction is not active
     let outcome = user1
@@ -417,7 +369,11 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "Only the auction owner can cancel the auction").await;
+    check_outcome_fail(
+        outcome.status,
+        "Only the auction owner can cancel the auction",
+    )
+    .await;
 
     // Panics if the auction already has a bid
     user2
@@ -437,14 +393,19 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "Can't cancel the auction after the first bid is made").await;
+    check_outcome_fail(
+        outcome.status,
+        "Can't cancel the auction after the first bid is made",
+    )
+    .await;
 
-    let vector_auctions: Vec<AuctionJson> = market.view(
-        &worker,
-        "get_auctions",
-        serde_json::json!({"from_index": null, "limit": null})
-            .to_string()
-            .into_bytes(),
+    let vector_auctions: Vec<AuctionJson> = market
+        .view(
+            &worker,
+            "get_auctions",
+            serde_json::json!({"from_index": null, "limit": null})
+                .to_string()
+                .into_bytes(),
         )
         .await?
         .json()?;
@@ -460,27 +421,12 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
 
@@ -514,12 +460,11 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
-    let vector_auctions: Vec<AuctionJson> = market.view(
-        &worker,
-        "get_auctions",
-        serde_json::json!({})
-            .to_string()
-            .into_bytes(),
+    let vector_auctions: Vec<AuctionJson> = market
+        .view(
+            &worker,
+            "get_auctions",
+            serde_json::json!({}).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -539,27 +484,12 @@ async fn finish_auction_positive() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
 
@@ -608,27 +538,12 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
     let worker = workspaces::sandbox();
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
-    let market = init_market(
-        &worker,
-        worker.root_account().id(),
-        vec![nft.id()]
-    ).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series = create_series(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        owner.id().clone()
-    ).await?;
-    let token1 = mint_token(
-        &worker,
-        nft.id().clone(),
-        &user1,
-        user1.id(),
-        &series
-    ).await?;
+    let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
 
     deposit(&worker, market.id().clone(), &user1).await;
 
@@ -674,7 +589,11 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     println!("{:?}", outcome.status);
-    check_outcome_fail(outcome.status, "Auction can be finalized only after the end time").await;
+    check_outcome_fail(
+        outcome.status,
+        "Auction can be finalized only after the end time",
+    )
+    .await;
 
     // Panics if there is no bid
 

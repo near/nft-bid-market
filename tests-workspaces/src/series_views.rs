@@ -1,9 +1,6 @@
-use crate::utils::{
-    init_nft, create_subaccount, 
-    create_series, mint_token
-};
-use nft_contract::TokenSeriesJson;
+use crate::utils::{create_series, create_subaccount, init_nft, mint_token};
 use nft_contract::common::{AccountId, U128};
+use nft_contract::TokenSeriesJson;
 
 /*
 - Panics if the series wasn't found
@@ -19,7 +16,7 @@ async fn series_views_nft_get_series() -> anyhow::Result<()> {
 
     let _series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
 
-    // Check that method fails in case of wrong `token_series_id` 
+    // Check that method fails in case of wrong `token_series_id`
     let outcome = nft
         .view(
             &worker,
@@ -31,8 +28,8 @@ async fn series_views_nft_get_series() -> anyhow::Result<()> {
         .await;
     match outcome {
         Err(err) => {
-            println!("{}", err); 
-        },
+            println!("{}", err);
+        }
         Ok(_) => panic!("Expected failure"),
     };
 
@@ -47,9 +44,15 @@ async fn series_views_nft_get_series() -> anyhow::Result<()> {
         .await?
         .json()?;
 
-    assert_eq!(token_series.owner_id, AccountId::new_unchecked("user1.test.near".to_owned()));
+    assert_eq!(
+        token_series.owner_id,
+        AccountId::new_unchecked("user1.test.near".to_owned())
+    );
     assert_eq!(token_series.metadata.title, Some("some title".to_string()));
-    assert_eq!(token_series.metadata.media, Some("ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz".to_string()));
+    assert_eq!(
+        token_series.metadata.media,
+        Some("ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz".to_string())
+    );
     assert_eq!(token_series.metadata.copies, Some(10));
 
     Ok(())
@@ -69,8 +72,8 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
 
     let _series1 = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
-    
-    // Check that method fails in case of wrong `from_index` 
+
+    // Check that method fails in case of wrong `from_index`
     let outcome = nft
         .view(
             &worker,
@@ -82,8 +85,8 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
         .await;
     match outcome {
         Err(err) => {
-            println!("{}", err); 
-        },
+            println!("{}", err);
+        }
         Ok(_) => panic!("Expected failure"),
     };
 
@@ -99,8 +102,8 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
         .await;
     match outcome {
         Err(err) => {
-            println!("{}", err); 
-        },
+            println!("{}", err);
+        }
         Ok(_) => panic!("Expected failure"),
     };
 
@@ -108,17 +111,21 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
         .view(
             &worker,
             "nft_series",
-            serde_json::json!({  })
-                .to_string()
-                .into_bytes(),
+            serde_json::json!({}).to_string().into_bytes(),
         )
         .await?
         .json()?;
     assert_eq!(vec_token_series.len(), 1);
     let token = &vec_token_series[0];
-    assert_eq!(token.owner_id, AccountId::new_unchecked("user1.test.near".to_owned()));
+    assert_eq!(
+        token.owner_id,
+        AccountId::new_unchecked("user1.test.near".to_owned())
+    );
     assert_eq!(token.metadata.title, Some("some title".to_string()));
-    assert_eq!(token.metadata.media, Some("ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz".to_string()));
+    assert_eq!(
+        token.metadata.media,
+        Some("ipfs://QmTqZsmhZLLbi8vxZwm21wjKRFRBUQFzMFtTiyh3DJ2CCz".to_string())
+    );
     assert_eq!(token.metadata.copies, Some(10));
 
     let _series2 = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
@@ -128,9 +135,7 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
         .view(
             &worker,
             "nft_series",
-            serde_json::json!({  })
-                .to_string()
-                .into_bytes(),
+            serde_json::json!({}).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -152,7 +157,7 @@ async fn series_views_nft_supply_for_series() -> anyhow::Result<()> {
 
     let series = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
 
-    // Check that method fails in case of wrong `token_series_id` 
+    // Check that method fails in case of wrong `token_series_id`
     let outcome = nft
         .view(
             &worker,
@@ -164,8 +169,8 @@ async fn series_views_nft_supply_for_series() -> anyhow::Result<()> {
         .await;
     match outcome {
         Err(err) => {
-            println!("{}", err); 
-        },
+            println!("{}", err);
+        }
         Ok(_) => panic!("Expected failure"),
     };
 
