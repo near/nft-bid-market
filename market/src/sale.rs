@@ -288,7 +288,7 @@ impl Market {
     ) {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
-        let mut sale = self
+        let sale = self
             .market
             .sales
             .get(&contract_and_token_id)
@@ -326,7 +326,6 @@ impl Market {
                 deposit,
                 ft_token_id,
                 buyer_id,
-                &mut sale,
                 start,
                 end,
                 origins,

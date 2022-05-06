@@ -4,7 +4,7 @@ use near_sdk::assert_one_yocto;
 
 use crate::fee::{calculate_actual_amount, calculate_origins};
 use crate::sale::{
-    ext_contract, ContractAndTokenId, FungibleTokenId, Sale, DELIMETER, GAS_FOR_FT_TRANSFER,
+    ext_contract, ContractAndTokenId, FungibleTokenId, DELIMETER, GAS_FOR_FT_TRANSFER,
 };
 use crate::*;
 
@@ -49,7 +49,6 @@ impl Market {
         amount: Balance,
         ft_token_id: AccountId,
         buyer_id: AccountId,
-        sale: &mut Sale, //TODO: remove it
         start: U64,
         end: Option<U64>,
         origins: Option<Origins>,
