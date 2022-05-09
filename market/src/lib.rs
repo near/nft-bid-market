@@ -15,7 +15,7 @@ use common::*;
 
 use crate::auction::Auction;
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
-use crate::bid::Bids;
+use crate::bid::{BidAccount, Bids};
 pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 pub use crate::market_core::{ArgsKind, AuctionArgs, SaleArgs};
 use crate::sale::{ContractAndTokenId, FungibleTokenId, Sale, SaleConditions, TokenType};
@@ -36,6 +36,7 @@ pub enum StorageKey {
     FTTokenIds,
     StorageDeposits,
     Bids,
+    BidAccounts,
     OriginFees,
     Auctions,
     AuctionId,
@@ -51,7 +52,8 @@ pub struct MarketSales {
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
     pub bids: LookupMap<ContractAndTokenId, Bids>,
-    pub bid_history_length: u8,
+    pub bid_accounts: LookupMap<AccountId, BidAccount>,
+    pub bid_history_length: u8, //TODO: should be depricated?
 
     pub auctions: UnorderedMap<u128, Auction>,
     pub next_auction_id: u128,
@@ -81,6 +83,7 @@ impl Market {
             ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
             bids: LookupMap::new(StorageKey::Bids),
+            bid_accounts: LookupMap::new(StorageKey::BidAccounts),
             bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
             auctions: UnorderedMap::new(StorageKey::Auctions),
             next_auction_id: 0,
@@ -130,5 +133,52 @@ impl Market {
 
     pub fn storage_amount(&self) -> U128 {
         U128(STORAGE_PER_SALE)
+    }
+
+    #[payable]
+    pub fn bid_withdraw(&mut self, ft_token_id: Option<AccountId>) {
+        assert_one_yocto();
+        let owner_id = env::predecessor_account_id();
+        let bid_ft = match ft_token_id {
+            Some(ft) => ft,
+            None => "near".parse().unwrap(),
+        };
+        let amount = self
+            .market
+            .bid_accounts
+            .get(&owner_id)
+            .expect("Bid account not found")
+            .availible_balance
+            .remove(&bid_ft)
+            .expect("No token");
+        assert!(amount > 0, "There is no available balance");
+        self.refund_bid(bid_ft, owner_id, amount.into());
+    }
+
+    #[payable]
+    pub fn bid_deposit(&mut self,  account_id: Option<AccountId>, ft_token_id: Option<AccountId>) {
+        let owner_id = account_id.unwrap_or(env::predecessor_account_id());
+        match ft_token_id {
+            None => {
+                let bid_ft = AccountId::new_unchecked("near".to_string());
+                let added_amount = env::attached_deposit();
+                let previous_amount = self
+                    .market
+                    .bid_accounts
+                    .get(&owner_id)
+                    .expect("Bid account not found")
+                    .availible_balance
+                    .get(&bid_ft)
+                    .unwrap_or_default();
+                self
+                    .market
+                    .bid_accounts
+                    .get(&owner_id)
+                    .expect("Bid account not found")
+                    .availible_balance
+                    .insert(&bid_ft, &(previous_amount + added_amount));
+            },
+            Some(ft) => (),
+        };
     }
 }

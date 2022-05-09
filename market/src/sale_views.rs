@@ -138,6 +138,38 @@ impl Market {
             .map(|sale| self.json_from_sale(sale))
     }
 
+    pub fn get_total_bid_balance(&self, ft_token_id: Option<AccountId>) -> Balance {
+        let owner_id: AccountId = env::predecessor_account_id();
+        let ft = match ft_token_id {
+            Some(ft) => ft,
+            None => "near".parse().unwrap(),
+        };
+        self
+            .market
+            .bid_accounts
+            .get(&owner_id)
+            .expect("No account")
+            .total_balance
+            .get(&ft)
+            .expect("No token for this account")
+    }
+
+    pub fn get_available_bid_balance(&self, ft_token_id: Option<AccountId>) -> Balance {
+        let owner_id: AccountId = env::predecessor_account_id();
+        let ft = match ft_token_id {
+            Some(ft) => ft,
+            None => "near".parse().unwrap(),
+        };
+        self
+            .market
+            .bid_accounts
+            .get(&owner_id)
+            .expect("No account")
+            .availible_balance
+            .get(&ft)
+            .unwrap_or_default()
+    }
+
     pub(crate) fn json_from_sale(&self, sale: Sale) -> SaleJson {
         SaleJson {
             owner_id: sale.owner_id,

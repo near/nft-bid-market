@@ -34,6 +34,12 @@ impl Bid {
     }
 }
 
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct BidAccount {
+    pub total_balance: LookupMap<FungibleTokenId, Balance>,
+    pub availible_balance: LookupMap<FungibleTokenId, Balance>,
+}
+
 pub type Bids = HashMap<FungibleTokenId, Vec<Bid>>;
 pub type Origins = HashMap<AccountId, u32>;
 
@@ -95,8 +101,6 @@ impl Market {
             self.refund_bid(ft_token_id, early_bid.owner_id.clone(), early_bid.price);
             bids_for_token_id.remove(0);
         }
-
-        //self.market.sales.insert(&contract_and_token_id, sale);
     }
 
     #[payable]
