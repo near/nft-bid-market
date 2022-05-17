@@ -189,7 +189,7 @@ impl Market {
             price,
             bid_id,
         );
-        self.refund_bid(ft_token_id, owner_id, price); //TODO: remove it and use bidding account
+        //self.refund_bid(ft_token_id, owner_id, price); //TODO: remove it and use bidding account
     }
 
     // Cancels the bid if it has ended
@@ -216,7 +216,7 @@ impl Market {
         if let Some(end) = bid.end {
             let is_finished = env::block_timestamp() >= end.0;
             require!(is_finished, "The bid hasn't ended yet");
-            self.refund_bid(ft_token_id, owner_id, price);
+            //self.refund_bid(ft_token_id, owner_id, price);
         } else {
             panic!("The bid doesn't have an end");
         }
