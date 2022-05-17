@@ -99,8 +99,8 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract or token id");
-        let bids_tree = bids_for_contract_and_token_id
-            .get_mut(&ft_token_id)
+        let mut bids_tree = bids_for_contract_and_token_id
+            .remove(&ft_token_id)
             .expect("No token");
         let mut equal_bids = bids_tree.get(&amount).unwrap_or(UnorderedSet::new(b"s"));
         equal_bids.insert(&new_bid.bid_id);
@@ -109,7 +109,7 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract_and_token_id")
-            .insert(ft_token_id, *bids_tree);
+            .insert(ft_token_id, bids_tree);
         /*let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
         let bids_for_token_id = bids.entry(ft_token_id.clone()).or_insert_with(||Vector::new(b"v"));
         if let Some(current_bid) = bids_for_token_id.get(bids_for_token_id.len() - 1) {
@@ -201,12 +201,12 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract or token id");
-        let bids_tree: &TreeMap<u128, UnorderedSet<u64>> = bids_for_contract_and_token_id
-            .get_mut(&ft_token_id)
+        let mut bids_tree: TreeMap<u128, UnorderedSet<u64>> = bids_for_contract_and_token_id
+            .remove(&ft_token_id)
             .expect("No ft_token_id");
         //let bids_tree = bids_tree.borrow_mut();
-        for (balance, equal_bids) in bids_tree.iter() {
-            for bid_id in equal_bids.iter() {
+        for (balance, mut equal_bids) in bids_tree.iter().collect::<HashMap<u128,UnorderedSet<u64>>>() {
+            for bid_id in equal_bids.iter().collect::<Vec<u64>>() {
                 // Find a bid by its id
                 let bid = self.market.bids_by_index.get(&bid_id).expect("No bid_id");
                 let mut not_finished = true;
@@ -230,7 +230,7 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No nft_contract_id or ft_token_id")
-            .insert(ft_token_id, *bids_tree);
+            .insert(ft_token_id, bids_tree);
         // let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
         // let bid_vec = bids.get(&ft_token_id).expect("No token").clone();
         // bid_vec.to_vec().retain(|bid_from_vec| {
