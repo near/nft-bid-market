@@ -285,7 +285,7 @@ impl Market {
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
-    ) {
+    ) -> Option<BidIndex> {
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let sale = self
@@ -318,10 +318,11 @@ impl Market {
                 buyer_id,
                 origins.unwrap_or_default(),
             );
+            return None;
         } else {
             let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
-            self.add_bid(
+            return Some(self.add_bid(
                 contract_and_token_id,
                 deposit,
                 ft_token_id,
@@ -329,11 +330,11 @@ impl Market {
                 start,
                 end,
                 origins,
-            );
+            ));
         }
     }
 
-    // Accepts the last (highest) offer
+    // Accepts the highest active bid
     pub fn accept_offer(
         &mut self,
         nft_contract_id: AccountId,
@@ -353,15 +354,63 @@ impl Market {
             "Either the sale is finished or it hasn't started yet"
         );
         //let bids_for_token_id = self.market.bids.remove()
-        let bids_for_token_id = self
+        // let bids_for_token_id = self
+        //     .market
+        //     .bids
+        //     .get(&contract_and_token_id)
+        //     .unwrap()
+        //     .remove(&ft_token_id)
+        //     .expect("No bids");
+        // let mut bid = &bids_for_token_id.get(bids_for_token_id.len() - 1).unwrap();
+
+        //let bids = self.market.bids;
+        let bids_for_contract_and_token_id = self
             .market
             .bids
             .get(&contract_and_token_id)
-            .unwrap()
-            .remove(&ft_token_id)
-            .expect("No bids");
-        let bid = &bids_for_token_id[bids_for_token_id.len() - 1];
-        require!(bid.in_limits(), "Out of time limit of the bid");
+            .expect("Wrong contract or token id");
+        let bids_tree = bids_for_contract_and_token_id
+            .get(&ft_token_id)
+            .expect("No token");
+        let mut biggest_bid = u64::MAX;
+        let mut price = 0;
+        for (balance, equal_bids) in bids_tree.iter_rev() {
+            let mut earliest_bid_id = equal_bids
+                .as_vector()
+                .get(0)
+                .expect("No bids with this balance");
+            // let bid = self
+            //     .market
+            //     .bids_by_index
+            //     .get(&bid_id)
+            //     .expect("No bid with this id");
+            let mut min_start_time: u64 = u64::MAX;
+
+            for bid_id in equal_bids.iter() {
+                let bid = self
+                    .market
+                    .bids_by_index
+                    .get(&bid_id)
+                    .expect("No bid with this id");
+                if bid.in_limits() && bid.start.0 < min_start_time && self.is_active(bid_id, ft_token_id.clone()) {
+                    min_start_time = bid.start.0;
+                    earliest_bid_id = bid_id;
+                }
+            }
+            if min_start_time < u64::MAX {
+                biggest_bid = earliest_bid_id;
+                price = balance;
+                break;
+            }
+            
+        }
+        require!(price > 0, "There are no active non-finished bids");
+        let bid = self
+            .market
+            .bids_by_index
+            .get(&biggest_bid)
+            .expect("No bid wuth this id");
+        //require!(bid.in_limits(), "Out of time limit of the bid");
         self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
@@ -481,7 +530,7 @@ impl Market {
             return price;
         };
         // Going to payout everyone, first return all outstanding bids (accepted offer bid was already removed)
-        self.refund_all_bids(&bids_for_contract_and_token_id); // TODO: maybe should do this outside of this call, to lower gas for this call
+        //self.refund_all_bids(&bids_for_contract_and_token_id); // TODO: maybe should do this outside of this call, to lower gas for this call
 
         // NEAR payouts
         if ft_token_id == "near".parse().unwrap() {

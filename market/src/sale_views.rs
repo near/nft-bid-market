@@ -144,8 +144,7 @@ impl Market {
             Some(ft) => ft,
             None => "near".parse().unwrap(),
         };
-        self
-            .market
+        self.market
             .bid_accounts
             .get(&owner_id)
             .expect("No account")
@@ -160,8 +159,7 @@ impl Market {
             Some(ft) => ft,
             None => "near".parse().unwrap(),
         };
-        self
-            .market
+        self.market
             .bid_accounts
             .get(&owner_id)
             .expect("No account")

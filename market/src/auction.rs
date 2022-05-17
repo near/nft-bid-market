@@ -152,12 +152,14 @@ impl Market {
         }
         // Create a bid
         let bid = Bid {
+            bid_id: self.market.next_bid_id,
             owner_id: env::predecessor_account_id(),
             price: deposit.into(),
             start: env::block_timestamp().into(),
             end: None,
             origins: origins.unwrap_or_default(),
         };
+        self.market.next_bid_id += 1;
         // Extend the auction if the bid is added EXTENSION_DURATION (15 min) before the auction end
         // and the token is not bought out
         auction.bid = Some(bid);

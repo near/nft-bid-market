@@ -1,4 +1,4 @@
-use crate::bid::Bid;
+use crate::bid::{Bid, BidIndex};
 use crate::common::*;
 use crate::sale::{Sale, DELIMETER};
 use crate::Market;
@@ -69,16 +69,19 @@ impl Market {
         token_id: TokenId,
         owner_id: &AccountId,
         price: U128,
+        bid_id: BidIndex,
     ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let mut bids = self
+        let mut bids_by_ft = self
             .market
             .bids
             .get(&contract_and_token_id)
-            .expect("No bid");
-        let bid_vec = bids.get(ft_token_id).expect("No token").clone();
+            .expect("No bid for this nft contract and ft token");
+        let bids_tree = bids_by_ft.get(ft_token_id).expect("No token").clone();
+        let mut equal_bids = bids_tree.get(&price.0).expect("No bid with this balance");
+        assert!(equal_bids.remove(&bid_id), "No bid with this price and id");
 
-        for (index, bid_from_vec) in bid_vec.iter().enumerate() {
+        /*for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if &(bid_from_vec.owner_id) == owner_id && bid_from_vec.price == price {
                 if bid_vec.len() == 1 {
                     //If the vector contained only one bid, should remove ft_token_id from the HashMap
@@ -89,9 +92,9 @@ impl Market {
                 };
                 self.market.bids.insert(&contract_and_token_id, &bids);
                 //break; // shouldn't allow bids with equal price
-                return Some((*bid_from_vec).clone());
+                return Some((bid_from_vec).clone());
             };
-        }
-        None
+        }*/
+        self.market.bids_by_index.remove(&bid_id)
     }
 }

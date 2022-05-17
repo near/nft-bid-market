@@ -15,11 +15,12 @@ use common::*;
 
 use crate::auction::Auction;
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
-use crate::bid::{BidAccount, Bids};
+use crate::bid::{Bid, BidAccount, BidIndex, BidsForContractAndTokenId};
 pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 pub use crate::market_core::{ArgsKind, AuctionArgs, SaleArgs};
 use crate::sale::{ContractAndTokenId, FungibleTokenId, Sale, SaleConditions, TokenType};
 pub use crate::sale::{SaleJson, BID_HISTORY_LENGTH_DEFAULT};
+//use std::collections::HashMap;
 
 const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 
@@ -35,6 +36,7 @@ pub enum StorageKey {
     ByNFTTokenTypeInner { token_type_hash: CryptoHash },
     FTTokenIds,
     StorageDeposits,
+    BidsByIndex,
     Bids,
     BidAccounts,
     OriginFees,
@@ -51,10 +53,13 @@ pub struct MarketSales {
     pub by_nft_token_type: LookupMap<String, UnorderedSet<ContractAndTokenId>>,
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
-    pub bids: LookupMap<ContractAndTokenId, Bids>,
-    pub bid_accounts: LookupMap<AccountId, BidAccount>,
-    pub bid_history_length: u8, //TODO: should be depricated?
 
+    pub bids_by_index: LookupMap<BidIndex, Bid>,
+    pub bids: LookupMap<ContractAndTokenId, BidsForContractAndTokenId>,
+    pub next_bid_id: BidIndex,
+
+    pub bid_accounts: LookupMap<AccountId, BidAccount>,
+    //pub bid_history_length: u8, //TODO: should be depricated?
     pub auctions: UnorderedMap<u128, Auction>,
     pub next_auction_id: u128,
 }
@@ -82,9 +87,13 @@ impl Market {
             by_nft_token_type: LookupMap::new(StorageKey::ByNFTTokenType),
             ft_token_ids: tokens,
             storage_deposits: LookupMap::new(StorageKey::StorageDeposits),
+
+            bids_by_index: LookupMap::new(StorageKey::BidsByIndex),
             bids: LookupMap::new(StorageKey::Bids),
+            next_bid_id: 0,
+
             bid_accounts: LookupMap::new(StorageKey::BidAccounts),
-            bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
+            //bid_history_length: BID_HISTORY_LENGTH_DEFAULT,
             auctions: UnorderedMap::new(StorageKey::Auctions),
             next_auction_id: 0,
         };
@@ -156,7 +165,7 @@ impl Market {
     }
 
     #[payable]
-    pub fn bid_deposit(&mut self,  account_id: Option<AccountId>, ft_token_id: Option<AccountId>) {
+    pub fn bid_deposit(&mut self, account_id: Option<AccountId>, ft_token_id: Option<AccountId>) {
         let owner_id = account_id.unwrap_or(env::predecessor_account_id());
         match ft_token_id {
             None => {
@@ -170,15 +179,14 @@ impl Market {
                     .availible_balance
                     .get(&bid_ft)
                     .unwrap_or_default();
-                self
-                    .market
+                self.market
                     .bid_accounts
                     .get(&owner_id)
                     .expect("Bid account not found")
                     .availible_balance
                     .insert(&bid_ft, &(previous_amount + added_amount));
-            },
-            Some(ft) => (),
+            }
+            Some(_ft) => (),
         };
     }
 }
