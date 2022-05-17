@@ -72,7 +72,7 @@ impl Market {
         bid_id: BidIndex,
     ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let mut bids_by_ft = self
+        let bids_by_ft = self
             .market
             .bids
             .get(&contract_and_token_id)
@@ -81,6 +81,15 @@ impl Market {
         let mut equal_bids = bids_tree.get(&price.0).expect("No bid with this balance");
         assert!(equal_bids.remove(&bid_id), "No bid with this price and id");
 
+        let mut bids_by_owner = self
+            .market
+            .bids_by_owner
+            .get(&owner_id)
+            .expect("No bids for the owner");
+        bids_by_owner
+            .remove(&contract_and_token_id)
+            .expect("No bid for owner, nft contract and token");
+        self.market.bids_by_owner.insert(&owner_id, &bids_by_owner);
         /*for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if &(bid_from_vec.owner_id) == owner_id && bid_from_vec.price == price {
                 if bid_vec.len() == 1 {

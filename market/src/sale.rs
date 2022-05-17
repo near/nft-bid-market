@@ -323,7 +323,8 @@ impl Market {
             let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
             return Some(self.add_bid(
-                contract_and_token_id,
+                contract_id,
+                token_id,
                 deposit,
                 ft_token_id,
                 buyer_id,
@@ -392,7 +393,10 @@ impl Market {
                     .bids_by_index
                     .get(&bid_id)
                     .expect("No bid with this id");
-                if bid.in_limits() && bid.start.0 < min_start_time && self.is_active(bid_id, ft_token_id.clone()) {
+                if bid.in_limits()
+                    && bid.start.0 < min_start_time
+                    && self.is_active(bid_id, ft_token_id.clone())
+                {
                     min_start_time = bid.start.0;
                     earliest_bid_id = bid_id;
                 }
@@ -402,7 +406,6 @@ impl Market {
                 price = balance;
                 break;
             }
-            
         }
         require!(price > 0, "There are no active non-finished bids");
         let bid = self

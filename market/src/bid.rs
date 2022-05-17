@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
-use std::borrow::{BorrowMut, Borrow};
+use std::borrow::{Borrow, BorrowMut};
 
 use crate::fee::{calculate_actual_amount, calculate_origins};
 use crate::sale::{
@@ -57,7 +57,9 @@ impl Market {
     #[private]
     pub(crate) fn add_bid(
         &mut self,
-        contract_and_token_id: ContractAndTokenId,
+        //contract_and_token_id: ContractAndTokenId,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
         amount: Balance,
         ft_token_id: AccountId,
         buyer_id: AccountId,
@@ -65,6 +67,7 @@ impl Market {
         end: Option<U64>,
         origins: Option<Origins>,
     ) -> BidIndex {
+        let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
         require!(
             self.market.ft_token_ids.contains(&ft_token_id),
             format!("Token {} not supported by this market", ft_token_id)
@@ -81,12 +84,30 @@ impl Market {
         // create a bid
         let new_bid = Bid {
             bid_id: self.market.next_bid_id,
-            owner_id: buyer_id,
+            owner_id: buyer_id.clone(),
             price: U128(amount),
             start,
             end,
             origins: origins.unwrap_or_default(),
         };
+
+        // if the buyer_id has a bid on already has a bid on this contract_and_token_id,
+        // it should be removed
+        let bids_for_buyer = self.market.bids_by_owner.get(&buyer_id);
+        if let Some(bids_for_buyer) = bids_for_buyer {
+            let bids_for_buyer_contract_and_token = bids_for_buyer.get(&contract_and_token_id);
+            if let Some(bid_for_buyer_contract_and_token) = bids_for_buyer_contract_and_token {
+                self.internal_remove_bid(
+                    nft_contract_id,
+                    &bid_for_buyer_contract_and_token.0,
+                    token_id,
+                    &buyer_id,
+                    bid_for_buyer_contract_and_token.1.into(),
+                    bid_for_buyer_contract_and_token.2,
+                );
+            }
+        }
+
         // increase id of a next bid
         self.market.next_bid_id += 1;
 
@@ -109,7 +130,21 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract_and_token_id")
-            .insert(ft_token_id, bids_tree);
+            .insert(ft_token_id.clone(), bids_tree);
+
+        // add the bid to bids_by_owner
+        let mut bids_by_owner = self
+            .market
+            .bids_by_owner
+            .get(&buyer_id)
+            .unwrap_or(LookupMap::new(b"o"));
+        let bid_data = (ft_token_id.clone(), amount, new_bid.bid_id);
+        bids_by_owner.insert(&contract_and_token_id, &bid_data);
+        self
+            .market
+            .bids_by_owner
+            .insert(&buyer_id, &bids_by_owner);
+
         /*let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
         let bids_for_token_id = bids.entry(ft_token_id.clone()).or_insert_with(||Vector::new(b"v"));
         if let Some(current_bid) = bids_for_token_id.get(bids_for_token_id.len() - 1) {
@@ -205,7 +240,10 @@ impl Market {
             .remove(&ft_token_id)
             .expect("No ft_token_id");
         //let bids_tree = bids_tree.borrow_mut();
-        for (balance, mut equal_bids) in bids_tree.iter().collect::<HashMap<u128,UnorderedSet<u64>>>() {
+        for (balance, mut equal_bids) in bids_tree
+            .iter()
+            .collect::<HashMap<u128, UnorderedSet<u64>>>()
+        {
             for bid_id in equal_bids.iter().collect::<Vec<u64>>() {
                 // Find a bid by its id
                 let bid = self.market.bids_by_index.get(&bid_id).expect("No bid_id");
@@ -222,6 +260,16 @@ impl Market {
                         .remove(&bid_id)
                         .expect("No bid_id");
                     equal_bids.remove(&bid_id);
+                    let mut bids_by_owner = self
+                        .market
+                        .bids_by_owner
+                        .get(&bid.owner_id)
+                        .expect("No bids for account");
+                    bids_by_owner.remove(&contract_and_token_id);
+                    self
+                        .market
+                        .bids_by_owner
+                        .insert(&bid.owner_id, &bids_by_owner);
                 }
             }
             bids_tree.insert(&balance, &equal_bids);

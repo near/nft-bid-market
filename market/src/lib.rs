@@ -38,6 +38,7 @@ pub enum StorageKey {
     StorageDeposits,
     BidsByIndex,
     Bids,
+    BidsByOwner,
     BidAccounts,
     OriginFees,
     Auctions,
@@ -56,6 +57,8 @@ pub struct MarketSales {
 
     pub bids_by_index: LookupMap<BidIndex, Bid>,
     pub bids: LookupMap<ContractAndTokenId, BidsForContractAndTokenId>,
+    pub bids_by_owner:
+        LookupMap<AccountId, LookupMap<ContractAndTokenId, (FungibleTokenId, Balance, BidIndex)>>,
     pub next_bid_id: BidIndex,
 
     pub bid_accounts: LookupMap<AccountId, BidAccount>,
@@ -90,6 +93,7 @@ impl Market {
 
             bids_by_index: LookupMap::new(StorageKey::BidsByIndex),
             bids: LookupMap::new(StorageKey::Bids),
+            bids_by_owner: LookupMap::new(StorageKey::BidsByOwner),
             next_bid_id: 0,
 
             bid_accounts: LookupMap::new(StorageKey::BidAccounts),
