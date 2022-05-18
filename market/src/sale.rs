@@ -282,10 +282,12 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: String,
         ft_token_id: AccountId,
+        offered_price: Balance,
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
     ) -> Option<BidIndex> {
+        assert_one_yocto();
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let sale = self
@@ -306,15 +308,15 @@ impl Market {
             .get(&ft_token_id)
             .unwrap_or_else(|| env::panic_str("Not supported ft"));
 
-        let deposit = env::attached_deposit();
-        require!(deposit > 0, "Attached deposit must be greater than 0");
+        //let deposit = env::attached_deposit();
+        //require!(deposit > 0, "Attached deposit must be greater than 0");
 
-        if deposit == calculate_price_with_fees(price, origins.as_ref()) {
+        if offered_price == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(
                 contract_id,
                 token_id,
                 ft_token_id,
-                U128(deposit),
+                U128(offered_price),
                 buyer_id,
                 origins.unwrap_or_default(),
             );
@@ -325,7 +327,7 @@ impl Market {
             return Some(self.add_bid(
                 contract_id,
                 token_id,
-                deposit,
+                offered_price,
                 ft_token_id,
                 buyer_id,
                 start,
