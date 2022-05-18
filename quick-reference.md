@@ -140,14 +140,14 @@ Any other account (in our case it is `ALICE`) can buy or offer to buy any of the
 The difference is in the deposit which she attaches to `offer`. 
 If `ALICE` calls `offer` to buy the first NFT and the attached deposit is equal to the price (`10300` including protocol fee), she automatically buys it.
 If `ALICE` calls `offer` on the second NFT, but attaches less deposit than the price, she will only offer to buy the token.
-`ALICE` gets the second NFT only after `CONTRACT_PARENT` accepts the offer using `accept_offer`.
+`ALICE` gets the second NFT only after `CONTRACT_PARENT` accepts the offer using `accept_bid`.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:1"}'
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10200 --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
-near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
+near call $MARKET_CONTRACT_ID accept_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 ```
 
@@ -207,8 +207,8 @@ near view $MARKET_CONTRACT_ID get_sales
 When the sale is in progress, only `CONTRACT_PARENT` can call it. 
 If the sale ends and no bid is accepted, anyone can call `remove_sale`.
 
-If the sale is finished, you cannot call `offer` or `accept_offer`.
-> `offer` and `accept_offer` should fail after `hack_finish_sale`.
+If the sale is finished, you cannot call `offer` or `accept_bid`.
+> `offer` and `accept_bid` should fail after `hack_finish_sale`.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 300 --gas 200000000000000
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5"}'
@@ -216,7 +216,7 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'"
 near call $MARKET_CONTRACT_ID hack_finish_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'" "token_id": "1:5"}' --accountId $ALICE
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 400 --gas 200000000000000
-near call $MARKET_CONTRACT_ID accept_offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
+near call $MARKET_CONTRACT_ID accept_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:5"}'
 near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5"}'

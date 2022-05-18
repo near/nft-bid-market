@@ -336,7 +336,7 @@ impl Market {
     }
 
     // Accepts the highest active bid
-    pub fn accept_offer(
+    pub fn accept_bid(
         &mut self,
         nft_contract_id: AccountId,
         token_id: String,
