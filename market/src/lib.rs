@@ -62,7 +62,6 @@ pub struct MarketSales {
     pub next_bid_id: BidIndex,
 
     pub bid_accounts: LookupMap<AccountId, BidAccount>,
-    //pub bid_history_length: u8, //TODO: should be depricated?
     pub auctions: UnorderedMap<u128, Auction>,
     pub next_auction_id: u128,
 }
@@ -149,22 +148,23 @@ impl Market {
     }
 
     #[payable]
-    pub fn bid_withdraw(&mut self, ft_token_id: Option<AccountId>) {
+    pub fn bid_withdraw(&mut self,  amount: Option<Balance>, ft_token_id: Option<AccountId>) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
         let bid_ft = match ft_token_id {
             Some(ft) => ft,
             None => "near".parse().unwrap(),
         };
-        let amount = self
+        let balance = self
             .market
             .bid_accounts
             .get(&owner_id)
             .expect("Bid account not found")
-            .availible_balance
+            .total_balance
             .remove(&bid_ft)
             .expect("No token");
-        assert!(amount > 0, "There is no available balance");
+        let amount = amount.unwrap_or(balance);
+        assert!(amount <= balance, "Can't withdraw more than you have deposited");
         self.refund_bid(bid_ft, owner_id, amount.into());
     }
 
@@ -175,20 +175,20 @@ impl Market {
             None => {
                 let bid_ft = AccountId::new_unchecked("near".to_string());
                 let added_amount = env::attached_deposit();
-                let previous_amount = self
+                let previous_balance = self
                     .market
                     .bid_accounts
                     .get(&owner_id)
                     .expect("Bid account not found")
-                    .availible_balance
+                    .total_balance
                     .get(&bid_ft)
                     .unwrap_or_default();
                 self.market
                     .bid_accounts
                     .get(&owner_id)
                     .expect("Bid account not found")
-                    .availible_balance
-                    .insert(&bid_ft, &(previous_amount + added_amount));
+                    .total_balance
+                    .insert(&bid_ft, &(previous_balance + added_amount));
             }
             Some(_ft) => (),
         };

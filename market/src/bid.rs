@@ -40,7 +40,7 @@ impl Bid {
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct BidAccount {
     pub total_balance: LookupMap<FungibleTokenId, Balance>,
-    pub availible_balance: LookupMap<FungibleTokenId, Balance>,
+    //pub availible_balance: LookupMap<FungibleTokenId, Balance>,
 }
 
 //pub type Bids = HashMap<FungibleTokenId, Vector<Bid>>;
