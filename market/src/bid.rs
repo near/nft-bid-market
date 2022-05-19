@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use near_sdk::assert_one_yocto;
-use std::borrow::{Borrow, BorrowMut};
 
-use crate::fee::{calculate_actual_amount, calculate_origins};
+use crate::fee::calculate_origins;
 use crate::sale::{
-    ext_contract, ContractAndTokenId, FungibleTokenId, DELIMETER, GAS_FOR_FT_TRANSFER,
+    ext_contract, FungibleTokenId, DELIMETER, GAS_FOR_FT_TRANSFER,
 };
 use crate::*;
 
@@ -79,7 +78,7 @@ impl Market {
         };
 
         require!(total_origins < 4_700, "Max origins exceeded"); // TODO: FINDOUT MAX ORIGINS
-        let actual_amount = calculate_actual_amount(amount, total_origins);
+        //let actual_amount = calculate_actual_amount(amount, total_origins);
 
         // create a bid
         let new_bid = Bid {

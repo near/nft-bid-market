@@ -439,6 +439,27 @@ impl Market {
         origins: Origins,
     ) -> Promise {
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
+
+        // Decrease account balance
+        let mut buyer_bid_account = self
+            .market
+            .bid_accounts
+            .get(&buyer_id)
+            .expect("No bid account");
+        let mut balance = buyer_bid_account
+            .total_balance
+            .get(&ft_token_id)
+            .expect("No ft_token_id");
+        assert!(balance >= price.0, "Not enough funds");
+        balance -= price.0;
+        buyer_bid_account
+            .total_balance
+            .insert(&ft_token_id, &balance);
+        self
+            .market
+            .bid_accounts
+            .insert(&buyer_id, &buyer_bid_account);
+
         let mut buyer = origins;
         buyer.insert(env::current_account_id(), PROTOCOL_FEE as u32);
         let mut seller_fee = HashMap::with_capacity(sale.origins.len() + 1);
