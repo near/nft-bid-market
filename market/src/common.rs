@@ -1,7 +1,7 @@
 pub use near_sdk::{
     assert_one_yocto,
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::{LazyOption, LookupMap, LookupSet, TreeMap, UnorderedMap, UnorderedSet},
+    collections::{LazyOption, LookupMap, LookupSet, TreeMap, UnorderedMap, UnorderedSet, Vector},
     env::{self, STORAGE_PRICE_PER_BYTE},
     json_types::{U128, U64},
     near_bindgen, require,

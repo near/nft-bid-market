@@ -58,7 +58,7 @@ pub struct MarketSales {
     pub bids_by_index: LookupMap<BidIndex, Bid>,
     pub bids: LookupMap<ContractAndTokenId, BidsForContractAndTokenId>,
     pub bids_by_owner:
-        LookupMap<AccountId, LookupMap<ContractAndTokenId, (FungibleTokenId, Balance, BidIndex)>>,
+        LookupMap<AccountId, UnorderedMap<ContractAndTokenId, (FungibleTokenId, Balance, BidIndex)>>,
     pub next_bid_id: BidIndex,
 
     pub bid_accounts: LookupMap<AccountId, BidAccount>,

@@ -134,7 +134,7 @@ impl Market {
             .market
             .bids_by_owner
             .get(&buyer_id)
-            .unwrap_or(LookupMap::new(b"o"));
+            .unwrap_or(UnorderedMap::new(b"o"));
         let bid_data = (ft_token_id.clone(), amount, new_bid.bid_id);
         bids_by_owner.insert(&contract_and_token_id, &bid_data);
         self.market.bids_by_owner.insert(&buyer_id, &bids_by_owner);

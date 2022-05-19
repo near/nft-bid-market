@@ -153,6 +153,36 @@ impl Market {
             .expect("No token for this account")
     }
 
+    pub fn get_bid_by_index(&self, bid_id: BidIndex) -> Bid {
+        self.market.bids_by_index.get(&bid_id).expect("No bid with this id")
+    }
+
+    pub fn get_bids_by_contract_and_token(&self, contract_and_token_id: ContractAndTokenId) -> BidsForContractAndTokenId {
+        self.market.bids.get(&contract_and_token_id).expect("No bid with this id")
+    }
+
+    pub fn get_bids_by_account_on_token(&self, owner_id: Option<AccountId>) -> Vec<ContractAndTokenId> {
+        let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
+        self.market.bids_by_owner.get(&owner_id).expect("No bid with this id").keys_as_vector().to_vec()
+    }
+
+    pub fn get_bids_id_by_account_on(&self, owner_id: Option<AccountId>) -> Vec<BidIndex> {
+        let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
+        let mut vec = Vec::new();
+        let lookup_map = &self
+            .market
+            .bids_by_owner;
+        let unordered_map = lookup_map
+            .get(&owner_id)
+            .expect("No bid with this id");
+        let iter = unordered_map.values_as_vector().iter();
+        
+        for bid in iter {
+            vec.push(bid.2);
+        }
+        vec
+    }
+
     pub(crate) fn json_from_sale(&self, sale: Sale) -> SaleJson {
         SaleJson {
             owner_id: sale.owner_id,
