@@ -455,8 +455,7 @@ impl Market {
         buyer_bid_account
             .total_balance
             .insert(&ft_token_id, &balance);
-        self
-            .market
+        self.market
             .bid_accounts
             .insert(&buyer_id, &buyer_bid_account);
 

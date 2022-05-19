@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use near_sdk::assert_one_yocto;
 
 use crate::fee::calculate_origins;
-use crate::sale::{
-    ext_contract, FungibleTokenId, DELIMETER, GAS_FOR_FT_TRANSFER,
-};
+use crate::sale::{ext_contract, FungibleTokenId, DELIMETER, GAS_FOR_FT_TRANSFER};
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
@@ -78,7 +76,7 @@ impl Market {
         };
 
         require!(total_origins < 4_700, "Max origins exceeded"); // TODO: FINDOUT MAX ORIGINS
-        //let actual_amount = calculate_actual_amount(amount, total_origins);
+                                                                 //let actual_amount = calculate_actual_amount(amount, total_origins);
 
         // create a bid
         let new_bid = Bid {
@@ -139,10 +137,7 @@ impl Market {
             .unwrap_or(LookupMap::new(b"o"));
         let bid_data = (ft_token_id.clone(), amount, new_bid.bid_id);
         bids_by_owner.insert(&contract_and_token_id, &bid_data);
-        self
-            .market
-            .bids_by_owner
-            .insert(&buyer_id, &bids_by_owner);
+        self.market.bids_by_owner.insert(&buyer_id, &bids_by_owner);
 
         /*let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
         let bids_for_token_id = bids.entry(ft_token_id.clone()).or_insert_with(||Vector::new(b"v"));
@@ -265,8 +260,7 @@ impl Market {
                         .get(&bid.owner_id)
                         .expect("No bids for account");
                     bids_by_owner.remove(&contract_and_token_id);
-                    self
-                        .market
+                    self.market
                         .bids_by_owner
                         .insert(&bid.owner_id, &bids_by_owner);
                 }
