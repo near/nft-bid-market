@@ -375,7 +375,7 @@ impl Market {
         let bids_tree = bids_for_contract_and_token_id
             .get(&ft_token_id)
             .expect("No token");
-        let mut biggest_bid = u64::MAX;
+        let mut biggest_bid = u128::MAX;
         let mut price = 0;
         for (balance, equal_bids) in bids_tree.iter_rev() {
             let mut earliest_bid_id = equal_bids
@@ -387,7 +387,7 @@ impl Market {
             //     .bids_by_index
             //     .get(&bid_id)
             //     .expect("No bid with this id");
-            let mut min_start_time: u64 = u64::MAX;
+            let mut min_start_time = u64::MAX;
 
             for bid_id in equal_bids.iter() {
                 let bid = self

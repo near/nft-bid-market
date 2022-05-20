@@ -42,7 +42,7 @@ pub struct BidAccount {
 
 //pub type Bids = HashMap<FungibleTokenId, Vector<Bid>>;
 pub type Origins = HashMap<AccountId, u32>;
-pub type BidIndex = u64;
+pub type BidIndex = u128;
 pub type BidsForContractAndTokenId =
     HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidIndex>>>;
 
@@ -230,15 +230,15 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract or token id");
-        let mut bids_tree: TreeMap<u128, UnorderedSet<u64>> = bids_for_contract_and_token_id
+        let mut bids_tree: TreeMap<u128, UnorderedSet<BidIndex>> = bids_for_contract_and_token_id
             .remove(&ft_token_id)
             .expect("No ft_token_id");
         //let bids_tree = bids_tree.borrow_mut();
         for (balance, mut equal_bids) in bids_tree
             .iter()
-            .collect::<HashMap<u128, UnorderedSet<u64>>>()
+            .collect::<HashMap<u128, UnorderedSet<BidIndex>>>()
         {
-            for bid_id in equal_bids.iter().collect::<Vec<u64>>() {
+            for bid_id in equal_bids.iter().collect::<Vec<BidIndex>>() {
                 // Find a bid by its id
                 let bid = self.market.bids_by_index.get(&bid_id).expect("No bid_id");
                 let mut not_finished = true;

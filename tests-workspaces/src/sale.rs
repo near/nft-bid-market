@@ -9,7 +9,7 @@ use crate::utils::{
 };
 use near_contract_standards::non_fungible_token::Token;
 use near_units::{parse_gas, parse_near};
-use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT};
+use nft_bid_market::{ArgsKind, SaleArgs, SaleJson, BidsForContractAndTokenId, BidIndex, BID_HISTORY_LENGTH_DEFAULT};
 use nft_contract::common::{AccountId, U128, U64};
 
 /*

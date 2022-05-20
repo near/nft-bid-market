@@ -157,9 +157,9 @@ impl Market {
         self.market.bids_by_index.get(&bid_id).expect("No bid with this id")
     }
 
-    pub fn get_bids_by_contract_and_token(&self, contract_and_token_id: ContractAndTokenId) -> BidsForContractAndTokenId {
+    /*pub fn get_bids_by_contract_and_token(&self, contract_and_token_id: ContractAndTokenId) -> BidsForContractAndTokenIdJson {
         self.market.bids.get(&contract_and_token_id).expect("No bid with this id")
-    }
+    }*/
 
     pub fn get_bids_by_account_on_token(&self, owner_id: Option<AccountId>) -> Vec<ContractAndTokenId> {
         let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
