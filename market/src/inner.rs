@@ -1,4 +1,4 @@
-use crate::bid::{Bid, BidIndex};
+use crate::bid::{Bid, BidId};
 use crate::common::*;
 use crate::sale::{Sale, DELIMETER};
 use crate::Market;
@@ -69,7 +69,7 @@ impl Market {
         token_id: TokenId,
         owner_id: &AccountId,
         price: U128,
-        bid_id: BidIndex,
+        bid_id: BidId,
     ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
         let bids_by_ft = self

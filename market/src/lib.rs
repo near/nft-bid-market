@@ -15,7 +15,7 @@ use common::*;
 
 use crate::auction::Auction;
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
-use crate::bid::{Bid, BidAccount, BidIndex, BidsForContractAndTokenId};
+use crate::bid::{Bid, BidAccount, BidId, BidsForContractAndTokenId};
 pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 pub use crate::market_core::{ArgsKind, AuctionArgs, SaleArgs};
 use crate::sale::{ContractAndTokenId, FungibleTokenId, Sale, SaleConditions, TokenType};
@@ -55,11 +55,11 @@ pub struct MarketSales {
     pub ft_token_ids: UnorderedSet<FungibleTokenId>,
     pub storage_deposits: LookupMap<AccountId, Balance>,
 
-    pub bids_by_index: LookupMap<BidIndex, Bid>,
+    pub bids_by_index: LookupMap<BidId, Bid>,
     pub bids: LookupMap<ContractAndTokenId, BidsForContractAndTokenId>,
     pub bids_by_owner:
-        LookupMap<AccountId, UnorderedMap<ContractAndTokenId, (FungibleTokenId, Balance, BidIndex)>>,
-    pub next_bid_id: BidIndex,
+        LookupMap<AccountId, UnorderedMap<ContractAndTokenId, (FungibleTokenId, Balance, BidId)>>,
+    pub next_bid_id: BidId,
 
     pub bid_accounts: LookupMap<AccountId, BidAccount>,
     pub auctions: UnorderedMap<u128, Auction>,

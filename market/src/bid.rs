@@ -10,7 +10,7 @@ use crate::*;
 #[cfg_attr(not(target_arch = "wasm32"), derive(Debug, PartialEq))]
 #[serde(crate = "near_sdk::serde")]
 pub struct Bid {
-    pub bid_id: BidIndex,
+    pub bid_id: BidId,
 
     pub owner_id: AccountId,
     pub price: U128,
@@ -42,9 +42,9 @@ pub struct BidAccount {
 
 //pub type Bids = HashMap<FungibleTokenId, Vector<Bid>>;
 pub type Origins = HashMap<AccountId, u32>;
-pub type BidIndex = u128;
+pub type BidId = u128;
 pub type BidsForContractAndTokenId =
-    HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidIndex>>>;
+    HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidId>>>;
 
 #[near_bindgen]
 impl Market {
@@ -63,7 +63,7 @@ impl Market {
         start: U64,
         end: Option<U64>,
         origins: Option<Origins>,
-    ) -> BidIndex {
+    ) -> BidId {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
         require!(
             self.market.ft_token_ids.contains(&ft_token_id),
@@ -171,7 +171,7 @@ impl Market {
         token_id: TokenId,
         ft_token_id: AccountId,
         price: U128,
-        bid_id: BidIndex,
+        bid_id: BidId,
     ) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
@@ -195,7 +195,7 @@ impl Market {
         ft_token_id: AccountId,
         owner_id: AccountId,
         price: U128,
-        bid_id: BidIndex,
+        bid_id: BidId,
     ) {
         let bid = self
             .internal_remove_bid(
@@ -230,15 +230,15 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No contract or token id");
-        let mut bids_tree: TreeMap<u128, UnorderedSet<BidIndex>> = bids_for_contract_and_token_id
+        let mut bids_tree: TreeMap<u128, UnorderedSet<BidId>> = bids_for_contract_and_token_id
             .remove(&ft_token_id)
             .expect("No ft_token_id");
         //let bids_tree = bids_tree.borrow_mut();
         for (balance, mut equal_bids) in bids_tree
             .iter()
-            .collect::<HashMap<u128, UnorderedSet<BidIndex>>>()
+            .collect::<HashMap<u128, UnorderedSet<BidId>>>()
         {
-            for bid_id in equal_bids.iter().collect::<Vec<BidIndex>>() {
+            for bid_id in equal_bids.iter().collect::<Vec<BidId>>() {
                 // Find a bid by its id
                 let bid = self.market.bids_by_index.get(&bid_id).expect("No bid_id");
                 let mut not_finished = true;
@@ -317,7 +317,7 @@ impl Market {
         }
     }
 
-    pub(crate) fn is_active(&self, bid_id: BidIndex, ft: AccountId) -> bool {
+    pub(crate) fn is_active(&self, bid_id: BidId, ft: AccountId) -> bool {
         let bid = self
             .market
             .bids_by_index

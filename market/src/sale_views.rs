@@ -153,7 +153,7 @@ impl Market {
             .expect("No token for this account")
     }
 
-    pub fn get_bid_by_index(&self, bid_id: BidIndex) -> Bid {
+    pub fn get_bid_by_index(&self, bid_id: BidId) -> Bid {
         self.market.bids_by_index.get(&bid_id).expect("No bid with this id")
     }
 
@@ -166,7 +166,7 @@ impl Market {
         self.market.bids_by_owner.get(&owner_id).expect("No bid with this id").keys_as_vector().to_vec()
     }
 
-    pub fn get_bids_id_by_account_on(&self, owner_id: Option<AccountId>) -> Vec<BidIndex> {
+    pub fn get_bids_id_by_account_on(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
         let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
         let mut vec = Vec::new();
         let lookup_map = &self

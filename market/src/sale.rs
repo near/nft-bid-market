@@ -286,7 +286,7 @@ impl Market {
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
-    ) -> Option<BidIndex> {
+    ) -> Option<BidId> {
         assert_one_yocto();
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
