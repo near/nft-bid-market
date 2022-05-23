@@ -12,7 +12,9 @@ use crate::*;
 pub struct Bid {
     pub bid_id: BidId,
 
+    pub contract_and_token_id: ContractAndTokenId,
     pub owner_id: AccountId,
+    pub fungible_token: FungibleTokenId,
     pub price: U128,
 
     pub start: U64,
@@ -45,6 +47,11 @@ pub type Origins = HashMap<AccountId, u32>;
 pub type BidId = u128;
 pub type BidsForContractAndTokenId =
     HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidId>>>;
+
+pub type BidsForContractAndTokenIdJson =
+    HashMap<FungibleTokenId, TreeMap<BalanceJson, UnorderedSet<BidIdJson>>>;
+pub type BalanceJson = U128;
+pub type BidIdJson = U128;
 
 #[near_bindgen]
 impl Market {
@@ -81,7 +88,9 @@ impl Market {
         // create a bid
         let new_bid = Bid {
             bid_id: self.market.next_bid_id,
+            contract_and_token_id: contract_and_token_id.clone(),
             owner_id: buyer_id.clone(),
+            fungible_token: ft_token_id.clone(),
             price: U128(amount),
             start,
             end,

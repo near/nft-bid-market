@@ -5,7 +5,7 @@ use crate::fee::calculate_price_with_fees;
 use crate::market_core::AuctionArgs;
 use crate::sale::{
     ext_contract, ext_self, Payout, GAS_FOR_FT_TRANSFER, GAS_FOR_NFT_TRANSFER, GAS_FOR_ROYALTIES,
-    NO_DEPOSIT,
+    NO_DEPOSIT, DELIMETER
 };
 use crate::*;
 use near_sdk::{near_bindgen, promise_result_as_success};
@@ -153,7 +153,9 @@ impl Market {
         // Create a bid
         let bid = Bid {
             bid_id: self.market.next_bid_id,
+            contract_and_token_id: format!("{}{}{}", &auction.nft_contract_id, DELIMETER, auction.token_id),
             owner_id: env::predecessor_account_id(),
+            fungible_token: auction.ft_token_id.clone(),
             price: deposit.into(),
             start: env::block_timestamp().into(),
             end: None,
