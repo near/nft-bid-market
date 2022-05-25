@@ -267,8 +267,9 @@ async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
         }))?
         .deposit(10300)
         .transact()
-        .await?;
-    check_outcome_success(outcome.status).await;
+        .await;
+    //check_outcome_success(outcome.status).await;
+    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
     let current_buyer: Option<AccountId> = market
         .view(
             &worker,
@@ -365,8 +366,9 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
         }))?
         .deposit(10300)
         .transact()
-        .await?;
-    check_outcome_success(outcome.status).await;
+        .await;
+    //check_outcome_success(outcome.status).await;
+    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
     let current_bid: Option<U128> = market
         .view(
             &worker,
@@ -460,8 +462,9 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
         }))?
         .deposit(103000)
         .transact()
-        .await?;
-    check_outcome_success(outcome.status).await;
+        .await;
+    //check_outcome_success(outcome.status).await;
+    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
     let min_bid: U128 = market
         .view(
             &worker,
