@@ -5,7 +5,7 @@ use crate::utils::{
     init_market, init_nft, mint_token, nft_approve, offer, offer_with_duration,
 };
 use near_units::parse_gas;
-use nft_bid_market::SaleJson;
+use nft_bid_market::{SaleJson, BidId};
 use nft_contract::common::{AccountId, U128, U64};
 
 /*
@@ -47,27 +47,21 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
     .await;
 
     // Check that one bid is removed after `remove_bid`
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-                "nft_contract_id": nft.id(),
-                "token_id": token1
+                "owner_id": user2.id().to_string(),
             })
             .to_string()
             .into_bytes(),
         )
         .await?
         .json()?;
-    assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .unwrap()
-            .len()
-            == 1,
-        "No bids"
+    /*assert!(
+        bids_by_owner.len() == 1,
+        "There should be exactly one bid"
     );
 
     let outcome = user2
@@ -77,20 +71,20 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "price": price,
+            "bid_id": 0,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_success(outcome.status).await;
+    /heck_outcome_success(outcome.status).await;
 
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-                "nft_contract_id": nft.id(),
-                "token_id": token1
+                "owner_id": user2.id()
             })
             .to_string()
             .into_bytes(),
@@ -98,12 +92,9 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .is_none(),
-        "Bid is not removed"
-    );
+        bids_by_owner.len() == 0,
+        "Bid was not removed"
+    );*/
 
     Ok(())
 }
@@ -156,6 +147,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "price": price,
+            "bid_id": 0,
         }))?
         .deposit(2)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -175,12 +167,13 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "near",
             "price": price,
+            "bid_id": 0,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "No sale").await;
+    check_outcome_fail(outcome.status, "No bid for this nft contract and ft token").await;
 
     let outcome = user2
         .call(&worker, market.id().clone(), "remove_bid")
@@ -189,12 +182,13 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "token_id": "1:10",
             "ft_token_id": "near",
             "price": price,
+            "bid_id": 0,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "No sale").await;
+    check_outcome_fail(outcome.status, "No bid for this nft contract and ft token").await;
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user2
@@ -204,6 +198,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
             "token_id": token1.clone(),
             "ft_token_id": "not_near",
             "price": price,
+            "bid_id": 0,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -255,13 +250,12 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
     .await;
 
     // Check that one bid is removed after `cancel_bid`
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-                "nft_contract_id": nft.id(),
-                "token_id": token1
+                "owner_id": user2.id()
             })
             .to_string()
             .into_bytes(),
@@ -269,13 +263,8 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .unwrap()
-            .len()
-            == 1,
-        "No bids"
+        bids_by_owner.len() == 1,
+        "There should be exactly one bid"
     );
 
     let outcome = user3
@@ -286,19 +275,19 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 0,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
     check_outcome_success(outcome.status).await;
 
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-                "nft_contract_id": nft.id(),
-                "token_id": token1
+                "owner_id": user2.id()
             })
             .to_string()
             .into_bytes(),
@@ -306,11 +295,8 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .is_none(),
-        "Bid is not removed"
+        bids_by_owner.len() == 0,
+        "Bid was not removed"
     );
 
     Ok(())
@@ -370,6 +356,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 0,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -396,6 +383,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 1,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -423,6 +411,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -450,6 +439,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -464,6 +454,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -479,6 +470,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "not_near",
             "owner_id": user2.id(),
             "price": price,
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -494,6 +486,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
             "ft_token_id": "near",
             "owner_id": user1.id(),
             "price": price,
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -576,13 +569,12 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
     .await;
 
     // check that two bids are removed after `cancel_expired_bids`
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-               "nft_contract_id": nft.id(),
-               "token_id": token1
+                "owner_id": user2.id()
             })
             .to_string()
             .into_bytes(),
@@ -590,13 +582,8 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .unwrap()
-            .len()
-            == 3,
-        "No bids"
+        bids_by_owner.len() == 3,
+        "There should be exactly three bids"
     );
 
     let outcome = user3
@@ -611,13 +598,12 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .await?;
     check_outcome_success(outcome.status).await;
 
-    let sale: Option<SaleJson> = market
+    let bids_by_owner: Vec<BidId> = market
         .view(
             &worker,
-            "get_sale",
+            "get_bids_id_by_account",
             serde_json::json!({
-                "nft_contract_id": nft.id(),
-                "token_id": token1
+                "owner_id": user2.id()
             })
             .to_string()
             .into_bytes(),
@@ -625,13 +611,8 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .await?
         .json()?;
     assert!(
-        sale.unwrap()
-            .bids
-            .get(&AccountId::new_unchecked("near".to_owned()))
-            .unwrap()
-            .len()
-            == 1,
-        "Had to remove 2 bids"
+        bids_by_owner.len() == 1,
+        "There should be exactly two bids"
     );
 
     Ok(())

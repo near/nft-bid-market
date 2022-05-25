@@ -217,7 +217,7 @@ async fn sale_views() -> anyhow::Result<()> {
         )
         .await;
         user1
-            .call(&worker, market.id().clone(), "accept_offer")
+            .call(&worker, market.id().clone(), "accept_bid")
             .args_json(serde_json::json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series1[1],

@@ -94,11 +94,12 @@ pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str
     if let near_primitives::views::FinalExecutionStatus::Failure(err) = status {
         assert!(
             err.to_string().contains(expected_err),
-            "actual error: {}",
-            err
+            "actual error: {}, instead of {}",
+            err,
+            expected_err
         )
     } else {
-        panic!("Expected failure, got: {:?}", status);
+        panic!("Expected failure {:?}, got: {:?}", expected_err, status);
     };
 }
 
