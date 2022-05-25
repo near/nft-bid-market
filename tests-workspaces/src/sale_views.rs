@@ -8,7 +8,7 @@ use crate::utils::{create_series, deposit, init_market, init_nft, mint_token, nf
 
 #[tokio::test]
 async fn sale_views() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -217,7 +217,7 @@ async fn sale_views() -> anyhow::Result<()> {
         )
         .await;
         user1
-            .call(&worker, market.id().clone(), "accept_bid")
+            .call(&worker, &market.id().clone(), "accept_bid")
             .args_json(serde_json::json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series1[1],
@@ -243,7 +243,7 @@ async fn sale_views() -> anyhow::Result<()> {
         assert!(sale_json.is_none());
         // case2: removed after sale removed
         user2
-            .call(&worker, market.id().clone(), "remove_sale")
+            .call(&worker, &market.id().clone(), "remove_sale")
             .args_json(serde_json::json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series2[1]

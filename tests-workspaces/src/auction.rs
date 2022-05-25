@@ -14,7 +14,7 @@ const FIFTEEN_MINUTES: Duration = Duration::from_secs(60 * 15);
 
 #[tokio::test]
 async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -26,7 +26,7 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -58,7 +58,7 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn auction_add_bid_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -71,7 +71,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -92,7 +92,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if `ft_token_id` is not supported
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
             "token_type": "not_near".to_string(),
@@ -104,7 +104,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     // Panics if auction is not active
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "1".to_string(),
         }))?
@@ -115,7 +115,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if the owner tries to bid on his own auction
     let outcome = user1
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -126,7 +126,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -137,7 +137,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if the bid is smaller than the previous one
     user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -145,7 +145,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -165,7 +165,7 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn auction_add_bid_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -179,7 +179,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -213,7 +213,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -254,7 +254,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -298,7 +298,7 @@ async fn auction_add_bid_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_auction_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -312,7 +312,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -333,7 +333,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user1
-        .call(&worker, market.id().clone(), "cancel_auction")
+        .call(&worker, &market.id().clone(), "cancel_auction")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string()
         }))?
@@ -349,7 +349,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
 
     // Panics if auction is not active
     let outcome = user1
-        .call(&worker, market.id().clone(), "cancel_auction")
+        .call(&worker, &market.id().clone(), "cancel_auction")
         .args_json(serde_json::json!({
             "auction_id": "1".to_string()
         }))?
@@ -361,7 +361,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
 
     // Can only be called by the creator of the auction
     let outcome = user2
-        .call(&worker, market.id().clone(), "cancel_auction")
+        .call(&worker, &market.id().clone(), "cancel_auction")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string()
         }))?
@@ -377,7 +377,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
 
     // Panics if the auction already has a bid
     user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -385,7 +385,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, market.id().clone(), "cancel_auction")
+        .call(&worker, &market.id().clone(), "cancel_auction")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string()
         }))?
@@ -418,7 +418,7 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_auction_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -431,7 +431,7 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -451,7 +451,7 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
         .await?;
 
     let outcome = user1
-        .call(&worker, market.id().clone(), "cancel_auction")
+        .call(&worker, &market.id().clone(), "cancel_auction")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string()
         }))?
@@ -481,7 +481,7 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn finish_auction_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -494,7 +494,7 @@ async fn finish_auction_positive() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -514,7 +514,7 @@ async fn finish_auction_positive() -> anyhow::Result<()> {
         .await?;
 
     /*let outcome = user1
-        .call(&worker, market.id().clone(), "finish_auction")
+        .call(&worker, &market.id().clone(), "finish_auction")
         .args_json(serde_json::json!({
             "auction_id": "1".to_string()
         }))?
@@ -535,7 +535,7 @@ async fn finish_auction_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn finish_auction_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -548,7 +548,7 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -569,7 +569,7 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
 
     // Panics if the auction is not active
     let outcome = user1
-        .call(&worker, market.id().clone(), "finish_auction")
+        .call(&worker, &market.id().clone(), "finish_auction")
         .args_json(serde_json::json!({
             "auction_id": "1".to_string()
         }))?
@@ -581,7 +581,7 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
 
     // Should panic if called before the auction ends
     let outcome = user1
-        .call(&worker, market.id().clone(), "finish_auction")
+        .call(&worker, &market.id().clone(), "finish_auction")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string()
         }))?

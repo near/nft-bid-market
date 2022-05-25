@@ -13,7 +13,7 @@ use nft_contract::common::{AccountId, U128, U64};
 */
 #[tokio::test]
 async fn remove_bid_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -65,7 +65,7 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
     );
 
     let outcome = user2
-        .call(&worker, market.id().clone(), "remove_bid")
+        .call(&worker, &market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -106,7 +106,7 @@ async fn remove_bid_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn remove_bid_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -141,7 +141,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user2
-        .call(&worker, market.id().clone(), "remove_bid")
+        .call(&worker, &market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -161,7 +161,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user2
-        .call(&worker, market.id().clone(), "remove_bid")
+        .call(&worker, &market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": "some_other_nft_contract".to_string(),
             "token_id": token1.clone(),
@@ -176,7 +176,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
     check_outcome_fail(outcome.status, "No bid for this nft contract and ft token").await;
 
     let outcome = user2
-        .call(&worker, market.id().clone(), "remove_bid")
+        .call(&worker, &market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": "1:10",
@@ -192,7 +192,7 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user2
-        .call(&worker, market.id().clone(), "remove_bid")
+        .call(&worker, &market.id().clone(), "remove_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -214,7 +214,7 @@ TODO: Refunds a bid, removes it from the list
 */
 #[tokio::test]
 async fn cancel_bid_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -268,7 +268,7 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
     );
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -311,7 +311,7 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_bid_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -349,7 +349,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     .await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -376,7 +376,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     .await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -404,7 +404,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     .await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -432,7 +432,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     .await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": "another_nft_contract_id".to_string(),
             "token_id": token1.clone(),
@@ -447,7 +447,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     check_outcome_fail(outcome.status, "No sale").await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": "another_token_id".to_string(),
@@ -463,7 +463,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -479,7 +479,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no bid with given `owner_id` and `price`
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -494,7 +494,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
     check_outcome_fail(outcome.status, "No such bid").await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_bid")
+        .call(&worker, &market.id().clone(), "cancel_bid")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -515,7 +515,7 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -587,7 +587,7 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
     );
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .call(&worker, &market.id().clone(), "cancel_expired_bids")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),
@@ -624,7 +624,7 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -679,7 +679,7 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .call(&worker, &market.id().clone(), "cancel_expired_bids")
         .args_json(serde_json::json!({
             "nft_contract_id": "another_nft_contract".to_string(),
             "token_id": token1.clone(),
@@ -688,10 +688,10 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    check_outcome_fail(outcome.status, "No sale").await;
+    check_outcome_fail(outcome.transact(), "No sale").await;
 
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .call(&worker, &market.id().clone(), "cancel_expired_bids")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": "another_token".to_string(),
@@ -704,7 +704,7 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
-        .call(&worker, market.id().clone(), "cancel_expired_bids")
+        .call(&worker, &market.id().clone(), "cancel_expired_bids")
         .args_json(serde_json::json!({
             "nft_contract_id": nft.id().clone(),
             "token_id": token1.clone(),

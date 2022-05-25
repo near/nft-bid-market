@@ -9,7 +9,7 @@ pub async fn set_private_minting(
     user: &Account,
     enabled: bool,
 ) {
-    user.call(worker, nft, "set_private_minting")
+    user.call(worker, &&nft, "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": enabled,
         }))
@@ -26,7 +26,7 @@ pub async fn grant(
     account_id: AccountId,
 ) -> anyhow::Result<bool> {
     let result = user
-        .call(worker, nft, "grant")
+        .call(worker, &nft, "grant")
         .args_json(serde_json::json!({
             "account_id": account_id,
         }))?
@@ -63,7 +63,7 @@ pub async fn is_allowed(
 */
 #[tokio::test]
 async fn permissions_grant() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 
@@ -73,7 +73,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, nft.id().clone(), "grant")
+        .call(&worker, &nft.id().clone(), "grant")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -83,7 +83,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
 
     // Adds a given account to the list of the autorized accounts
     let outcome = owner
-        .call(&worker, nft.id().clone(), "grant")
+        .call(&worker, &nft.id().clone(), "grant")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -100,7 +100,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
 
     // `user1` is already in the list, thus `false` is returned
     let outcome = owner
-        .call(&worker, nft.id().clone(), "grant")
+        .call(&worker, &nft.id().clone(), "grant")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -119,7 +119,7 @@ async fn permissions_grant() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn permissions_deny() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 
@@ -136,7 +136,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, nft.id().clone(), "deny")
+        .call(&worker, &nft.id().clone(), "deny")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -146,7 +146,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
 
     // Called by the owner
     let outcome = owner
-        .call(&worker, nft.id().clone(), "deny")
+        .call(&worker, &nft.id().clone(), "deny")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -161,7 +161,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
 
     // `user1` is not in the list, thus `false` is returned
     let outcome = owner
-        .call(&worker, nft.id().clone(), "deny")
+        .call(&worker, &nft.id().clone(), "deny")
         .args_json(serde_json::json!({
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
@@ -180,7 +180,7 @@ async fn permissions_deny() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn permissions_set_private_minting() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 
@@ -188,7 +188,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": true,
         }))?
@@ -206,7 +206,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
 
     // If `enabled` is true, turns on private minting
     let outcome = owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": true,
         }))?
@@ -220,7 +220,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
 
     // If `enabled` is false, turns off private minting
     let outcome = owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": false,
         }))?
@@ -241,7 +241,7 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn permissions_is_allowed() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 

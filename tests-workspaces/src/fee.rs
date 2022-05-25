@@ -8,7 +8,7 @@ use crate::utils::init_market;
 
 #[tokio::test]
 async fn price_with_fees() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let market = init_market(&worker, worker.root_account().id(), vec![]).await?;
     let price_without_fees = U128(23456788765);
     let price_with_fees: U128 = market

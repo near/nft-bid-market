@@ -8,7 +8,7 @@ use nft_contract::TokenSeriesJson;
 */
 #[tokio::test]
 async fn series_views_nft_get_series() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 
@@ -64,7 +64,7 @@ async fn series_views_nft_get_series() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn series_views_nft_series() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 
@@ -149,7 +149,7 @@ async fn series_views_nft_series() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn series_views_nft_supply_for_series() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
 

@@ -15,7 +15,7 @@ use nft_contract::TokenSeriesJson;
 */
 #[tokio::test]
 async fn nft_create_series_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner
@@ -33,7 +33,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
 
     // Only authorized account can create series
     owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": true,
         }))?
@@ -54,7 +54,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
         reference_hash: None,
     };
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": null
@@ -70,7 +70,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
         panic!("Expected failure")
     };
     owner
-        .call(&worker, nft.id().clone(), "grant")
+        .call(&worker, &nft.id().clone(), "grant")
         .args_json(serde_json::json!({
             "account_id": user1.id()
         }))?
@@ -79,7 +79,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
 
     // Title of the series should be specified
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": TokenMetadata{
                 title: None,
@@ -100,7 +100,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
     // Royalty can't exceed 50%
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 5000)]);
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -122,7 +122,7 @@ async fn nft_create_series_negative() -> anyhow::Result<()> {
  */
 #[tokio::test]
 async fn nft_create_series_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner
@@ -153,7 +153,7 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
         reference_hash: None,
     };
     let series1: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -164,7 +164,7 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
         .json()?;
 
     owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": true,
         }))?
@@ -172,14 +172,14 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
         .await?;
 
     owner
-        .call(&worker, nft.id().clone(), "grant")
+        .call(&worker, &nft.id().clone(), "grant")
         .args_json(serde_json::json!({
             "account_id": user2.id()
         }))?
         .transact()
         .await?;
     let series2: String = user2
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -224,7 +224,7 @@ async fn nft_create_series_positive() -> anyhow::Result<()> {
  */
 #[tokio::test]
 async fn nft_mint_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner
@@ -261,7 +261,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
     };
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 2000)]);
     let series_id: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -273,14 +273,14 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
 
     // Only authorized account can mint
     owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": true,
         }))?
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -297,7 +297,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
     };
 
     owner
-        .call(&worker, nft.id().clone(), "set_private_minting")
+        .call(&worker, &nft.id().clone(), "set_private_minting")
         .args_json(serde_json::json!({
             "enabled": false,
         }))?
@@ -306,7 +306,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
 
     // wrong series_id
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": "3",
             "receiver_id": user1.id()
@@ -322,7 +322,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
 
     // only owner can mint
     let outcome = user3
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -338,7 +338,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
 
     // Exceed max tokens
     user1
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -347,7 +347,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -369,7 +369,7 @@ async fn nft_mint_negative() -> anyhow::Result<()> {
  */
 #[tokio::test]
 async fn nft_mint_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner
@@ -400,7 +400,7 @@ async fn nft_mint_positive() -> anyhow::Result<()> {
     };
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 2000)]);
     let series_id: String = user1
-        .call(&worker, nft.id().clone(), "nft_create_series")
+        .call(&worker, &nft.id().clone(), "nft_create_series")
         .args_json(serde_json::json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -411,7 +411,7 @@ async fn nft_mint_positive() -> anyhow::Result<()> {
         .json()?;
 
     let token_id: String = user1
-        .call(&worker, nft.id().clone(), "nft_mint")
+        .call(&worker, &nft.id().clone(), "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series_id,
             "receiver_id": user2.id()
@@ -454,7 +454,7 @@ async fn nft_mint_positive() -> anyhow::Result<()> {
 */
 #[tokio::test]
 async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner
@@ -495,7 +495,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
     .await?;
     let token1 = mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series).await?;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": user2.id(),
@@ -523,7 +523,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
     };
     // 1 yoctoNEAR not attached
     let outcome = user2
-        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .call(&worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -541,7 +541,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
 
     // `token_id` contains `token_series_id`, which doesn't exist
     let outcome = user2
-        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .call(&worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": "2:1",
@@ -556,7 +556,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
 
     // number of royalties exceeds `max_len_payout`
     let outcome = user2
-        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .call(&worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -571,7 +571,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
 
     // invalid `memo` is provided
     let outcome = user2
-        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .call(&worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -605,7 +605,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         ]),
     };
     let outcome = user2
-        .call(&worker, nft.id().clone(), "nft_transfer_payout")
+        .call(&worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -625,7 +625,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
 // Checking calculations here
 #[tokio::test]
 async fn nft_transfer_payout_positive() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let user1 = owner

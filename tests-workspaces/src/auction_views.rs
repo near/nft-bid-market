@@ -11,7 +11,7 @@ use nft_contract::common::{U128, U64};
 
 #[tokio::test]
 async fn view_auction_get_auction() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -23,7 +23,7 @@ async fn view_auction_get_auction() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -94,7 +94,7 @@ async fn view_auction_get_auction() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn view_auction_get_auctions() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -112,7 +112,7 @@ async fn view_auction_get_auctions() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user2).await;
 
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -131,7 +131,7 @@ async fn view_auction_get_auctions() -> anyhow::Result<()> {
         .transact()
         .await?;
     user2
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token2,
             "account_id": market.id(),
@@ -195,7 +195,7 @@ async fn view_auction_get_auctions() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -208,7 +208,7 @@ async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -261,7 +261,7 @@ async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
     assert!(current_buyer.is_none(), "Should be None");
 
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -291,7 +291,7 @@ async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn view_auction_get_current_bid() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -304,7 +304,7 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -359,7 +359,7 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
     // add a bid with deposit 10300
     // 300 yocto is protocol see
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -385,7 +385,7 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -398,7 +398,7 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
 
     deposit(&worker, market.id().clone(), &user1).await;
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -454,7 +454,7 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
     // this bid without fees is equal to 100000
     // the next bid (without fees) is equal to 100100
     let outcome = user2
-        .call(&worker, market.id().clone(), "auction_add_bid")
+        .call(&worker, &market.id().clone(), "auction_add_bid")
         .args_json(serde_json::json!({
             "auction_id": "0".to_string(),
         }))?
@@ -479,7 +479,7 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn view_auction_check_auction_in_progress() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -493,7 +493,7 @@ async fn view_auction_check_auction_in_progress() -> anyhow::Result<()> {
 
     // create an auction that starts now
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -552,7 +552,7 @@ async fn view_auction_check_auction_in_progress() -> anyhow::Result<()> {
     let waiting_time = Duration::from_secs(60);
     let epoch_plus_waiting_time = (since_the_epoch + waiting_time).as_nanos();
     user1
-        .call(&worker, nft.id().clone(), "nft_approve")
+        .call(&worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token2,
             "account_id": market.id(),

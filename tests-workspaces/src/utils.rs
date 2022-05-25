@@ -67,7 +67,7 @@ pub async fn mint_token(
     series: &str,
 ) -> anyhow::Result<String> {
     let token_id = minter_id
-        .call(worker, nft_id, "nft_mint")
+        .call(worker, &nft_id, "nft_mint")
         .args_json(serde_json::json!({
             "token_series_id": series,
             "receiver_id": receiver_id.as_ref()
@@ -124,7 +124,7 @@ pub async fn create_series(
     owner: workspaces::AccountId,
 ) -> anyhow::Result<String> {
     let series: String = user
-        .call(worker, nft, "nft_create_series")
+        .call(worker, &nft, "nft_create_series")
         .args_json(serde_json::json!({
         "token_metadata":
         {
@@ -148,7 +148,7 @@ pub async fn deposit(
     market: workspaces::AccountId,
     user: &Account,
 ) {
-    user.call(worker, market, "storage_deposit")
+    user.call(worker, &market, "storage_deposit")
         .deposit(parse_near!("1 N"))
         .transact()
         .await
@@ -164,7 +164,7 @@ pub async fn nft_approve(
     sale_conditions: HashMap<AccountId, U128>,
     series: String,
 ) {
-    user.call(worker, nft.clone(), "nft_approve")
+    user.call(worker, &nft.clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token,
             "account_id": market,
@@ -212,7 +212,7 @@ pub async fn offer(
     token: String,
     price: U128,
 ) {
-    user.call(worker, market.clone(), "offer")
+    user.call(worker, &market.clone(), "offer")
         .args_json(serde_json::json!({
             "nft_contract_id": nft,
             "token_id": token,
@@ -248,7 +248,7 @@ pub async fn create_series_raw(
         reference_hash: None,
     };
     Ok(owner
-        .call(worker, nft, "nft_create_series")
+        .call(worker, &nft, "nft_create_series")
         .args_json(serde_json::json!({
                 "token_metadata": token_metadata,
                 "royalty": royalty
@@ -268,7 +268,7 @@ pub async fn offer_with_duration(
     price: U128,
     duration: U64,
 ) {
-    user.call(worker, market.clone(), "offer")
+    user.call(worker, &market.clone(), "offer")
         .args_json(serde_json::json!({
             "nft_contract_id": nft,
             "token_id": token,
@@ -301,7 +301,7 @@ pub async fn nft_transfer_payout_helper(
         .await
         .unwrap();
     user1
-        .call(worker, nft.id().clone(), "nft_approve")
+        .call(worker, &nft.id().clone(), "nft_approve")
         .args_json(serde_json::json!({
             "token_id": token_id,
             "account_id": user2.id(),
@@ -331,7 +331,7 @@ pub async fn nft_transfer_payout_helper(
             .unwrap()
     };
     user2
-        .call(worker, nft.id().clone(), "nft_transfer_payout")
+        .call(worker, &nft.id().clone(), "nft_transfer_payout")
         .args_json(serde_json::json!({
             "receiver_id": user3.id(),
             "token_id": token_id,

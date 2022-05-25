@@ -9,7 +9,7 @@ use crate::utils::{
 
 #[tokio::test]
 async fn storage_deposit() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -23,7 +23,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 
     // Negative
     let outcome = user
-        .call(&worker, market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id().clone(), "storage_deposit")
         .deposit(20)
         .transact()
         .await?;
@@ -31,7 +31,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 
     // Positive
     let outcome = user
-        .call(&worker, market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id().clone(), "storage_deposit")
         .deposit(parse_near!("0.01 N"))
         .transact()
         .await?;
@@ -41,7 +41,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn storage_withdraw() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
     let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
@@ -53,7 +53,7 @@ async fn storage_withdraw() -> anyhow::Result<()> {
         .await?
         .unwrap();
     let outcome = user
-        .call(&worker, market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id().clone(), "storage_deposit")
         .deposit(parse_near!("5 N"))
         .transact()
         .await?;
@@ -82,7 +82,7 @@ async fn storage_withdraw() -> anyhow::Result<()> {
     // Negative
     // - requires 1 yocto
     let outcome = user
-        .call(&worker, market.id().clone(), "storage_withdraw")
+        .call(&worker, &market.id().clone(), "storage_withdraw")
         .transact()
         .await?;
     check_outcome_fail(
@@ -94,7 +94,7 @@ async fn storage_withdraw() -> anyhow::Result<()> {
     // Positive
     // - deposit refunded
     let outcome = user
-        .call(&worker, market.id().clone(), "storage_withdraw")
+        .call(&worker, &market.id().clone(), "storage_withdraw")
         .deposit(1)
         .transact()
         .await?;
