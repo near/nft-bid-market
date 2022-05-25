@@ -282,6 +282,23 @@ To get sales for token type:
 near view $MARKET_CONTRACT_ID get_sales_by_nft_token_type '{"token_type": "near", "from_index": "0", "limit": 10}'
 ```
 
+To get bid by its index:
+```bash
+near view $MARKET_CONTRACT_ID get_bid_by_index '{"bid_id": 0}'
+```
+
+To get all bids for the given nft contract, id of the token and fungible token.
+```bash
+near call $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
+```
+
+To get bids created by the given account (by default `owner_id` is the caller):
+```bash
+near view $MARKET_CONTRACT_ID get_bids_id_by_account '{"owner_id": "'$NFT_CONTRACT_ID'"}'
+near view $MARKET_CONTRACT_ID get_bids_id_by_account '{}'
+```
+
+
 To get the full price with a protocol and origins fee:
 ```bash
 near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
