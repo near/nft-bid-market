@@ -15,7 +15,7 @@ use common::*;
 
 use crate::auction::Auction;
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
-use crate::bid::{Bid, BidAccount, BidId, BidsForContractAndTokenId};
+pub use crate::bid::{Bid, BidAccount, BidId, BidsForContractAndTokenId};
 pub use crate::fee::{Fees, PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 pub use crate::market_core::{ArgsKind, AuctionArgs, SaleArgs};
 use crate::sale::{ContractAndTokenId, FungibleTokenId, Sale, SaleConditions, TokenType};

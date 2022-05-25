@@ -125,18 +125,17 @@ impl Market {
             .market
             .bids
             .get(&contract_and_token_id)
-            .expect("No contract or token id");
+            .unwrap_or(HashMap::new());
         let mut bids_tree = bids_for_contract_and_token_id
             .remove(&ft_token_id)
-            .expect("No token");
+            .unwrap_or(TreeMap::new(b"t"));
         let mut equal_bids = bids_tree.get(&amount).unwrap_or(UnorderedSet::new(b"s"));
         equal_bids.insert(&new_bid.bid_id);
         bids_tree.insert(&new_bid.price.into(), &equal_bids);
+        bids_for_contract_and_token_id.insert(ft_token_id.clone(), bids_tree);
         self.market
             .bids
-            .get(&contract_and_token_id)
-            .expect("No contract_and_token_id")
-            .insert(ft_token_id.clone(), bids_tree);
+            .insert(&contract_and_token_id, &bids_for_contract_and_token_id);
 
         // add the bid to bids_by_owner
         let mut bids_by_owner = self
@@ -144,7 +143,7 @@ impl Market {
             .bids_by_owner
             .get(&buyer_id)
             .unwrap_or(UnorderedMap::new(b"o"));
-        let bid_data = (ft_token_id.clone(), amount, new_bid.bid_id);
+        let bid_data = (ft_token_id, amount, new_bid.bid_id);
         bids_by_owner.insert(&contract_and_token_id, &bid_data);
         self.market.bids_by_owner.insert(&buyer_id, &bids_by_owner);
 

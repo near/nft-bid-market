@@ -59,7 +59,7 @@ Creates an offer to buy NFT. If `attached_deposit` is sufficient, the purchase i
   - panic if origin fee exceeds `ORIGIN_FEE_MAX`
   - a new bid should be added
   - if the number of stored bids exceeds `bid_history_length`, the earliest bid is removed and refunded
-### accept_offer
+### accept_bid
 Accepts the last offer for the particular sale and given `ft_token_id`.
 - Should panic if there is no sale with the given `nft_contract_id` and `token_id`
 - Should panic if the sale is not in progress

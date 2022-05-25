@@ -309,7 +309,7 @@ impl Market {
             .unwrap_or_else(|| env::panic_str("Not supported ft"));
 
         //let deposit = env::attached_deposit();
-        //require!(deposit > 0, "Attached deposit must be greater than 0");
+        require!(offered_price > 0, "Offered price must be greater than 0");
 
         if offered_price == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(

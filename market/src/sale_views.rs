@@ -1,8 +1,11 @@
 use crate::common::*;
 use crate::*;
 
+use crate::bid::BidsForContractAndTokenIdJson;
 use crate::sale::{SaleJson, DELIMETER};
 use std::cmp::min;
+
+//use std::collections::HashMap;
 
 #[near_bindgen]
 impl Market {
@@ -154,29 +157,57 @@ impl Market {
     }
 
     pub fn get_bid_by_index(&self, bid_id: BidId) -> Bid {
-        self.market.bids_by_index.get(&bid_id).expect("No bid with this id")
+        self.market
+            .bids_by_index
+            .get(&bid_id)
+            .expect("No bid with this id")
     }
 
     /*pub fn get_bids_by_contract_and_token(&self, contract_and_token_id: ContractAndTokenId) -> BidsForContractAndTokenIdJson {
-        self.market.bids.get(&contract_and_token_id).expect("No bid with this id")
-    }*/
-
-    pub fn get_bids_by_account_on_token(&self, owner_id: Option<AccountId>) -> Vec<ContractAndTokenId> {
-        let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
-        self.market.bids_by_owner.get(&owner_id).expect("No bid with this id").keys_as_vector().to_vec()
+        let bids_by_contract_and_token = self.market.bids.get(&contract_and_token_id).expect("No bid with this id");
+        self.json_from_bids(bids_by_contract_and_token)
     }
 
-    pub fn get_bids_id_by_account_on(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
+    pub fn get_bids_by_contract_and_token(&self) -> LookupMap<u8, u8> {
+        LookupMap::new(b"t")
+    }
+
+    pub fn get_bids_by_account_and_token(&self, owner_id: Option<AccountId>) -> Vec<ContractAndTokenId> {
+        let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
+        self.market.bids_by_owner.get(&owner_id).expect("No bid with this id").keys_as_vector().to_vec()
+    }*/
+
+    pub fn get_bids_by_nft_and_token(
+        &self,
+        nft_contract_id: AccountId,
+        token_id: TokenId,
+        ft_token_id: FungibleTokenId,
+    ) -> Vec<BidId> {
+        let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
+        let bids_by_contract_and_token = self
+            .market
+            .bids
+            .get(&contract_and_token_id)
+            .expect("No contract_and_token_id");
+        let tree = bids_by_contract_and_token
+            .get(&ft_token_id)
+            .expect("No fungible token");
+        let mut vec = Vec::new();
+        for (_, set_bid) in tree.iter() {
+            for bid_id in set_bid.iter() {
+                vec.push(bid_id);
+            }
+        }
+        vec
+    }
+
+    pub fn get_bids_id_by_account(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
         let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
         let mut vec = Vec::new();
-        let lookup_map = &self
-            .market
-            .bids_by_owner;
-        let unordered_map = lookup_map
-            .get(&owner_id)
-            .expect("No bid with this id");
+        let lookup_map = &self.market.bids_by_owner;
+        let unordered_map = lookup_map.get(&owner_id).expect("No bid for this owner");
         let iter = unordered_map.values_as_vector().iter();
-        
+
         for bid in iter {
             vec.push(bid.2);
         }
@@ -197,4 +228,9 @@ impl Market {
             origins: sale.origins,
         }
     }
+
+    /*pub(crate) fn json_from_bids(&self, bids_for_contract_and_token_id: BidsForContractAndTokenId) -> BidsForContractAndTokenIdJson {
+        let bids_for_contract_and_token_id_json = BidsForContractAndTokenIdJson::default();
+        bids_for_contract_and_token_id_json
+    }*/
 }
