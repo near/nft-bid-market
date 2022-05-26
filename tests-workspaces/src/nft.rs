@@ -8,6 +8,9 @@ use near_units::{parse_gas, parse_near};
 use nft_bid_market::Fees;
 use nft_contract::TokenSeriesJson;
 
+use crate::transaction_status::StatusCheck;
+pub use workspaces::result::CallExecutionDetails;
+
 /*
 - Can only be called by the autorized account (if authorization enabled)
 - Panics if the title of the series is not specified
@@ -533,11 +536,7 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .transact()
         .await;
-    //check_outcome_fail(
-    //     outcome.status,
-    //     "Requires attached deposit of exactly 1 yoctoNEAR",
-    // )
-    // .await;
+    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
 
     // `token_id` contains `token_series_id`, which doesn't exist
     let outcome = user2
@@ -551,8 +550,8 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .deposit(1)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "no token id").await;
+        .await;
+    outcome.assert_err("no token id").unwrap();
 
     // number of royalties exceeds `max_len_payout`
     let outcome = user2
@@ -566,8 +565,8 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .deposit(1)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Too many recievers").await;
+        .await;
+    outcome.assert_err("Too many recievers").unwrap();
 
     // invalid `memo` is provided
     let outcome = user2
@@ -582,8 +581,8 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .deposit(1)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "invalid FeesArgs").await;
+        .await;
+    outcome.assert_err("invalid FeesArgs").unwrap();
 
     // if total payout exceeds `ROYALTY_TOTAL_VALUE`
     let fees = Fees {
@@ -616,8 +615,8 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .deposit(1)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Too many recievers").await;
+        .await;
+    outcome.assert_err("Too many recievers").unwrap();
     Ok(())
 }
 

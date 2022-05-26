@@ -3,6 +3,9 @@ use workspaces::{Account, Contract, DevNetwork, Worker};
 
 use crate::utils::{check_outcome_fail, check_outcome_success, create_subaccount, init_nft};
 
+use crate::transaction_status::StatusCheck;
+pub use workspaces::result::CallExecutionDetails;
+
 pub async fn set_private_minting(
     worker: &Worker<impl DevNetwork>,
     nft: workspaces::AccountId,
@@ -78,8 +81,8 @@ async fn permissions_grant() -> anyhow::Result<()> {
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "only owner can grant").await;
+        .await;
+    outcome.assert_err("only owner can grant").unwrap();
 
     // Adds a given account to the list of the autorized accounts
     let outcome = owner
@@ -151,8 +154,8 @@ async fn permissions_deny() -> anyhow::Result<()> {
             "account_id": AccountId::new_unchecked("user1".to_owned()),
         }))?
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "only owner can deny").await;
+        .await;
+    outcome.assert_err("only owner can deny").unwrap();
 
     // Called by the owner
     let outcome = owner
@@ -213,12 +216,8 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
             "enabled": true,
         }))?
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //     outcome.status,
-    //     "only owner can enable/disable private minting",
-    // )
-    // .await;
+        .await;
+    outcome.assert_err("only owner can enable/disable private minting").unwrap();
     assert!(
         is_allowed(&worker, &nft, AccountId::new_unchecked("user1".to_owned())).await?,
         "The authorization is turned on"

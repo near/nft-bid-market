@@ -7,6 +7,9 @@ use crate::utils::{
     mint_token, nft_approve,
 };
 
+use crate::transaction_status::StatusCheck;
+pub use workspaces::result::CallExecutionDetails;
+
 #[tokio::test]
 async fn storage_deposit() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
@@ -26,8 +29,8 @@ async fn storage_deposit() -> anyhow::Result<()> {
         .call(&worker, &market.id().clone(), "storage_deposit")
         .deposit(20)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Requires minimum deposit of").await;
+        .await;
+    outcome.assert_err("Requires minimum deposit of").unwrap();
 
     // Positive
     let outcome = user
@@ -94,12 +97,8 @@ async fn storage_withdraw() -> anyhow::Result<()> {
     let outcome = user
         .call(&worker, &market.id().clone(), "storage_withdraw")
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //     outcome.status,
-    //     "Requires attached deposit of exactly 1 yoctoNEAR",
-    // )
-    // .await;
+        .await;
+    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
 
     // Positive
     // - deposit refunded

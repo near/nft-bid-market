@@ -8,6 +8,9 @@ use near_units::parse_gas;
 use nft_bid_market::{BidId, SaleJson};
 use nft_contract::common::{AccountId, U128, U64};
 
+use crate::transaction_status::StatusCheck;
+pub use workspaces::result::CallExecutionDetails;
+
 /*
 - TODO: Refunds a bid, removes it from the list
 */
@@ -152,12 +155,8 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         .deposit(2)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //     outcome.status,
-    //     "Requires attached deposit of exactly 1 yoctoNEAR",
-    // )
-    // .await;
+        .await;
+    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user2
@@ -172,8 +171,8 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No bid for this nft contract and ft token").await;
+        .await;
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     let outcome = user2
         .call(&worker, &market.id().clone(), "remove_bid")
@@ -187,8 +186,8 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No bid for this nft contract and ft token").await;
+        .await;
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user2
@@ -203,8 +202,8 @@ async fn remove_bid_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No token").await;
+        .await;
+    outcome.assert_err("No token").unwrap();
 
     Ok(())
 }
@@ -359,8 +358,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "The bid hasn't ended yet").await;
+        .await;
+    outcome.assert_err("The bid hasn't ended yet").unwrap();
 
     // Should panic if the bid doesn't have end time
     let price: U128 = 950.into();
@@ -386,8 +385,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "The bid doesn't have an end").await;
+        .await;
+    outcome.assert_err("The bid doesn't have an end").unwrap();
 
     // Should panic if the bid isn't finished yet
     let price: U128 = 900.into();
@@ -414,8 +413,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "The bid hasn't ended yet").await;
+        .await;
+    outcome.assert_err("The bid hasn't ended yet").unwrap();
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let price: U128 = 1000.into();
@@ -442,8 +441,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No sale").await;
+        .await;
+    outcome.assert_err("No sale").unwrap();
 
     let outcome = user3
         .call(&worker, &market.id().clone(), "cancel_bid")
@@ -457,8 +456,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No sale").await;
+        .await;
+    outcome.assert_err("No sale").unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
@@ -473,8 +472,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No token").await;
+        .await;
+    outcome.assert_err("No token").unwrap();
 
     // Should panic if there is no bid with given `owner_id` and `price`
     let outcome = user3
@@ -489,8 +488,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No such bid").await;
+        .await;
+    outcome.assert_err("No such bid").unwrap();
 
     let outcome = user3
         .call(&worker, &market.id().clone(), "cancel_bid")
@@ -503,8 +502,8 @@ async fn cancel_bid_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No such bid").await;
+        .await;
+    outcome.assert_err("No such bid").unwrap();
 
     Ok(())
 }
@@ -688,8 +687,8 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status(), "No sale").await;
+        .await;
+    outcome.assert_err("No sale").unwrap();
 
     let outcome = user3
         .call(&worker, &market.id().clone(), "cancel_expired_bids")
@@ -700,8 +699,8 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No sale").await;
+        .await;
+    outcome.assert_err("No sale").unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
@@ -713,8 +712,8 @@ async fn cancel_expired_bids_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "No token").await;
+        .await;
+    outcome.assert_err("No token").unwrap();
 
     Ok(())
 }

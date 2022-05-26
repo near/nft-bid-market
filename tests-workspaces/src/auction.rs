@@ -9,6 +9,9 @@ use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 //use workspaces::{Contract, Account, Worker};
 
+use crate::transaction_status::StatusCheck;
+pub use workspaces::result::CallExecutionDetails;
+
 const THIRTY_SECONDS: Duration = Duration::from_secs(30);
 const FIFTEEN_MINUTES: Duration = Duration::from_secs(60 * 15);
 
@@ -104,8 +107,8 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         }))?
         .deposit(10300)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "token not supported").await;
+        .await;
+    outcome.assert_err("token not supported").unwrap();
 
     // Panics if auction is not active
     let outcome = user2
@@ -115,8 +118,8 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         }))?
         .deposit(10300)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Auction does not exist").await;
+        .await;
+    outcome.assert_err("Auction does not exist").unwrap();
 
     // Should panic if the owner tries to bid on his own auction
     let outcome = user1
@@ -126,8 +129,8 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         }))?
         .deposit(10300)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Cannot bid on your own auction").await;
+        .await;
+    outcome.assert_err("Cannot bid on your own auction").unwrap();
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
@@ -137,8 +140,8 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         }))?
         .deposit(10200)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Should bid at least 10300").await;
+        .await;
+    outcome.assert_err("Should bid at least 10300").unwrap();
 
     // Should panic if the bid is smaller than the previous one
     user2
@@ -156,9 +159,8 @@ async fn auction_add_bid_negative() -> anyhow::Result<()> {
         }))?
         .deposit(10350)
         .transact()
-        .await?;
-    //println!("outcome: {:?}", outcome);
-    //check_outcome_fail(outcome.status, "Should bid at least 10403").await;
+        .await;
+    outcome.assert_err("Should bid at least 10403").unwrap();
 
     Ok(())
 }
@@ -345,12 +347,8 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .deposit(2)
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //    outcome.status,
-    //    "Requires attached deposit of exactly 1 yoctoNEAR",
-    //)
-    //.await;
+        .await;
+    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
 
     // Panics if auction is not active
     let outcome = user1
@@ -361,8 +359,8 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Auction is not active").await;
+        .await;
+    outcome.assert_err("Auction is not active").unwrap();
 
     // Can only be called by the creator of the auction
     let outcome = user2
@@ -373,12 +371,8 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //    outcome.status,
-    //    "Only the auction owner can cancel the auction",
-    //)
-    //.await;
+        .await;
+    outcome.assert_err("Only the auction owner can cancel the auction").unwrap();
 
     // Panics if the auction already has a bid
     user2
@@ -397,12 +391,8 @@ async fn cancel_auction_negative() -> anyhow::Result<()> {
         .deposit(1)
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //    outcome.status,
-    //    "Can't cancel the auction after the first bid is made",
-    //)
-    //.await;
+        .await;
+    outcome.assert_err("Can't cancel the auction after the first bid is made").unwrap();
 
     let vector_auctions: Vec<AuctionJson> = market
         .view(
@@ -586,8 +576,8 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(outcome.status, "Auction is not active").await;
+        .await;
+    outcome.assert_err("Auction is not active").unwrap();
 
     // Should panic if called before the auction ends
     let outcome = user1
@@ -597,12 +587,8 @@ async fn finish_auction_negative() -> anyhow::Result<()> {
         }))?
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
-        .await?;
-    //check_outcome_fail(
-    //    outcome.status,
-    //    "Auction can be finalized only after the end time",
-    //)
-    //.await;
+        .await;
+    outcome.assert_err("Auction can be finalized only after the end time").unwrap();
 
     // Panics if there is no bid
 
