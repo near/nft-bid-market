@@ -36,7 +36,11 @@ async fn storage_deposit() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     Ok(())
 }
 
@@ -59,7 +63,11 @@ async fn storage_withdraw() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     let series = create_series_raw(
         &worker,
         nft.id().clone(),
@@ -101,7 +109,11 @@ async fn storage_withdraw() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     // TODO: check balances
     Ok(())

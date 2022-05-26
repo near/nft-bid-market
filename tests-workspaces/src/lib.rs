@@ -10,4 +10,5 @@ mod permissions;
 mod sale;
 mod sale_views;
 mod series_views;
+mod transaction_status;
 mod utils;

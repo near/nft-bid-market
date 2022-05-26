@@ -20,7 +20,7 @@ pub async fn init_nft(
     root_id: &workspaces::AccountId,
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(NFT_WASM_FILEPATH)?;
-    let contract = worker.dev_deploy(wasm).await?;
+    let contract = worker.dev_deploy(&wasm).await?;
     let outcome = contract
         .call(worker, "new_default_meta")
         .args_json(serde_json::json!({
@@ -28,11 +28,16 @@ pub async fn init_nft(
         }))?
         .gas(parse_gas!("150 Tgas") as u64)
         .transact()
-        .await?;
-    match outcome.status {
-        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
-        _ => panic!(),
-    };
+        .await;
+    // match outcome.status {
+    //     near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
+    //     _ => panic!(),
+    // };
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     Ok(contract)
 }
 
@@ -42,7 +47,7 @@ pub async fn init_market(
     nft_ids: Vec<&workspaces::AccountId>,
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(MARKET_WASM_FILEPATH)?;
-    let contract = worker.dev_deploy(wasm).await?;
+    let contract = worker.dev_deploy(&wasm).await?;
     let outcome = contract
         .call(worker, "new")
         .args_json(serde_json::json!({
@@ -51,11 +56,16 @@ pub async fn init_market(
         }))?
         .gas(parse_gas!("150 Tgas") as u64)
         .transact()
-        .await?;
-    match outcome.status {
-        near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
-        _ => panic!(),
-    };
+        .await;
+    // match outcome.status {
+    //     near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
+    //     _ => panic!(),
+    // };
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     Ok(contract)
 }
 

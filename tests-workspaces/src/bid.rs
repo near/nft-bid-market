@@ -5,7 +5,7 @@ use crate::utils::{
     init_market, init_nft, mint_token, nft_approve, offer, offer_with_duration,
 };
 use near_units::parse_gas;
-use nft_bid_market::{SaleJson, BidId};
+use nft_bid_market::{BidId, SaleJson};
 use nft_contract::common::{AccountId, U128, U64};
 
 /*
@@ -262,10 +262,7 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(
-        bids_by_owner.len() == 1,
-        "There should be exactly one bid"
-    );
+    assert!(bids_by_owner.len() == 1, "There should be exactly one bid");
 
     let outcome = user3
         .call(&worker, &market.id().clone(), "cancel_bid")
@@ -281,7 +278,11 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     let bids_by_owner: Vec<BidId> = market
         .view(
@@ -295,10 +296,7 @@ async fn cancel_bid_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(
-        bids_by_owner.len() == 0,
-        "Bid was not removed"
-    );
+    assert!(bids_by_owner.len() == 0, "Bid was not removed");
 
     Ok(())
 }
@@ -598,7 +596,11 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     let bids_by_owner: Vec<BidId> = market
         .view(
@@ -612,10 +614,7 @@ async fn cancel_expired_bids_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(
-        bids_by_owner.len() == 1,
-        "There should be exactly two bids"
-    );
+    assert!(bids_by_owner.len() == 1, "There should be exactly two bids");
 
     Ok(())
 }

@@ -4,6 +4,7 @@ use crate::utils::{
     check_outcome_success, create_series, create_subaccount, deposit, init_market, init_nft,
     mint_token,
 };
+
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 use nft_contract::common::AccountId;
@@ -269,7 +270,11 @@ async fn view_auction_get_current_buyer() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     let current_buyer: Option<AccountId> = market
         .view(
             &worker,
@@ -368,7 +373,11 @@ async fn view_auction_get_current_bid() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     let current_bid: Option<U128> = market
         .view(
             &worker,
@@ -464,7 +473,11 @@ async fn view_auction_get_minimal_next_bid() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     let min_bid: U128 = market
         .view(
             &worker,

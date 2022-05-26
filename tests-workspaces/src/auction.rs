@@ -45,7 +45,11 @@ async fn nft_on_approve_auction_positive() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     Ok(())
 }
 
@@ -461,7 +465,11 @@ async fn cancel_auction_positive() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     let vector_auctions: Vec<AuctionJson> = market
         .view(
             &worker,

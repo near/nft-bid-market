@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::utils::{
-    check_outcome_fail, check_outcome_success, create_series, create_series_raw, deposit, init_market, init_nft,
-    mint_token, nft_approve, offer,
+    check_outcome_fail, check_outcome_success, create_series, create_series_raw, deposit,
+    init_market, init_nft, mint_token, nft_approve, offer,
 };
 use near_contract_standards::non_fungible_token::Token;
 use near_units::{parse_gas, parse_near};
@@ -399,7 +399,7 @@ async fn offer_negative() -> anyhow::Result<()> {
     //         "ft_token_id": "near",
     //         "offered_price": 400, // less
     //     }))?
-    //     .deposit(1) 
+    //     .deposit(1)
     //     .gas(parse_gas!("300 Tgas") as u64)
     //     .transact()
     //     .await?;
@@ -416,7 +416,7 @@ async fn offer_negative() -> anyhow::Result<()> {
     //         "ft_token_id": "near",
     //         "offered_price": 500, // equal
     //     }))?
-    //     .deposit(1) 
+    //     .deposit(1)
     //     .gas(parse_gas!("300 Tgas") as u64)
     //     .transact()
     //     .await?;
@@ -438,7 +438,7 @@ async fn offer_negative() -> anyhow::Result<()> {
                 "user1": 4701,
             }
         }))?
-        .deposit(1) 
+        .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
@@ -493,7 +493,11 @@ async fn offer_negative() -> anyhow::Result<()> {
     //     panic!("Expected failure {:?}", outcome.status)
     // };
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     Ok(())
 }
@@ -537,8 +541,7 @@ async fn offer_positive() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
     user2
         .call(&worker, &market.id().clone(), "bid_deposit")
-        .args_json(serde_json::json!({
-        }))?
+        .args_json(serde_json::json!({}))?
         .deposit(100_000_000)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -593,8 +596,8 @@ async fn offer_positive() -> anyhow::Result<()> {
         )
         .await?
         .json()?;
-    assert!(bids_by_owner.len() == 1 , "Bid not added");
-  
+    assert!(bids_by_owner.len() == 1, "Bid not added");
+
     // check that the buyer can buyout the token
     let price: U128 = market
         .view(
@@ -897,8 +900,7 @@ async fn accept_bid_positive() -> anyhow::Result<()> {
     deposit(&worker, market.id().clone(), &user1).await;
     user2
         .call(&worker, &market.id().clone(), "bid_deposit")
-        .args_json(serde_json::json!({
-        }))?
+        .args_json(serde_json::json!({}))?
         .deposit(10000)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()

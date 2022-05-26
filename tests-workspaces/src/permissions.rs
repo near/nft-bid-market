@@ -90,7 +90,11 @@ async fn permissions_grant() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.clone().status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     // Returns `true` if the new account has been added to the list
     //assert!(outcome.json()?, "Returned false");
@@ -108,7 +112,11 @@ async fn permissions_grant() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.clone().status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     //assert!(!outcome.json()?, "Returned true");
 
     Ok(())
@@ -155,7 +163,11 @@ async fn permissions_deny() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.clone().status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     // Returns `true` if the account has been removed from the list
     //assert!(outcome.json()?, "Returned false");
@@ -171,7 +183,11 @@ async fn permissions_deny() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.clone().status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     //assert!(!outcome.json()?, "Returned true");
 
     Ok(())
@@ -231,7 +247,11 @@ async fn permissions_set_private_minting() -> anyhow::Result<()> {
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
-    assert!(outcome.is_ok(), "Failed with error {}", outcome.err().unwrap());
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     assert!(
         is_allowed(&worker, &nft, AccountId::new_unchecked("user1".to_owned())).await?,
         "The authorization is turned on"
