@@ -286,7 +286,7 @@ impl Market {
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
-    ) -> Option<u128> {
+    ) -> Option<U128> {
         assert_one_yocto();
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
@@ -324,16 +324,19 @@ impl Market {
         } else {
             let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
-            return Some(self.add_bid(
-                contract_id,
-                token_id,
-                offered_price,
-                ft_token_id,
-                buyer_id,
-                start,
-                end,
-                origins,
-            ));
+            return Some(
+                self.add_bid(
+                    contract_id,
+                    token_id,
+                    offered_price,
+                    ft_token_id,
+                    buyer_id,
+                    start,
+                    end,
+                    origins,
+                )
+                .into(),
+            );
         }
     }
 
