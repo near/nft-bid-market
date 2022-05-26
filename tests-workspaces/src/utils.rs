@@ -6,6 +6,7 @@ use nft_bid_market::{ArgsKind, SaleArgs};
 use nft_contract::common::TokenMetadata;
 use nft_contract::common::{AccountId, U128, U64};
 use nft_contract::Payout;
+use serde_json::json;
 use std::collections::HashMap;
 use workspaces::prelude::*;
 use workspaces::network::Sandbox;
@@ -161,6 +162,8 @@ pub async fn deposit(
 ) {
     user.call(worker, &market, "storage_deposit")
         .deposit(parse_near!("1 N"))
+        .args_json(json!({}))
+        .unwrap()
         .transact()
         .await
         .unwrap();
