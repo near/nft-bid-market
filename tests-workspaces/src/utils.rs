@@ -8,7 +8,8 @@ use nft_contract::common::{AccountId, U128, U64};
 use nft_contract::Payout;
 use std::collections::HashMap;
 use workspaces::prelude::*;
-use workspaces::{Account, Contract, DevNetwork, Worker};
+use workspaces::network::Sandbox;
+use workspaces::{Account, Contract, Worker};
 
 use near_primitives::views::FinalExecutionStatus;
 
@@ -16,7 +17,7 @@ const NFT_WASM_FILEPATH: &str = "../res/nft_contract.wasm";
 const MARKET_WASM_FILEPATH: &str = "../res/nft_bid_market.wasm";
 
 pub async fn init_nft(
-    worker: &workspaces::Worker<impl DevNetwork>,
+    worker: &workspaces::Worker<Sandbox>,
     root_id: &workspaces::AccountId,
 ) -> anyhow::Result<workspaces::Contract> {
     let wasm = std::fs::read(NFT_WASM_FILEPATH)?;
@@ -42,7 +43,7 @@ pub async fn init_nft(
 }
 
 pub async fn init_market(
-    worker: &workspaces::Worker<impl DevNetwork>,
+    worker: &workspaces::Worker<Sandbox>,
     root_id: &workspaces::AccountId,
     nft_ids: Vec<&workspaces::AccountId>,
 ) -> anyhow::Result<workspaces::Contract> {
@@ -70,7 +71,7 @@ pub async fn init_market(
 }
 
 pub async fn mint_token(
-    worker: &workspaces::Worker<impl DevNetwork>,
+    worker: &workspaces::Worker<Sandbox>,
     nft_id: workspaces::AccountId,
     minter_id: &workspaces::Account,
     receiver_id: &workspaces::AccountId,
@@ -114,7 +115,7 @@ pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str
 }
 
 pub async fn create_subaccount(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     owner: &Account,
     user_id: &str,
 ) -> anyhow::Result<Account> {
@@ -128,7 +129,7 @@ pub async fn create_subaccount(
 }
 
 pub async fn create_series(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     user: &Account,
     owner: workspaces::AccountId,
@@ -154,7 +155,7 @@ pub async fn create_series(
 }
 
 pub async fn deposit(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     market: workspaces::AccountId,
     user: &Account,
 ) {
@@ -166,7 +167,7 @@ pub async fn deposit(
 }
 
 pub async fn nft_approve(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     market: workspaces::AccountId,
     user: &Account,
@@ -195,7 +196,7 @@ pub async fn nft_approve(
 }
 
 pub async fn price_with_fees(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     market: &Contract,
     sale_conditions: HashMap<AccountId, U128>,
 ) -> anyhow::Result<U128> {
@@ -215,7 +216,7 @@ pub async fn price_with_fees(
 }
 
 pub async fn offer(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     market: workspaces::AccountId,
     user: &Account,
@@ -237,7 +238,7 @@ pub async fn offer(
 }
 
 pub async fn create_series_raw(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     owner: &Account,
     copies: Option<u64>,
@@ -270,7 +271,7 @@ pub async fn create_series_raw(
 }
 
 pub async fn offer_with_duration(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     market: workspaces::AccountId,
     user: &Account,
@@ -294,7 +295,7 @@ pub async fn offer_with_duration(
 }
 
 pub async fn nft_transfer_payout_helper(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: &Contract,
     user1: &Account,
     user2: &Account,

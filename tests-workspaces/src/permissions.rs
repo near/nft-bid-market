@@ -1,5 +1,6 @@
 use nft_contract::common::AccountId;
-use workspaces::{Account, Contract, DevNetwork, Worker};
+use workspaces::network::Sandbox;
+use workspaces::{Account, Contract, Worker};
 
 use crate::utils::{check_outcome_fail, check_outcome_success, create_subaccount, init_nft};
 
@@ -7,7 +8,7 @@ use crate::transaction_status::StatusCheck;
 pub use workspaces::result::CallExecutionDetails;
 
 pub async fn set_private_minting(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     user: &Account,
     enabled: bool,
@@ -23,7 +24,7 @@ pub async fn set_private_minting(
 }
 
 pub async fn grant(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: workspaces::AccountId,
     user: &Account,
     account_id: AccountId,
@@ -40,7 +41,7 @@ pub async fn grant(
 }
 
 pub async fn is_allowed(
-    worker: &Worker<impl DevNetwork>,
+    worker: &Worker<Sandbox>,
     nft: &Contract,
     account_id: AccountId,
 ) -> anyhow::Result<bool> {
