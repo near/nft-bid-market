@@ -282,7 +282,7 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: String,
         ft_token_id: AccountId,
-        offered_price: Balance,
+        offered_price: U128,
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
@@ -309,14 +309,14 @@ impl Market {
             .unwrap_or_else(|| env::panic_str("Not supported ft"));
 
         //let deposit = env::attached_deposit();
-        require!(offered_price > 0, "Offered price must be greater than 0");
+        require!(offered_price.0 > 0, "Offered price must be greater than 0");
 
-        if offered_price == calculate_price_with_fees(price, origins.as_ref()) {
+        if offered_price.0 == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(
                 contract_id,
                 token_id,
                 ft_token_id,
-                U128(offered_price),
+                offered_price,
                 buyer_id,
                 origins.unwrap_or_default(),
             );
@@ -328,7 +328,7 @@ impl Market {
                 self.add_bid(
                     contract_id,
                     token_id,
-                    offered_price,
+                    offered_price.0,
                     ft_token_id,
                     buyer_id,
                     start,
