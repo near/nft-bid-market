@@ -536,7 +536,9 @@ async fn nft_transfer_payout_negative() -> anyhow::Result<()> {
         }))?
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // `token_id` contains `token_series_id`, which doesn't exist
     let outcome = user2

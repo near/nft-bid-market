@@ -74,7 +74,9 @@ async fn nft_on_approve_negative() -> anyhow::Result<()> {
         }))?
         .transact()
         .await;
-    outcome.assert_err("nft_on_approve should only be called via cross-contract call").unwrap();
+    outcome
+        .assert_err("nft_on_approve should only be called via cross-contract call")
+        .unwrap();
 
     // TODO: to test `owner_id` must be the signer need to create another contract
 
@@ -117,7 +119,9 @@ async fn nft_on_approve_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Token ft.near not supported by this market").unwrap();
+    outcome
+        .assert_err("Token ft.near not supported by this market")
+        .unwrap();
 
     // bad message, sale/auction shouldn't be added
     let outcome = user1
@@ -302,7 +306,9 @@ async fn offer_negative() -> anyhow::Result<()> {
         .deposit(1)
         .transact()
         .await;
-    outcome.assert_err("Either the sale is finished or it hasn't started yet").unwrap();
+    outcome
+        .assert_err("Either the sale is finished or it hasn't started yet")
+        .unwrap();
 
     tokio::time::sleep(waiting_time).await;
     let price: U128 = market
@@ -343,7 +349,9 @@ async fn offer_negative() -> anyhow::Result<()> {
         .deposit(2)
         .transact()
         .await;
-        outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // Offered deposit not equal to 0
     let outcome = user2
@@ -357,7 +365,9 @@ async fn offer_negative() -> anyhow::Result<()> {
         .deposit(1)
         .transact()
         .await;
-    outcome.assert_err("Offered price must be greater than 0").unwrap();
+    outcome
+        .assert_err("Offered price must be greater than 0")
+        .unwrap();
 
     // Not supported ft
     let outcome = user2
@@ -854,7 +864,9 @@ async fn accept_bid_negative() -> anyhow::Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Either the sale is finished or it hasn't started yet").unwrap();
+    outcome
+        .assert_err("Either the sale is finished or it hasn't started yet")
+        .unwrap();
     Ok(())
 }
 
@@ -1002,7 +1014,9 @@ async fn update_price_negative() -> anyhow::Result<()> {
         }))?
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // no sale with given nft_contract_id:token_id
     let outcome = user1
@@ -1044,7 +1058,9 @@ async fn update_price_negative() -> anyhow::Result<()> {
         .deposit(1)
         .transact()
         .await;
-    outcome.assert_err("is not supported by this market").unwrap();
+    outcome
+        .assert_err("is not supported by this market")
+        .unwrap();
     Ok(())
 }
 
@@ -1172,7 +1188,9 @@ async fn remove_sale_negative() -> anyhow::Result<()> {
         }))?
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // Can be removed only by the owner of the sale, if not finished
     let outcome = user2
@@ -1184,7 +1202,9 @@ async fn remove_sale_negative() -> anyhow::Result<()> {
         .deposit(1)
         .transact()
         .await;
-    outcome.assert_err("Until the sale is finished, it can only be removed by the sale owner").unwrap();
+    outcome
+        .assert_err("Until the sale is finished, it can only be removed by the sale owner")
+        .unwrap();
     Ok(())
 }
 

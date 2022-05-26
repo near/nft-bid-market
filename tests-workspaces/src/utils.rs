@@ -8,8 +8,8 @@ use nft_contract::common::{AccountId, U128, U64};
 use nft_contract::Payout;
 use serde_json::json;
 use std::collections::HashMap;
-use workspaces::prelude::*;
 use workspaces::network::Sandbox;
+use workspaces::prelude::*;
 use workspaces::{Account, Contract, Worker};
 
 use near_primitives::views::FinalExecutionStatus;
@@ -155,11 +155,7 @@ pub async fn create_series(
     Ok(series)
 }
 
-pub async fn deposit(
-    worker: &Worker<Sandbox>,
-    market: workspaces::AccountId,
-    user: &Account,
-) {
+pub async fn deposit(worker: &Worker<Sandbox>, market: workspaces::AccountId, user: &Account) {
     user.call(worker, &market, "storage_deposit")
         .deposit(parse_near!("1 N"))
         .args_json(json!({}))
