@@ -178,20 +178,26 @@ impl Market {
             None => {
                 let bid_ft = AccountId::new_unchecked("near".to_string());
                 let added_amount = env::attached_deposit();
-                let previous_balance = self
+                let mut initial_map = LookupMap::new(b"b");
+                initial_map.insert(&bid_ft, &0).unwrap();
+                let initial_acc = BidAccount {
+                    total_balance: initial_map,
+                };
+                let mut bid_account = self
                     .market
                     .bid_accounts
                     .get(&owner_id)
-                    .expect("Bid account not found")
+                    .unwrap_or(initial_acc);
+                let previous_balance = bid_account
                     .total_balance
                     .get(&bid_ft)
                     .unwrap_or_default();
-                self.market
-                    .bid_accounts
-                    .get(&owner_id)
-                    .expect("Bid account not found")
+                bid_account
                     .total_balance
                     .insert(&bid_ft, &(previous_balance + added_amount));
+                self.market
+                    .bid_accounts
+                    .insert(&owner_id, &bid_account);
             }
             Some(_ft) => (),
         };
