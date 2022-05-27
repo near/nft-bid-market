@@ -29,21 +29,37 @@ const STORAGE_PER_SALE: u128 = 1000 * STORAGE_PRICE_PER_BYTE;
 pub enum StorageKey {
     Sales,
     ByOwnerId,
-    ByOwnerIdInner { account_id_hash: CryptoHash },
+    ByOwnerIdInner {
+        account_id_hash: CryptoHash,
+    },
     ByNFTContractId,
-    ByNFTContractIdInner { account_id_hash: CryptoHash },
+    ByNFTContractIdInner {
+        account_id_hash: CryptoHash,
+    },
     ByNFTTokenType,
-    ByNFTTokenTypeInner { token_type_hash: CryptoHash },
+    ByNFTTokenTypeInner {
+        token_type_hash: CryptoHash,
+    },
     FTTokenIds,
     StorageDeposits,
     BidsByIndex,
     Bids,
+    BidsForContractAndOwner {
+        contract_and_token_hash: CryptoHash,
+    },
+    BidsForContractAndOwnerInner {
+        contract_and_token_hash: CryptoHash,
+        balance: [u8; 16],
+    },
     BidsByOwner,
+    BidsByOwnerInner {
+        account_id_hash: CryptoHash,
+    },
     BidAccounts,
-    OriginFees,
     Auctions,
-    AuctionId,
+    NFTTokenContracts,
 }
+// LookupMap<ContractAndTokenId, HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidId>>>;
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct MarketSales {
@@ -77,7 +93,7 @@ pub struct Market {
 impl Market {
     #[init]
     pub fn new(nft_ids: Vec<AccountId>, owner_id: AccountId) -> Self {
-        let mut non_fungible_token_account_ids = LookupSet::new(b"n");
+        let mut non_fungible_token_account_ids = LookupSet::new(StorageKey::NFTTokenContracts);
         non_fungible_token_account_ids.extend(nft_ids);
         let mut tokens = UnorderedSet::new(StorageKey::FTTokenIds);
         tokens.insert(&AccountId::new_unchecked("near".to_owned()));
@@ -173,7 +189,7 @@ impl Market {
 
     #[payable]
     pub fn bid_deposit(&mut self, account_id: Option<AccountId>, ft_token_id: Option<AccountId>) {
-        let owner_id = account_id.unwrap_or(env::predecessor_account_id());
+        let owner_id = account_id.unwrap_or_else(env::predecessor_account_id);
         match ft_token_id {
             None => {
                 let bid_ft = AccountId::new_unchecked("near".to_string());

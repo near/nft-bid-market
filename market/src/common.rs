@@ -15,3 +15,9 @@ pub use near_contract_standards::non_fungible_token::{
 };
 
 pub const NANOS_PER_SEC: u64 = 1_000_000_000;
+
+pub fn hash_string(string: &str) -> CryptoHash {
+    let mut hash = CryptoHash::default();
+    hash.copy_from_slice(&env::sha256(string.as_bytes()));
+    hash
+}

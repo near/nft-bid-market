@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use near_contract_standards::non_fungible_token::hash_account_id;
 use near_sdk::assert_one_yocto;
 
 use crate::fee::calculate_origins;
@@ -125,11 +126,20 @@ impl Market {
             .market
             .bids
             .get(&contract_and_token_id)
-            .unwrap_or(HashMap::new());
+            .unwrap_or_default();
         let mut bids_tree = bids_for_contract_and_token_id
             .remove(&ft_token_id)
-            .unwrap_or(TreeMap::new(b"t"));
-        let mut equal_bids = bids_tree.get(&amount).unwrap_or(UnorderedSet::new(b"s"));
+            .unwrap_or_else(|| {
+                TreeMap::new(StorageKey::BidsForContractAndOwner {
+                    contract_and_token_hash: hash_string(&contract_and_token_id),
+                })
+            });
+        let mut equal_bids = bids_tree.get(&amount).unwrap_or_else(|| {
+            UnorderedSet::new(StorageKey::BidsForContractAndOwnerInner {
+                contract_and_token_hash: hash_string(&contract_and_token_id),
+                balance: amount.to_le_bytes(),
+            })
+        });
         equal_bids.insert(&new_bid.bid_id);
         bids_tree.insert(&new_bid.price.into(), &equal_bids);
         bids_for_contract_and_token_id.insert(ft_token_id.clone(), bids_tree);
@@ -138,11 +148,11 @@ impl Market {
             .insert(&contract_and_token_id, &bids_for_contract_and_token_id);
 
         // add the bid to bids_by_owner
-        let mut bids_by_owner = self
-            .market
-            .bids_by_owner
-            .get(&buyer_id)
-            .unwrap_or(UnorderedMap::new(b"o"));
+        let mut bids_by_owner = self.market.bids_by_owner.get(&buyer_id).unwrap_or_else(|| {
+            UnorderedMap::new(StorageKey::BidsByOwnerInner {
+                account_id_hash: hash_account_id(&buyer_id),
+            })
+        });
         let bid_data = (ft_token_id, amount, new_bid.bid_id);
         bids_by_owner.insert(&contract_and_token_id, &bid_data);
         self.market.bids_by_owner.insert(&buyer_id, &bids_by_owner);

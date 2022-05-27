@@ -47,6 +47,7 @@ enum StorageKey {
     TokensBySeriesInner { token_series: String },
     TokensPerOwner { account_hash: Vec<u8> },
     Minters,
+    TokenSeries,
 }
 
 #[near_bindgen]
@@ -89,7 +90,7 @@ impl Nft {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
-            token_series_by_id: UnorderedMap::new(b"s"),
+            token_series_by_id: UnorderedMap::new(StorageKey::TokenSeries),
             private_mint: PrivateMint::new(private_minting_enabled, minters),
         }
     }
