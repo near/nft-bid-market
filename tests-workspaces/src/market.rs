@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 use near_units::parse_near;
+use serde_json::json;
 
 use crate::utils::{
     check_outcome_fail, check_outcome_success, create_series_raw, init_market, init_nft,
@@ -29,6 +30,8 @@ async fn storage_deposit() -> Result<()> {
     let outcome = user
         .call(&worker, &market.id(), "storage_deposit")
         .deposit(20)
+        .args_json(json!({}))
+        .unwrap()
         .transact()
         .await;
     outcome.assert_err("Requires minimum deposit of").unwrap();
@@ -37,6 +40,8 @@ async fn storage_deposit() -> Result<()> {
     let outcome = user
         .call(&worker, &market.id(), "storage_deposit")
         .deposit(parse_near!("0.01 N"))
+        .args_json(json!({}))
+        .unwrap()
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;
@@ -64,6 +69,8 @@ async fn storage_withdraw() -> Result<()> {
     let outcome = user
         .call(&worker, &market.id(), "storage_deposit")
         .deposit(parse_near!("5 N"))
+        .args_json(json!({}))
+        .unwrap()
         .transact()
         .await;
     //check_outcome_success(outcome.status).await;

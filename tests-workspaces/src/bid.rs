@@ -152,7 +152,7 @@ async fn remove_bid_negative() -> Result<()> {
             "token_id": &token1,
             "ft_token_id": "near",
             "price": price,
-            "bid_id": "0",
+            "bid_id": 0,
         }))?
         .deposit(2)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -279,7 +279,7 @@ async fn cancel_bid_positive() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "0",
+            "bid_id": 0,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -362,7 +362,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "0",
+            "bid_id": 0,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -389,7 +389,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "1",
+            "bid_id": 1,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -417,7 +417,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "2",
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -445,7 +445,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "2",
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -460,7 +460,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "2",
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -476,7 +476,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "not_near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": "2",
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
@@ -492,7 +492,7 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user1.id(),
             "price": price,
-            "bid_id": "2",
+            "bid_id": 2,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
