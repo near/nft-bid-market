@@ -288,7 +288,6 @@ impl Market {
         origins: Option<Origins>,
     ) -> Option<U128> {
         assert_one_yocto();
-        let offered_price = offered_price.0;
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let sale = self
