@@ -12,6 +12,7 @@ mod token;
 mod hack; // TODO: remove
 
 use common::*;
+pub use near_contract_standards::non_fungible_token::hash_account_id;
 
 use crate::auction::Auction;
 pub use crate::auction::{AuctionJson, EXTENSION_DURATION};
@@ -56,10 +57,12 @@ pub enum StorageKey {
         account_id_hash: CryptoHash,
     },
     BidAccounts,
+    BidAccountsInner {
+        account_id_hash: CryptoHash,
+    },
     Auctions,
     NFTTokenContracts,
 }
-// LookupMap<ContractAndTokenId, HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidId>>>;
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct MarketSales {
@@ -194,26 +197,25 @@ impl Market {
             None => {
                 let bid_ft = AccountId::new_unchecked("near".to_string());
                 let added_amount = env::attached_deposit();
-                let mut initial_map = LookupMap::new(b"b");
-                initial_map.insert(&bid_ft, &0).unwrap();
-                let initial_acc = BidAccount {
-                    total_balance: initial_map,
-                };
-                let mut bid_account = self
-                    .market
-                    .bid_accounts
-                    .get(&owner_id)
-                    .unwrap_or(initial_acc);
-                let previous_balance = bid_account
-                    .total_balance
-                    .get(&bid_ft)
-                    .unwrap_or_default();
+                // let mut initial_map = LookupMap::new(b"b");
+                // initial_map.insert(&bid_ft, &0).unwrap();
+                // let initial_acc = BidAccount {
+                //     total_balance: initial_map,
+                // };
+                let mut bid_account =
+                    self.market
+                        .bid_accounts
+                        .get(&owner_id)
+                        .unwrap_or_else(|| BidAccount {
+                            total_balance: LookupMap::new(StorageKey::BidAccountsInner {
+                                account_id_hash: hash_account_id(&owner_id),
+                            }),
+                        });
+                let previous_balance = bid_account.total_balance.get(&bid_ft).unwrap_or_default();
                 bid_account
                     .total_balance
                     .insert(&bid_ft, &(previous_balance + added_amount));
-                self.market
-                    .bid_accounts
-                    .insert(&owner_id, &bid_account);
+                self.market.bid_accounts.insert(&owner_id, &bid_account);
             }
             Some(_ft) => (),
         };

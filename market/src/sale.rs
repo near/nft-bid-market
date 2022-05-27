@@ -9,7 +9,6 @@ use crate::fee::calculate_price_with_fees;
 use crate::market_core::SaleArgs;
 use crate::*;
 use common::*;
-use near_contract_standards::non_fungible_token::hash_account_id;
 
 use bid::Origins;
 pub type TokenSeriesId = String;

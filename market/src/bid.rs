@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use near_contract_standards::non_fungible_token::hash_account_id;
 use near_sdk::assert_one_yocto;
 
 use crate::fee::calculate_origins;
