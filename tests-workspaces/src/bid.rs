@@ -423,7 +423,7 @@ async fn cancel_bid_negative() -> Result<()> {
         .await;
     outcome.assert_err("The bid hasn't ended yet").unwrap();
 
-    // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+    // Should panic if there is no bid with the given `nft_contract_id` and `token_id`
     let price: U128 = 1000.into();
     offer_with_duration(
         &worker,
@@ -444,12 +444,12 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": 2,
+            "bid_id": 3,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No sale").unwrap();
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     let outcome = user3
         .call(&worker, market.id(), "cancel_bid")
@@ -459,12 +459,12 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": 2,
+            "bid_id": 3,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No sale").unwrap();
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
@@ -475,28 +475,14 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "not_near",
             "owner_id": user2.id(),
             "price": price,
-            "bid_id": 2,
+            "bid_id": 3,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
     outcome.assert_err("No token").unwrap();
 
-    // Should panic if there is no bid with given `owner_id` and `price`
-    let outcome = user3
-        .call(&worker, market.id(), "cancel_bid")
-        .args_json(json!({
-            "nft_contract_id": nft.id(),
-            "token_id": token1,
-            "ft_token_id": "near",
-            "owner_id": user1.id(),
-            "price": price,
-            "bid_id": 2,
-        }))?
-        .gas(parse_gas!("300 Tgas") as u64)
-        .transact()
-        .await;
-    outcome.assert_err("No such bid").unwrap();
+    // Should panic if there is no bid with given `owner_id`, `price` or `bid_id`
 
     let outcome = user3
         .call(&worker, market.id(), "cancel_bid")
@@ -506,11 +492,42 @@ async fn cancel_bid_negative() -> Result<()> {
             "ft_token_id": "near",
             "owner_id": user2.id(),
             "price": "1100",
+            "bid_id": 3,
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No such bid").unwrap();
+    outcome.assert_err("No bid with this balance").unwrap();
+
+    let outcome = user3
+        .call(&worker, market.id(), "cancel_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "owner_id": user2.id(),
+            "price": price,
+            "bid_id": 4,
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("No bid with this price and id").unwrap();
+
+    let outcome = user3
+        .call(&worker, market.id(), "cancel_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+            "owner_id": user1.id(),
+            "price": price,
+            "bid_id": 3,
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("No bids for the owner").unwrap();
 
     Ok(())
 }
@@ -684,7 +701,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
     )
     .await?;
 
-    // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
+    // Should panic if there is no bid with the given `nft_contract_id` and `token_id`
     let outcome = user3
         .call(&worker, market.id(), "cancel_expired_bids")
         .args_json(json!({
@@ -695,7 +712,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No sale").unwrap();
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     let outcome = user3
         .call(&worker, market.id(), "cancel_expired_bids")
@@ -707,7 +724,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No sale").unwrap();
+    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
