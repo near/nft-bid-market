@@ -341,14 +341,21 @@ impl Market {
             .get(&bid_id)
             .expect("No bid with this id");
         let owner_id = bid.owner_id;
-        let bid_balance = self
+
+        let bid_account = self
             .market
             .bid_accounts
-            .get(&owner_id)
-            .expect("No bid account")
-            .total_balance
-            .get(&ft)
-            .expect("No fungible token");
-        bid.price.0 <= bid_balance
+            .get(&owner_id);
+
+        if let Some(bid_account) = bid_account {
+            let bid_balance = bid_account.total_balance.get(&ft);
+            if let Some(bid_balance) = bid_balance {
+                bid.price.0 <= bid_balance
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     }
 }
