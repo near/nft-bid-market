@@ -589,7 +589,7 @@ async fn offer_positive() -> Result<()> {
             "nft_contract_id": nft.id(),
             "token_id": token2,
             "ft_token_id": "near",
-            "offered_price": initial_price,
+            "offered_price": initial_price.to_string(),
         }))?
         .deposit(initial_price)
         .gas(parse_gas!("300 Tgas") as u64)
