@@ -111,7 +111,7 @@ async fn nft_on_approve_negative() -> Result<()> {
     let outcome = user1
         .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
-            "token_id": token1,
+            "token_id": "wrong_token",
             "account_id": market.id(),
             "msg": msg.to_string()
         }))?
@@ -120,7 +120,7 @@ async fn nft_on_approve_negative() -> Result<()> {
         .transact()
         .await;
     outcome
-        .assert_err("Token ft.near not supported by this market")
+        .assert_err("Token not found")
         .unwrap();
 
     // bad message, sale/auction shouldn't be added
