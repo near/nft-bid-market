@@ -28,7 +28,7 @@ async fn storage_deposit() -> Result<()> {
 
     // Negative
     let outcome = user
-        .call(&worker, &market.id(), "storage_deposit")
+        .call(&worker, market.id(), "storage_deposit")
         .deposit(20)
         .args_json(json!({}))
         .unwrap()
@@ -38,7 +38,7 @@ async fn storage_deposit() -> Result<()> {
 
     // Positive
     let outcome = user
-        .call(&worker, &market.id(), "storage_deposit")
+        .call(&worker, market.id(), "storage_deposit")
         .deposit(parse_near!("0.01 N"))
         .args_json(json!({}))
         .unwrap()
@@ -67,7 +67,7 @@ async fn storage_withdraw() -> Result<()> {
         .await?
         .unwrap();
     let outcome = user
-        .call(&worker, &market.id(), "storage_deposit")
+        .call(&worker, market.id(), "storage_deposit")
         .deposit(parse_near!("5 N"))
         .args_json(json!({}))
         .unwrap()
@@ -103,7 +103,7 @@ async fn storage_withdraw() -> Result<()> {
     // Negative
     // - requires 1 yocto
     let outcome = user
-        .call(&worker, &market.id(), "storage_withdraw")
+        .call(&worker, market.id(), "storage_withdraw")
         .transact()
         .await;
     outcome
@@ -113,7 +113,7 @@ async fn storage_withdraw() -> Result<()> {
     // Positive
     // - deposit refunded
     let outcome = user
-        .call(&worker, &market.id(), "storage_withdraw")
+        .call(&worker, market.id(), "storage_withdraw")
         .deposit(1)
         .transact()
         .await;

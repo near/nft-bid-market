@@ -320,11 +320,11 @@ impl Market {
                 buyer_id,
                 origins.unwrap_or_default(),
             );
-            return None;
+            None
         } else {
             let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
-            return Some(
+            Some(
                 self.add_bid(
                     contract_id,
                     token_id,
@@ -336,7 +336,7 @@ impl Market {
                     origins,
                 )
                 .into(),
-            );
+            )
         }
     }
 
@@ -427,7 +427,7 @@ impl Market {
             ft_token_id,
             bid.price,
             bid.owner_id.clone(),
-            bid.origins.clone(),
+            bid.origins,
         );
     }
 

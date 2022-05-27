@@ -1,6 +1,5 @@
 use crate::utils::{create_series, create_subaccount, init_nft, mint_token};
 use nft_contract::common::U128;
-use workspaces::AccountId;
 use nft_contract::TokenSeriesJson;
 use anyhow::Result;
 use serde_json::json;

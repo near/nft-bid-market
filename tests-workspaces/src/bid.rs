@@ -12,7 +12,6 @@ use nft_contract::common::{U128, U64};
 
 use crate::transaction_status::StatusCheck;
 pub use workspaces::result::CallExecutionDetails;
-use workspaces::AccountId;
 /*
 - TODO: Refunds a bid, removes it from the list
 */
@@ -70,7 +69,7 @@ async fn remove_bid_positive() -> Result<()> {
     );
 
     let outcome = user2
-        .call(&worker, &market.id(), "remove_bid")
+        .call(&worker, market.id(), "remove_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,
@@ -146,7 +145,7 @@ async fn remove_bid_negative() -> Result<()> {
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user2
-        .call(&worker, &market.id(), "remove_bid")
+        .call(&worker, market.id(), "remove_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,
@@ -164,7 +163,7 @@ async fn remove_bid_negative() -> Result<()> {
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user2
-        .call(&worker, &market.id(), "remove_bid")
+        .call(&worker, market.id(), "remove_bid")
         .args_json(json!({
             "nft_contract_id": "some_other_nft_contract".to_string(),
             "token_id": &token1,
@@ -181,7 +180,7 @@ async fn remove_bid_negative() -> Result<()> {
         .unwrap();
 
     let outcome = user2
-        .call(&worker, &market.id(), "remove_bid")
+        .call(&worker, market.id(), "remove_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": "1:10",
@@ -199,7 +198,7 @@ async fn remove_bid_negative() -> Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user2
-        .call(&worker, &market.id(), "remove_bid")
+        .call(&worker, market.id(), "remove_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,
@@ -272,7 +271,7 @@ async fn cancel_bid_positive() -> Result<()> {
     assert!(bids_by_owner.len() == 1, "There should be exactly one bid");
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,
@@ -303,7 +302,7 @@ async fn cancel_bid_positive() -> Result<()> {
         )
         .await?
         .json()?;
-    assert!(bids_by_owner.len() == 0, "Bid was not removed");
+    assert!(bids_by_owner.is_empty(), "Bid was not removed");
 
     Ok(())
 }
@@ -355,7 +354,7 @@ async fn cancel_bid_negative() -> Result<()> {
     .await?;
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -382,7 +381,7 @@ async fn cancel_bid_negative() -> Result<()> {
     .await?;
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -410,7 +409,7 @@ async fn cancel_bid_negative() -> Result<()> {
     .await?;
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -438,7 +437,7 @@ async fn cancel_bid_negative() -> Result<()> {
     .await?;
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": "another_nft_contract_id".to_string(),
             "token_id": token1,
@@ -453,7 +452,7 @@ async fn cancel_bid_negative() -> Result<()> {
     outcome.assert_err("No sale").unwrap();
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": "another_token_id".to_string(),
@@ -469,7 +468,7 @@ async fn cancel_bid_negative() -> Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -485,7 +484,7 @@ async fn cancel_bid_negative() -> Result<()> {
 
     // Should panic if there is no bid with given `owner_id` and `price`
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -500,7 +499,7 @@ async fn cancel_bid_negative() -> Result<()> {
     outcome.assert_err("No such bid").unwrap();
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_bid")
+        .call(&worker, market.id(), "cancel_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -593,7 +592,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
     );
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_expired_bids")
+        .call(&worker, market.id(), "cancel_expired_bids")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,
@@ -687,7 +686,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_expired_bids")
+        .call(&worker, market.id(), "cancel_expired_bids")
         .args_json(json!({
             "nft_contract_id": "another_nft_contract".to_string(),
             "token_id": &token1,
@@ -699,7 +698,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
     outcome.assert_err("No sale").unwrap();
 
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_expired_bids")
+        .call(&worker, market.id(), "cancel_expired_bids")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": "another_token".to_string(),
@@ -712,7 +711,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
-        .call(&worker, &market.id(), "cancel_expired_bids")
+        .call(&worker, market.id(), "cancel_expired_bids")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": &token1,

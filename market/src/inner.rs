@@ -77,19 +77,19 @@ impl Market {
             .bids
             .get(&contract_and_token_id)
             .expect("No bid for this nft contract and ft token");
-        let bids_tree = bids_by_ft.get(ft_token_id).expect("No token").clone();
+        let bids_tree = bids_by_ft.get(ft_token_id).expect("No token");
         let mut equal_bids = bids_tree.get(&price.0).expect("No bid with this balance");
         assert!(equal_bids.remove(&bid_id), "No bid with this price and id");
 
         let mut bids_by_owner = self
             .market
             .bids_by_owner
-            .get(&owner_id)
+            .get(owner_id)
             .expect("No bids for the owner");
         bids_by_owner
             .remove(&contract_and_token_id)
             .expect("No bid for owner, nft contract and token");
-        self.market.bids_by_owner.insert(&owner_id, &bids_by_owner);
+        self.market.bids_by_owner.insert(owner_id, &bids_by_owner);
         /*for (index, bid_from_vec) in bid_vec.iter().enumerate() {
             if &(bid_from_vec.owner_id) == owner_id && bid_from_vec.price == price {
                 if bid_vec.len() == 1 {

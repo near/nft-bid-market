@@ -202,7 +202,7 @@ impl Market {
     }
 
     pub fn get_bids_id_by_account(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
-        let owner_id = owner_id.unwrap_or(env::predecessor_account_id());
+        let owner_id = owner_id.unwrap_or_else(env::predecessor_account_id);
         let mut vec = Vec::new();
         let lookup_map = &self.market.bids_by_owner;
         let unordered_map = lookup_map.get(&owner_id).expect("No bid for this owner");

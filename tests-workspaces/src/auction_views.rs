@@ -26,7 +26,7 @@ async fn view_auction_get_auction() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -115,7 +115,7 @@ async fn view_auction_get_auctions() -> Result<()> {
     deposit(&worker, market.id(), &user2).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -134,7 +134,7 @@ async fn view_auction_get_auctions() -> Result<()> {
         .transact()
         .await?;
     user2
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token2,
             "account_id": market.id(),
@@ -211,7 +211,7 @@ async fn view_auction_get_current_buyer() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -264,7 +264,7 @@ async fn view_auction_get_current_buyer() -> Result<()> {
     assert!(current_buyer.is_none(), "Should be None");
 
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -312,7 +312,7 @@ async fn view_auction_get_current_bid() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -367,7 +367,7 @@ async fn view_auction_get_current_bid() -> Result<()> {
     // add a bid with deposit 10300
     // 300 yocto is protocol see
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -411,7 +411,7 @@ async fn view_auction_get_minimal_next_bid() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -467,7 +467,7 @@ async fn view_auction_get_minimal_next_bid() -> Result<()> {
     // this bid without fees is equal to 100000
     // the next bid (without fees) is equal to 100100
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -511,7 +511,7 @@ async fn view_auction_check_auction_in_progress() -> Result<()> {
 
     // create an auction that starts now
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -570,7 +570,7 @@ async fn view_auction_check_auction_in_progress() -> Result<()> {
     let waiting_time = Duration::from_secs(60);
     let epoch_plus_waiting_time = (since_the_epoch + waiting_time).as_nanos();
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token2,
             "account_id": market.id(),

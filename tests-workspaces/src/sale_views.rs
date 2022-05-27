@@ -219,7 +219,7 @@ async fn sale_views() -> Result<()> {
         )
         .await?;
         user1
-            .call(&worker, &market.id(), "accept_bid")
+            .call(&worker, market.id(), "accept_bid")
             .args_json(json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series1[1],
@@ -245,7 +245,7 @@ async fn sale_views() -> Result<()> {
         assert!(sale_json.is_none());
         // case2: removed after sale removed
         user2
-            .call(&worker, &market.id(), "remove_sale")
+            .call(&worker, market.id(), "remove_sale")
             .args_json(json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series2[1]

@@ -31,7 +31,7 @@ async fn nft_on_approve_auction_positive() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -81,7 +81,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -102,7 +102,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     // Should panic if `ft_token_id` is not supported
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
             "token_type": "not_near".to_string(),
@@ -114,7 +114,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     // Panics if auction is not active
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "1".to_string(),
         }))?
@@ -125,7 +125,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     // Should panic if the owner tries to bid on his own auction
     let outcome = user1
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -138,7 +138,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -149,7 +149,7 @@ async fn auction_add_bid_negative() -> Result<()> {
 
     // Should panic if the bid is smaller than the previous one
     user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -157,7 +157,7 @@ async fn auction_add_bid_negative() -> Result<()> {
         .transact()
         .await?;
     let outcome = user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -190,7 +190,7 @@ async fn auction_add_bid_positive() -> Result<()> {
     deposit(&worker, market.id(), &user1).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -224,7 +224,7 @@ async fn auction_add_bid_positive() -> Result<()> {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -265,7 +265,7 @@ async fn auction_add_bid_positive() -> Result<()> {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -323,7 +323,7 @@ async fn cancel_auction_negative() -> Result<()> {
     deposit(&worker, market.id(), &user1).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -344,7 +344,7 @@ async fn cancel_auction_negative() -> Result<()> {
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user1
-        .call(&worker, &market.id(), "cancel_auction")
+        .call(&worker, market.id(), "cancel_auction")
         .args_json(json!({
             "auction_id": "0".to_string()
         }))?
@@ -358,7 +358,7 @@ async fn cancel_auction_negative() -> Result<()> {
 
     // Panics if auction is not active
     let outcome = user1
-        .call(&worker, &market.id(), "cancel_auction")
+        .call(&worker, market.id(), "cancel_auction")
         .args_json(json!({
             "auction_id": "1".to_string()
         }))?
@@ -370,7 +370,7 @@ async fn cancel_auction_negative() -> Result<()> {
 
     // Can only be called by the creator of the auction
     let outcome = user2
-        .call(&worker, &market.id(), "cancel_auction")
+        .call(&worker, market.id(), "cancel_auction")
         .args_json(json!({
             "auction_id": "0".to_string()
         }))?
@@ -384,7 +384,7 @@ async fn cancel_auction_negative() -> Result<()> {
 
     // Panics if the auction already has a bid
     user2
-        .call(&worker, &market.id(), "auction_add_bid")
+        .call(&worker, market.id(), "auction_add_bid")
         .args_json(json!({
             "auction_id": "0".to_string(),
         }))?
@@ -392,7 +392,7 @@ async fn cancel_auction_negative() -> Result<()> {
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, &market.id(), "cancel_auction")
+        .call(&worker, market.id(), "cancel_auction")
         .args_json(json!({
             "auction_id": "0".to_string()
         }))?
@@ -436,7 +436,7 @@ async fn cancel_auction_positive() -> Result<()> {
     deposit(&worker, market.id(), &user1).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -456,7 +456,7 @@ async fn cancel_auction_positive() -> Result<()> {
         .await?;
 
     let outcome = user1
-        .call(&worker, &market.id(), "cancel_auction")
+        .call(&worker, market.id(), "cancel_auction")
         .args_json(json!({
             "auction_id": "0".to_string()
         }))?
@@ -504,7 +504,7 @@ async fn finish_auction_positive() -> Result<()> {
     deposit(&worker, market.id(), &user1).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -524,7 +524,7 @@ async fn finish_auction_positive() -> Result<()> {
         .await?;
 
     /*let outcome = user1
-        .call(&worker, &market.id(), "finish_auction")
+        .call(&worker, market.id(), "finish_auction")
         .args_json(json!({
             "auction_id": "1".to_string()
         }))?
@@ -559,7 +559,7 @@ async fn finish_auction_negative() -> Result<()> {
     deposit(&worker, market.id(), &user1).await?;
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -580,7 +580,7 @@ async fn finish_auction_negative() -> Result<()> {
 
     // Panics if the auction is not active
     let outcome = user1
-        .call(&worker, &market.id(), "finish_auction")
+        .call(&worker, market.id(), "finish_auction")
         .args_json(json!({
             "auction_id": "1".to_string()
         }))?
@@ -591,7 +591,7 @@ async fn finish_auction_negative() -> Result<()> {
 
     // Should panic if called before the auction ends
     let outcome = user1
-        .call(&worker, &market.id(), "finish_auction")
+        .call(&worker, market.id(), "finish_auction")
         .args_json(json!({
             "auction_id": "0".to_string()
         }))?

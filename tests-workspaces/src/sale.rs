@@ -42,7 +42,7 @@ async fn nft_on_approve_negative() -> Result<()> {
         .unwrap();
 
     let series: String = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
         "token_metadata":
         {
@@ -67,12 +67,12 @@ async fn nft_on_approve_negative() -> Result<()> {
 
     // try to call nft_on_approve without cross contract call
     let outcome = user1
-        .call(&worker, &market.id(), "nft_on_approve")
+        .call(&worker, market.id(), "nft_on_approve")
         .args_json(json!({
             "token_id": token1,
             "owner_id": user1.id(),
             "approval_id": 1u64,
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .transact()
         .await;
@@ -89,11 +89,11 @@ async fn nft_on_approve_negative() -> Result<()> {
 
     // fail without storage deposit
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .deposit(parse_near!("1 N"))
         .gas(parse_gas!("200 Tgas") as u64)
@@ -109,11 +109,11 @@ async fn nft_on_approve_negative() -> Result<()> {
     // not supported ft
     deposit(&worker, market.id(), &user1).await.unwrap();
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .deposit(parse_near!("1 N"))
         .gas(parse_gas!("200 Tgas") as u64)
@@ -125,7 +125,7 @@ async fn nft_on_approve_negative() -> Result<()> {
 
     // bad message, sale/auction shouldn't be added
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
@@ -161,7 +161,7 @@ async fn nft_on_approve_positive() -> Result<()> {
         .unwrap();
 
     let series: String = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
         "token_metadata":
         {
@@ -187,11 +187,11 @@ async fn nft_on_approve_positive() -> Result<()> {
     }});
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .deposit(parse_near!("1 N"))
         .gas(parse_gas!("200 Tgas") as u64)
@@ -255,7 +255,7 @@ async fn offer_negative() -> Result<()> {
 
     // No sale with given `contract_and_token_id`
     // let outcome = user1
-    //     .call(&worker, &market.id(), "offer")
+    //     .call(&worker, market.id(), "offer")
     //     .args_json(json!({
     //         "nft_contract_id": nft.id(),
     //         "token_id": "1:1",
@@ -290,18 +290,18 @@ async fn offer_negative() -> Result<()> {
     }});
 
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .deposit(parse_near!("1 N"))
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -330,7 +330,7 @@ async fn offer_negative() -> Result<()> {
         .json()?;
     // NFT owner tries to make a bid on his own sale
     let outcome = user1
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -344,7 +344,7 @@ async fn offer_negative() -> Result<()> {
 
     // Deposit not equal to 1
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -360,7 +360,7 @@ async fn offer_negative() -> Result<()> {
 
     // Offered deposit not equal to 0
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -376,7 +376,7 @@ async fn offer_negative() -> Result<()> {
 
     // Not supported ft
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -390,7 +390,7 @@ async fn offer_negative() -> Result<()> {
 
     // the bid smaller or equal to the previous one (deprecated)
     // user2
-    //     .call(&worker, &market.id(), "offer")
+    //     .call(&worker, market.id(), "offer")
     //     .args_json(json!({
     //         "nft_contract_id": nft.id(),
     //         "token_id": token1,
@@ -402,7 +402,7 @@ async fn offer_negative() -> Result<()> {
     //     .transact()
     //     .await?;
     // let outcome = user2
-    //     .call(&worker, &market.id(), "offer")
+    //     .call(&worker, market.id(), "offer")
     //     .args_json(json!({
     //         "nft_contract_id": nft.id(),
     //         "token_id": token1,
@@ -419,7 +419,7 @@ async fn offer_negative() -> Result<()> {
     // )
     // .await;
     // let outcome = user2
-    //     .call(&worker, &market.id(), "offer")
+    //     .call(&worker, market.id(), "offer")
     //     .args_json(json!({
     //         "nft_contract_id": nft.id(),
     //         "token_id": token1,
@@ -438,7 +438,7 @@ async fn offer_negative() -> Result<()> {
 
     // Exceeding ORIGIN_FEE_MAX
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -483,7 +483,7 @@ async fn offer_negative() -> Result<()> {
         .await?
         .json()?;
     let outcome = user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -550,7 +550,7 @@ async fn offer_positive() -> Result<()> {
 
     deposit(&worker, market.id(), &user1).await?;
     user2
-        .call(&worker, &market.id(), "bid_deposit")
+        .call(&worker, market.id(), "bid_deposit")
         .args_json(json!({}))?
         .deposit(100_000_000)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -584,7 +584,7 @@ async fn offer_positive() -> Result<()> {
     .await?;
     let initial_price = 100;
     user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token2,
@@ -637,7 +637,7 @@ async fn offer_positive() -> Result<()> {
         .await?
         .json()?;
     user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -689,7 +689,7 @@ async fn offer_positive() -> Result<()> {
     // // Earliest bid should be removed
     // for i in 1..=BID_HISTORY_LENGTH_DEFAULT {
     //     user2
-    //         .call(&worker, &market.id(), "offer")
+    //         .call(&worker, market.id(), "offer")
     //         .args_json(json!({
     //             "nft_contract_id": nft.id(),
     //             "token_id": token2,
@@ -783,7 +783,7 @@ async fn accept_bid_negative() -> Result<()> {
 
     // No sale with the given `nft_contract_id` and `token_id`
     let outcome = user1
-        .call(&worker, &market.id(), "accept_bid")
+        .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -809,18 +809,18 @@ async fn accept_bid_negative() -> Result<()> {
     }});
     
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": market.id(),
-            "msg": msg
+            "msg": msg.to_string()
         }))?
         .deposit(parse_near!("1 N"))
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, &market.id(), "accept_bid")
+        .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -833,7 +833,7 @@ async fn accept_bid_negative() -> Result<()> {
 
     // last bid is out of time
     user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -847,7 +847,7 @@ async fn accept_bid_negative() -> Result<()> {
         .await?;
     tokio::time::sleep(Duration::from_nanos(1)).await;
     let outcome = user1
-        .call(&worker, &market.id(), "accept_bid")
+        .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -860,7 +860,7 @@ async fn accept_bid_negative() -> Result<()> {
     // Sale is not in progress
     tokio::time::sleep(waiting_time).await;
     let outcome = user1
-        .call(&worker, &market.id(), "accept_bid")
+        .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -907,7 +907,7 @@ async fn accept_bid_positive() -> Result<()> {
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id(), &user1).await?;
     user2
-        .call(&worker, &market.id(), "bid_deposit")
+        .call(&worker, market.id(), "bid_deposit")
         .args_json(json!({}))?
         .deposit(10000)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -925,7 +925,7 @@ async fn accept_bid_positive() -> Result<()> {
     )
     .await?;
     user2
-        .call(&worker, &market.id(), "offer")
+        .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -937,7 +937,7 @@ async fn accept_bid_positive() -> Result<()> {
         .transact()
         .await?;
     user1
-        .call(&worker, &market.id(), "accept_bid")
+        .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -1023,7 +1023,7 @@ async fn update_price_negative() -> Result<()> {
 
     // no sale with given nft_contract_id:token_id
     let outcome = user1
-        .call(&worker, &market.id(), "update_price")
+        .call(&worker, market.id(), "update_price")
         .args_json(json!({
             "nft_contract_id": market.id(),
             "token_id": token1,
@@ -1037,7 +1037,7 @@ async fn update_price_negative() -> Result<()> {
 
     // called not by the owner
     let outcome = user2
-        .call(&worker, &market.id(), "update_price")
+        .call(&worker, market.id(), "update_price")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -1051,7 +1051,7 @@ async fn update_price_negative() -> Result<()> {
 
     // ft must be supported
     let outcome = user1
-        .call(&worker, &market.id(), "update_price")
+        .call(&worker, market.id(), "update_price")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -1104,7 +1104,7 @@ async fn update_price_positive() -> Result<()> {
     )
     .await?;
     user1
-        .call(&worker, &market.id(), "update_price")
+        .call(&worker, market.id(), "update_price")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1,
@@ -1184,7 +1184,7 @@ async fn remove_sale_negative() -> Result<()> {
 
     // 1 yocto is needed
     let outcome = user1
-        .call(&worker, &market.id(), "remove_sale")
+        .call(&worker, market.id(), "remove_sale")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1
@@ -1197,7 +1197,7 @@ async fn remove_sale_negative() -> Result<()> {
 
     // Can be removed only by the owner of the sale, if not finished
     let outcome = user2
-        .call(&worker, &market.id(), "remove_sale")
+        .call(&worker, market.id(), "remove_sale")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1
@@ -1259,7 +1259,7 @@ async fn remove_sale_positive() -> Result<()> {
     .await?;
     offer(&worker, nft.id(), market.id(), &user2, &token1, 4000.into()).await?;
     user1
-        .call(&worker, &market.id(), "remove_sale")
+        .call(&worker, market.id(), "remove_sale")
         .args_json(json!({
             "nft_contract_id": nft.id(),
             "token_id": token1

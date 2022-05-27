@@ -38,7 +38,7 @@ async fn nft_create_series_negative() -> Result<()> {
 
     // Only authorized account can create series
     owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": true,
         }))?
@@ -59,7 +59,7 @@ async fn nft_create_series_negative() -> Result<()> {
         reference_hash: None,
     };
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": null
@@ -78,7 +78,7 @@ async fn nft_create_series_negative() -> Result<()> {
         .assert_err("Access to mint is denied for this contract")
         .unwrap();
     owner
-        .call(&worker, &nft.id(), "grant")
+        .call(&worker, nft.id(), "grant")
         .args_json(json!({
             "account_id": user1.id()
         }))?
@@ -87,7 +87,7 @@ async fn nft_create_series_negative() -> Result<()> {
 
     // Title of the series should be specified
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": TokenMetadata{
                 title: None,
@@ -111,7 +111,7 @@ async fn nft_create_series_negative() -> Result<()> {
     // Royalty can't exceed 50%
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 5000)]);
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -167,7 +167,7 @@ async fn nft_create_series_positive() -> Result<()> {
         reference_hash: None,
     };
     let series1: String = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -178,7 +178,7 @@ async fn nft_create_series_positive() -> Result<()> {
         .json()?;
 
     owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": true,
         }))?
@@ -186,14 +186,14 @@ async fn nft_create_series_positive() -> Result<()> {
         .await?;
 
     owner
-        .call(&worker, &nft.id(), "grant")
+        .call(&worker, nft.id(), "grant")
         .args_json(json!({
             "account_id": user2.id()
         }))?
         .transact()
         .await?;
     let series2: String = user2
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -275,7 +275,7 @@ async fn nft_mint_negative() -> Result<()> {
     };
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 2000)]);
     let series_id: String = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -287,14 +287,14 @@ async fn nft_mint_negative() -> Result<()> {
 
     // Only authorized account can mint
     owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": true,
         }))?
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -314,7 +314,7 @@ async fn nft_mint_negative() -> Result<()> {
         .unwrap();
 
     owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": false,
         }))?
@@ -323,7 +323,7 @@ async fn nft_mint_negative() -> Result<()> {
 
     // wrong series_id
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": "3",
             "receiver_id": user1.id()
@@ -342,7 +342,7 @@ async fn nft_mint_negative() -> Result<()> {
 
     // only owner can mint
     let outcome = user3
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -361,7 +361,7 @@ async fn nft_mint_negative() -> Result<()> {
 
     // Exceed max tokens
     user1
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -370,7 +370,7 @@ async fn nft_mint_negative() -> Result<()> {
         .transact()
         .await?;
     let outcome = user1
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": series_id,
             "receiver_id": user1.id()
@@ -426,7 +426,7 @@ async fn nft_mint_positive() -> Result<()> {
     };
     let royalty = HashMap::from([(user1.id(), 500), (user2.id(), 2000)]);
     let series_id: String = user1
-        .call(&worker, &nft.id(), "nft_create_series")
+        .call(&worker, nft.id(), "nft_create_series")
         .args_json(json!({
             "token_metadata": token_metadata,
             "royalty": royalty,
@@ -437,7 +437,7 @@ async fn nft_mint_positive() -> Result<()> {
         .json()?;
 
     let token_id: String = user1
-        .call(&worker, &nft.id(), "nft_mint")
+        .call(&worker, nft.id(), "nft_mint")
         .args_json(json!({
             "token_series_id": series_id,
             "receiver_id": user2.id()
@@ -521,7 +521,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
     user1
-        .call(&worker, &nft.id(), "nft_approve")
+        .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token1,
             "account_id": user2.id(),
@@ -549,7 +549,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
     };
     // 1 yoctoNEAR not attached
     let outcome = user2
-        .call(&worker, &nft.id(), "nft_transfer_payout")
+        .call(&worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -565,7 +565,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
 
     // `token_id` contains `token_series_id`, which doesn't exist
     let outcome = user2
-        .call(&worker, &nft.id(), "nft_transfer_payout")
+        .call(&worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": "2:1",
@@ -580,7 +580,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
 
     // number of royalties exceeds `max_len_payout`
     let outcome = user2
-        .call(&worker, &nft.id(), "nft_transfer_payout")
+        .call(&worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -595,7 +595,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
 
     // invalid `memo` is provided
     let outcome = user2
-        .call(&worker, &nft.id(), "nft_transfer_payout")
+        .call(&worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": token1,
@@ -629,7 +629,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
         ]),
     };
     let outcome = user2
-        .call(&worker, &nft.id(), "nft_transfer_payout")
+        .call(&worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": token1,

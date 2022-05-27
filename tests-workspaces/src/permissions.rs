@@ -14,7 +14,7 @@ pub async fn set_private_minting(
     user: &Account,
     enabled: bool,
 ) {
-    user.call(worker, &nft, "set_private_minting")
+    user.call(worker, nft, "set_private_minting")
         .args_json(json!({
             "enabled": enabled,
         }))
@@ -31,7 +31,7 @@ pub async fn grant(
     account_id: &str,
 ) -> Result<bool> {
     let result = user
-        .call(worker, &nft, "grant")
+        .call(worker, nft, "grant")
         .args_json(json!({
             "account_id": account_id,
         }))?
@@ -78,7 +78,7 @@ async fn permissions_grant() -> Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, &nft.id(), "grant")
+        .call(&worker, nft.id(), "grant")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -88,7 +88,7 @@ async fn permissions_grant() -> Result<()> {
 
     // Adds a given account to the list of the authorized accounts
     let outcome = owner
-        .call(&worker, &nft.id(), "grant")
+        .call(&worker, nft.id(), "grant")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -110,7 +110,7 @@ async fn permissions_grant() -> Result<()> {
 
     // `user1` is already in the list, thus `false` is returned
     let outcome = owner
-        .call(&worker, &nft.id(), "grant")
+        .call(&worker, nft.id(), "grant")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -151,7 +151,7 @@ async fn permissions_deny() -> Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, &nft.id(), "deny")
+        .call(&worker, nft.id(), "deny")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -161,7 +161,7 @@ async fn permissions_deny() -> Result<()> {
 
     // Called by the owner
     let outcome = owner
-        .call(&worker, &nft.id(), "deny")
+        .call(&worker, nft.id(), "deny")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -181,7 +181,7 @@ async fn permissions_deny() -> Result<()> {
 
     // `user1` is not in the list, thus `false` is returned
     let outcome = owner
-        .call(&worker, &nft.id(), "deny")
+        .call(&worker, nft.id(), "deny")
         .args_json(json!({
             "account_id": "user1",
         }))?
@@ -213,7 +213,7 @@ async fn permissions_set_private_minting() -> Result<()> {
 
     // Can only be called by the owner
     let outcome = user1
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": true,
         }))?
@@ -229,7 +229,7 @@ async fn permissions_set_private_minting() -> Result<()> {
 
     // If `enabled` is true, turns on private minting
     let outcome = owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": true,
         }))?
@@ -248,7 +248,7 @@ async fn permissions_set_private_minting() -> Result<()> {
 
     // If `enabled` is false, turns off private minting
     let outcome = owner
-        .call(&worker, &nft.id(), "set_private_minting")
+        .call(&worker, nft.id(), "set_private_minting")
         .args_json(json!({
             "enabled": false,
         }))?

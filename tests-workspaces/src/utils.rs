@@ -184,7 +184,7 @@ pub async fn nft_approve(
         .args_json(json!({
             "token_id": token,
             "account_id": market,
-            "msg": msg
+            "msg": msg.to_string()
         }))
         .unwrap()
         .deposit(parse_near!("1 N"))
@@ -310,7 +310,7 @@ pub async fn nft_transfer_payout_helper(
         .await
         .unwrap();
     user1
-        .call(worker, &nft.id(), "nft_approve")
+        .call(worker, nft.id(), "nft_approve")
         .args_json(json!({
             "token_id": token_id,
             "account_id": user2.id(),
@@ -340,7 +340,7 @@ pub async fn nft_transfer_payout_helper(
             .unwrap()
     };
     user2
-        .call(worker, &nft.id(), "nft_transfer_payout")
+        .call(worker, nft.id(), "nft_transfer_payout")
         .args_json(json!({
             "receiver_id": user3.id(),
             "token_id": token_id,

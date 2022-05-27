@@ -222,7 +222,7 @@ mod tests {
                 &alice(),
                 vec!["2", "3"],
                 Some(&bob()),
-                Some(&"has memo".to_string()),
+                Some("has memo"),
             ),
             NftBurnData::new(owner_id, token_ids, None, None),
         ])
