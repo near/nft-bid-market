@@ -122,7 +122,6 @@ async fn sale_views() -> Result<()> {
     assert_eq!(sales_user2.len(), tokens_series2.len());
     assert!(tokens_series2.contains(&sales_user2[1].token_id));
 
-    println!("gothere1");
     let supply_by_nft_contract: U64 = market
         .view(
             &worker,
@@ -140,8 +139,6 @@ async fn sale_views() -> Result<()> {
         tokens_series1.len() + tokens_series2.len()
     );
 
-
-    println!("gothere2");
     let sales_nft_contract_id: Vec<SaleJson> = market
         .view(
             &worker,
@@ -165,8 +162,6 @@ async fn sale_views() -> Result<()> {
             || tokens_series2.contains(&sales_nft_contract_id[1].token_id)
     );
 
-
-    println!("gothere3");
     let supply_by_nft_token_type: U64 = market
         .view(
             &worker,
@@ -196,8 +191,6 @@ async fn sale_views() -> Result<()> {
     assert_eq!(sales_nft_token_type.len(), tokens_series2.len());
     assert!(tokens_series2.contains(&sales_nft_token_type[1].token_id));
 
-
-    println!("gothere4");
     // check if removing also works correct
     {
         // case1: removed after sale
