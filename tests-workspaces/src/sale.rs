@@ -488,7 +488,7 @@ async fn offer_negative() -> Result<()> {
             "nft_contract_id": nft.id(),
             "token_id": token1,
             "ft_token_id": "near",
-            "offered_price": price.0,
+            "offered_price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -642,7 +642,7 @@ async fn offer_positive() -> Result<()> {
             "nft_contract_id": nft.id(),
             "token_id": token1,
             "ft_token_id": "near",
-            "offered_price": price.0,
+            "offered_price": price,
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -930,7 +930,7 @@ async fn accept_bid_positive() -> Result<()> {
             "nft_contract_id": nft.id(),
             "token_id": token1,
             "ft_token_id": "near",
-            "offered_price": 200,
+            "offered_price": "200",
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
