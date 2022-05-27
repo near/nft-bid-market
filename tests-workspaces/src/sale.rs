@@ -179,7 +179,7 @@ async fn nft_on_approve_positive() -> Result<()> {
         .json()?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     let msg = json!({"Sale": {
         "sale_conditions": { "near": "10000" },
@@ -275,7 +275,7 @@ async fn offer_negative() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let since_the_epoch = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
@@ -548,7 +548,7 @@ async fn offer_positive() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user2
         .call(&worker, &market.id(), "bid_deposit")
         .args_json(json!({}))?
@@ -567,7 +567,7 @@ async fn offer_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
 
     // Check if bids can be added
     let token2 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
@@ -581,7 +581,7 @@ async fn offer_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     let initial_price = 100;
     user2
         .call(&worker, &market.id(), "offer")
@@ -779,7 +779,7 @@ async fn accept_bid_negative() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     // No sale with the given `nft_contract_id` and `token_id`
     let outcome = user1
@@ -905,7 +905,7 @@ async fn accept_bid_positive() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user2
         .call(&worker, &market.id(), "bid_deposit")
         .args_json(json!({}))?
@@ -923,7 +923,7 @@ async fn accept_bid_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     user2
         .call(&worker, &market.id(), "offer")
         .args_json(json!({
@@ -993,7 +993,7 @@ async fn update_price_negative() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
     nft_approve(
         &worker,
@@ -1004,7 +1004,7 @@ async fn update_price_negative() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
 
     // not attaching 1 yocto
     let outcome = user1
@@ -1091,7 +1091,7 @@ async fn update_price_positive() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
     nft_approve(
         &worker,
@@ -1102,7 +1102,7 @@ async fn update_price_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     user1
         .call(&worker, &market.id(), "update_price")
         .args_json(json!({
@@ -1169,7 +1169,7 @@ async fn remove_sale_negative() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
     nft_approve(
         &worker,
@@ -1180,7 +1180,7 @@ async fn remove_sale_negative() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
 
     // 1 yocto is needed
     let outcome = user1
@@ -1245,7 +1245,7 @@ async fn remove_sale_positive() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
     nft_approve(
         &worker,
@@ -1256,8 +1256,8 @@ async fn remove_sale_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
-    offer(&worker, nft.id(), market.id(), &user2, &token1, 4000.into()).await;
+    .await?;
+    offer(&worker, nft.id(), market.id(), &user2, &token1, 4000.into()).await?;
     user1
         .call(&worker, &market.id(), "remove_sale")
         .args_json(json!({

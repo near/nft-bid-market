@@ -234,7 +234,12 @@ async fn permissions_set_private_minting() -> Result<()> {
             "enabled": true,
         }))?
         .transact()
-        .await?;
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     //check_outcome_success(outcome.status).await;
     assert!(
         !is_allowed(&worker, &nft, "user1").await?,

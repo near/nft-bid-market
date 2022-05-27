@@ -98,7 +98,7 @@ async fn storage_withdraw() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
 
     // Negative
     // - requires 1 yocto

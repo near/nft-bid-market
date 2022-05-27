@@ -24,7 +24,7 @@ async fn view_auction_get_auction() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await.unwrap();
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await.unwrap();
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -111,8 +111,8 @@ async fn view_auction_get_auctions() -> Result<()> {
     let series2 = create_series(&worker, nft.id(), &user2, owner.id()).await?;
     let token2 = mint_token(&worker, nft.id(), &user2, user2.id(), &series2).await?;
 
-    deposit(&worker, market.id(), &user1).await;
-    deposit(&worker, market.id(), &user2).await;
+    deposit(&worker, market.id(), &user1).await?;
+    deposit(&worker, market.id(), &user2).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
@@ -209,7 +209,7 @@ async fn view_auction_get_current_buyer() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -310,7 +310,7 @@ async fn view_auction_get_current_bid() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -409,7 +409,7 @@ async fn view_auction_get_minimal_next_bid() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -507,7 +507,7 @@ async fn view_auction_check_auction_in_progress() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
     let token2 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     // create an auction that starts now
     user1

@@ -41,8 +41,8 @@ async fn sale_views() -> Result<()> {
         tokens_series2
             .push(mint_token(&worker, nft.id(), &user2, user2.id(), &series2).await?);
     }
-    deposit(&worker, market.id(), &user1).await;
-    deposit(&worker, market.id(), &user2).await;
+    deposit(&worker, market.id(), &user1).await?;
+    deposit(&worker, market.id(), &user2).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     for token1 in tokens_series1.iter() {
         nft_approve(
@@ -54,7 +54,7 @@ async fn sale_views() -> Result<()> {
             &sale_conditions,
             &series1,
         )
-        .await;
+        .await?;
     }
     for token2 in tokens_series2.iter() {
         nft_approve(
@@ -66,7 +66,7 @@ async fn sale_views() -> Result<()> {
             &sale_conditions,
             &series2,
         )
-        .await;
+        .await?;
     }
 
     let supply_sales: U64 = market
@@ -217,7 +217,7 @@ async fn sale_views() -> Result<()> {
             &tokens_series1[1],
             500.into(),
         )
-        .await;
+        .await?;
         user1
             .call(&worker, &market.id(), "accept_bid")
             .args_json(json!({

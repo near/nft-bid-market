@@ -66,7 +66,7 @@ async fn nft_create_series_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("0.005 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err
     //         .to_string()
@@ -74,6 +74,9 @@ async fn nft_create_series_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("Access to mint is denied for this contract")
+        .unwrap();
     owner
         .call(&worker, &nft.id(), "grant")
         .args_json(json!({
@@ -93,7 +96,10 @@ async fn nft_create_series_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("0.005 N"))
         .transact()
-        .await?;
+        .await;
+    outcome
+        .assert_err("title is missing from token metadata")
+        .unwrap();
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err
     //         .to_string()
@@ -112,12 +118,15 @@ async fn nft_create_series_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("0.005 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err.to_string().contains("maximum royalty cap exceeded"))
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("maximum royalty cap exceeded")
+        .unwrap();
     Ok(())
 }
 
@@ -292,7 +301,7 @@ async fn nft_mint_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("1 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err
     //         .to_string()
@@ -300,6 +309,9 @@ async fn nft_mint_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("Access to mint is denied for this contract")
+        .unwrap();
 
     owner
         .call(&worker, &nft.id(), "set_private_minting")
@@ -318,12 +330,15 @@ async fn nft_mint_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("1 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err.to_string().contains("Token series does not exist"))
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("Token series does not exist")
+        .unwrap();
 
     // only owner can mint
     let outcome = user3
@@ -334,12 +349,15 @@ async fn nft_mint_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("1 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err.to_string().contains("permission denied"))
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("permission denied")
+        .unwrap();
 
     // Exceed max tokens
     user1
@@ -359,12 +377,15 @@ async fn nft_mint_negative() -> Result<()> {
         }))?
         .deposit(parse_near!("1 N"))
         .transact()
-        .await?;
+        .await;
     // if let near_primitives::views::FinalExecutionStatus::Failure(err) = outcome.status {
     //     assert!(err.to_string().contains("Max token minted"))
     // } else {
     //     panic!("Expected failure")
     // };
+    outcome
+        .assert_err("Max token minted")
+        .unwrap();
     Ok(())
 }
 

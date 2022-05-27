@@ -28,7 +28,7 @@ async fn remove_bid_positive() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -39,7 +39,7 @@ async fn remove_bid_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     let price: U128 = 900.into();
     offer(
         &worker,
@@ -49,7 +49,7 @@ async fn remove_bid_positive() -> Result<()> {
         &token1,
         price,
     )
-    .await;
+    .await?;
 
     // Check that one bid is removed after `remove_bid`
     let bids_by_owner: Vec<BidId> = market
@@ -121,7 +121,7 @@ async fn remove_bid_negative() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -132,7 +132,7 @@ async fn remove_bid_negative() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     let price: U128 = 900.into();
     offer(
         &worker,
@@ -142,7 +142,7 @@ async fn remove_bid_negative() -> Result<()> {
         &token1,
         price,
     )
-    .await;
+    .await?;
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user2
@@ -232,7 +232,7 @@ async fn cancel_bid_positive() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -243,7 +243,7 @@ async fn cancel_bid_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     let price: U128 = 900.into();
     offer_with_duration(
         &worker,
@@ -254,7 +254,7 @@ async fn cancel_bid_positive() -> Result<()> {
         price,
         U64(100000000),
     )
-    .await;
+    .await?;
 
     // Check that one bid is removed after `cancel_bid`
     let bids_by_owner: Vec<BidId> = market
@@ -328,7 +328,7 @@ async fn cancel_bid_negative() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -339,7 +339,7 @@ async fn cancel_bid_negative() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
 
     // Should panic if the bid isn't finished yet
     let price: U128 = 900.into();
@@ -352,7 +352,7 @@ async fn cancel_bid_negative() -> Result<()> {
         price,
         U64(1000000000000),
     )
-    .await;
+    .await?;
 
     let outcome = user3
         .call(&worker, &market.id(), "cancel_bid")
@@ -379,7 +379,7 @@ async fn cancel_bid_negative() -> Result<()> {
         &token1,
         price,
     )
-    .await;
+    .await?;
 
     let outcome = user3
         .call(&worker, &market.id(), "cancel_bid")
@@ -407,7 +407,7 @@ async fn cancel_bid_negative() -> Result<()> {
         price,
         U64(1000000000000),
     )
-    .await;
+    .await?;
 
     let outcome = user3
         .call(&worker, &market.id(), "cancel_bid")
@@ -435,7 +435,7 @@ async fn cancel_bid_negative() -> Result<()> {
         price,
         U64(100000000),
     )
-    .await;
+    .await?;
 
     let outcome = user3
         .call(&worker, &market.id(), "cancel_bid")
@@ -532,7 +532,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -543,7 +543,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     offer_with_duration(
         &worker,
         nft.id(),
@@ -553,7 +553,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         U128(900),
         U64(100000000),
     )
-    .await;
+    .await?;
     offer(
         &worker,
         nft.id(),
@@ -562,7 +562,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         &token1,
         U128(950),
     )
-    .await;
+    .await?;
     offer_with_duration(
         &worker,
         nft.id(),
@@ -572,7 +572,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         U128(1000),
         U64(100000000),
     )
-    .await;
+    .await?;
 
     // check that two bids are removed after `cancel_expired_bids`
     let bids_by_owner: Vec<BidId> = market
@@ -643,7 +643,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     nft_approve(
         &worker,
@@ -654,7 +654,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         &sale_conditions,
         &series,
     )
-    .await;
+    .await?;
     offer_with_duration(
         &worker,
         nft.id(),
@@ -664,7 +664,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         U128(900),
         U64(100000000),
     )
-    .await;
+    .await?;
     offer(
         &worker,
         nft.id(),
@@ -673,7 +673,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         &token1,
         U128(950),
     )
-    .await;
+    .await?;
     offer_with_duration(
         &worker,
         nft.id(),
@@ -683,7 +683,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         U128(1000),
         U64(100000000),
     )
-    .await;
+    .await?;
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user3

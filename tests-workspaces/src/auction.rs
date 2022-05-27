@@ -29,7 +29,7 @@ async fn nft_on_approve_auction_positive() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     let outcome = user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -79,7 +79,7 @@ async fn auction_add_bid_negative() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
     user1
         .call(&worker, &nft.id(), "nft_approve")
         .args_json(json!({
@@ -187,7 +187,7 @@ async fn auction_add_bid_positive() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
@@ -320,7 +320,7 @@ async fn cancel_auction_negative() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
@@ -433,7 +433,7 @@ async fn cancel_auction_positive() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
@@ -501,7 +501,7 @@ async fn finish_auction_positive() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
@@ -556,7 +556,7 @@ async fn finish_auction_negative() -> Result<()> {
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
 
-    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user1).await?;
 
     user1
         .call(&worker, &nft.id(), "nft_approve")
