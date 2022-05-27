@@ -158,7 +158,9 @@ async fn remove_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // Should panic if there is no sale with the given `nft_contract_id` and `token_id`
     let outcome = user2
@@ -174,7 +176,9 @@ async fn remove_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
+    outcome
+        .assert_err("No bid for this nft contract and ft token")
+        .unwrap();
 
     let outcome = user2
         .call(&worker, &market.id(), "remove_bid")
@@ -189,7 +193,9 @@ async fn remove_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
+    outcome
+        .assert_err("No bid for this nft contract and ft token")
+        .unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user2

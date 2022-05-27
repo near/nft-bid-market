@@ -286,7 +286,7 @@ impl Market {
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
-    ) -> Option<u128> {
+    ) -> Option<U128> {
         assert_one_yocto();
         let offered_price = offered_price.0;
         let contract_id: AccountId = nft_contract_id;
@@ -310,14 +310,14 @@ impl Market {
             .unwrap_or_else(|| env::panic_str("Not supported ft"));
 
         //let deposit = env::attached_deposit();
-        require!(offered_price > 0, "Offered price must be greater than 0");
+        require!(offered_price.0 > 0, "Offered price must be greater than 0");
 
-        if offered_price == calculate_price_with_fees(price, origins.as_ref()) {
+        if offered_price.0 == calculate_price_with_fees(price, origins.as_ref()) {
             self.process_purchase(
                 contract_id,
                 token_id,
                 ft_token_id,
-                U128(offered_price),
+                offered_price,
                 buyer_id,
                 origins.unwrap_or_default(),
             );
@@ -325,16 +325,19 @@ impl Market {
         } else {
             let start = start.unwrap_or(env::block_timestamp().into());
             let end = duration.map(|d| U64(d.0 + start.0));
-            return Some(self.add_bid(
-                contract_id,
-                token_id,
-                offered_price,
-                ft_token_id,
-                buyer_id,
-                start,
-                end,
-                origins,
-            ));
+            return Some(
+                self.add_bid(
+                    contract_id,
+                    token_id,
+                    offered_price.0,
+                    ft_token_id,
+                    buyer_id,
+                    start,
+                    end,
+                    origins,
+                )
+                .into(),
+            );
         }
     }
 

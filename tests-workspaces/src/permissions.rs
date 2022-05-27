@@ -219,7 +219,9 @@ async fn permissions_set_private_minting() -> Result<()> {
         }))?
         .transact()
         .await;
-    outcome.assert_err("only owner can enable/disable private minting").unwrap();
+    outcome
+        .assert_err("only owner can enable/disable private minting")
+        .unwrap();
     assert!(
         is_allowed(&worker, &nft, "user1").await?,
         "The authorization is turned on"

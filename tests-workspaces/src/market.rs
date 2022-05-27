@@ -99,7 +99,9 @@ async fn storage_withdraw() -> Result<()> {
         .call(&worker, &market.id(), "storage_withdraw")
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // Positive
     // - deposit refunded

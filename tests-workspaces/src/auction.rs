@@ -132,7 +132,9 @@ async fn auction_add_bid_negative() -> Result<()> {
         .deposit(10300)
         .transact()
         .await;
-    outcome.assert_err("Cannot bid on your own auction").unwrap();
+    outcome
+        .assert_err("Cannot bid on your own auction")
+        .unwrap();
 
     // Should panic if the bid is smaller than the minimal deposit
     let outcome = user2
@@ -350,7 +352,9 @@ async fn cancel_auction_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
 
     // Panics if auction is not active
     let outcome = user1
@@ -374,7 +378,9 @@ async fn cancel_auction_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Only the auction owner can cancel the auction").unwrap();
+    outcome
+        .assert_err("Only the auction owner can cancel the auction")
+        .unwrap();
 
     // Panics if the auction already has a bid
     user2
@@ -394,7 +400,9 @@ async fn cancel_auction_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Can't cancel the auction after the first bid is made").unwrap();
+    outcome
+        .assert_err("Can't cancel the auction after the first bid is made")
+        .unwrap();
 
     let vector_auctions: Vec<AuctionJson> = market
         .view(
@@ -590,7 +598,9 @@ async fn finish_auction_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Auction can be finalized only after the end time").unwrap();
+    outcome
+        .assert_err("Auction can be finalized only after the end time")
+        .unwrap();
 
     // Panics if there is no bid
 
