@@ -132,7 +132,7 @@ impl NonFungibleTokenApprovalReceiver for Market {
             STORAGE_PER_SALE
         );
 
-        for (ft_token_id, _price) in token_series.sale_conditions.clone() {
+        for (ft_token_id, _price) in token_series.&sale_conditions {
             if !self.market.ft_token_ids.contains(&ft_token_id) {
                 env::panic_str(&format!(
                     "Token {} not supported by this market",

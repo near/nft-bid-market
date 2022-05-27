@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use anyhow::Result;
+use serde_json::json;
 
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::SaleJson;
@@ -7,7 +9,7 @@ use nft_contract::common::U64;
 use crate::utils::{create_series, deposit, init_market, init_nft, mint_token, nft_approve, offer};
 
 #[tokio::test]
-async fn sale_views() -> anyhow::Result<()> {
+async fn sale_views() -> Result<()> {
     let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
@@ -27,42 +29,42 @@ async fn sale_views() -> anyhow::Result<()> {
         .await?
         .unwrap();
 
-    let series1 = create_series(&worker, nft.id().clone(), &user1, owner.id().clone()).await?;
+    let series1 = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let mut tokens_series1 = vec![];
     for _ in 0..3 {
         tokens_series1
-            .push(mint_token(&worker, nft.id().clone(), &user1, user1.id(), &series1).await?);
+            .push(mint_token(&worker, nft.id(), &user1, user1.id(), &series1).await?);
     }
-    let series2 = create_series(&worker, nft.id().clone(), &user2, owner.id().clone()).await?;
+    let series2 = create_series(&worker, nft.id(), &user2, owner.id()).await?;
     let mut tokens_series2 = vec![];
     for _ in 0..2 {
         tokens_series2
-            .push(mint_token(&worker, nft.id().clone(), &user2, user2.id(), &series2).await?);
+            .push(mint_token(&worker, nft.id(), &user2, user2.id(), &series2).await?);
     }
-    deposit(&worker, market.id().clone(), &user1).await;
-    deposit(&worker, market.id().clone(), &user2).await;
+    deposit(&worker, market.id(), &user1).await;
+    deposit(&worker, market.id(), &user2).await;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
     for token1 in tokens_series1.iter() {
         nft_approve(
             &worker,
-            nft.id().clone(),
-            market.id().clone(),
+            nft.id(),
+            market.id(),
             &user1,
-            token1.clone(),
-            sale_conditions.clone(),
-            series1.clone(),
+            &token1,
+            &sale_conditions,
+            &series1,
         )
         .await;
     }
     for token2 in tokens_series2.iter() {
         nft_approve(
             &worker,
-            nft.id().clone(),
-            market.id().clone(),
+            nft.id(),
+            market.id(),
             &user2,
-            token2.clone(),
-            sale_conditions.clone(),
-            series2.clone(),
+            &token2,
+            &sale_conditions,
+            &series2,
         )
         .await;
     }
@@ -80,7 +82,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales",
-            serde_json::json!({}).to_string().into_bytes(),
+            json!({}).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -93,7 +95,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_owner_id",
-            serde_json::json!({
+            json!({
                 "account_id": user1.id()
             })
             .to_string()
@@ -107,7 +109,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_owner_id",
-            serde_json::json!({
+            json!({
                 "account_id": user2.id(),
                 "from_index": "0",
                 "limit": 10,
@@ -124,7 +126,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_contract_id",
-            serde_json::json!({
+            json!({
                 "nft_contract_id": nft.id()
             })
             .to_string()
@@ -141,7 +143,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_nft_contract_id",
-            serde_json::json!({
+            json!({
                 "nft_contract_id": nft.id(),
                 "from_index": "0",
                 "limit": 10,
@@ -164,7 +166,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_token_type",
-            serde_json::json!({ "token_type": series1 })
+            json!({ "token_type": series1 })
                 .to_string()
                 .into_bytes(),
         )
@@ -176,7 +178,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_nft_token_type",
-            serde_json::json!({
+            json!({
                 "token_type": series2,
                 "from_index": "0",
                 "limit": 10,
@@ -197,7 +199,7 @@ async fn sale_views() -> anyhow::Result<()> {
             .view(
                 &worker,
                 "get_sale",
-                serde_json::json!({
+                json!({
                    "nft_contract_id": nft.id(),
                    "token_id": removed_token
                 })
@@ -209,16 +211,16 @@ async fn sale_views() -> anyhow::Result<()> {
         assert!(sale_json.is_some());
         offer(
             &worker,
-            nft.id().clone(),
-            market.id().clone(),
+            nft.id(),
+            market.id(),
             &user2,
-            tokens_series1[1].clone(),
+            &tokens_series1[1],
             500.into(),
         )
         .await;
         user1
-            .call(&worker, &market.id().clone(), "accept_bid")
-            .args_json(serde_json::json!({
+            .call(&worker, &market.id(), "accept_bid")
+            .args_json(json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series1[1],
                 "ft_token_id": "near",
@@ -231,7 +233,7 @@ async fn sale_views() -> anyhow::Result<()> {
             .view(
                 &worker,
                 "get_sale",
-                serde_json::json!({
+                json!({
                    "nft_contract_id": nft.id(),
                    "token_id": removed_token
                 })
@@ -243,8 +245,8 @@ async fn sale_views() -> anyhow::Result<()> {
         assert!(sale_json.is_none());
         // case2: removed after sale removed
         user2
-            .call(&worker, &market.id().clone(), "remove_sale")
-            .args_json(serde_json::json!({
+            .call(&worker, &market.id(), "remove_sale")
+            .args_json(json!({
                 "nft_contract_id": nft.id(),
                 "token_id": tokens_series2[1]
             }))?
@@ -268,7 +270,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales",
-            serde_json::json!({}).to_string().into_bytes(),
+            json!({}).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -281,7 +283,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_owner_id",
-            serde_json::json!({
+            json!({
                 "account_id": user1.id()
             })
             .to_string()
@@ -295,7 +297,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_owner_id",
-            serde_json::json!({
+            json!({
                 "account_id": user2.id(),
                 "from_index": "0",
                 "limit": 10,
@@ -312,7 +314,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_contract_id",
-            serde_json::json!({
+            json!({
                 "nft_contract_id": nft.id()
             })
             .to_string()
@@ -329,7 +331,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_nft_contract_id",
-            serde_json::json!({
+            json!({
                 "nft_contract_id": nft.id(),
                 "from_index": "0",
                 "limit": 10,
@@ -352,7 +354,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_token_type",
-            serde_json::json!({ "token_type": series1 })
+            json!({ "token_type": series1 })
                 .to_string()
                 .into_bytes(),
         )
@@ -364,7 +366,7 @@ async fn sale_views() -> anyhow::Result<()> {
         .view(
             &worker,
             "get_sales_by_nft_token_type",
-            serde_json::json!({
+            json!({
                 "token_type": series2,
                 "from_index": "0",
                 "limit": 10,

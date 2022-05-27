@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use anyhow::Result;
 
 use near_units::parse_near;
 
@@ -11,7 +12,7 @@ use crate::transaction_status::StatusCheck;
 pub use workspaces::result::CallExecutionDetails;
 
 #[tokio::test]
-async fn storage_deposit() -> anyhow::Result<()> {
+async fn storage_deposit() -> Result<()> {
     let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
@@ -26,7 +27,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 
     // Negative
     let outcome = user
-        .call(&worker, &market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id(), "storage_deposit")
         .deposit(20)
         .transact()
         .await;
@@ -34,7 +35,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 
     // Positive
     let outcome = user
-        .call(&worker, &market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id(), "storage_deposit")
         .deposit(parse_near!("0.01 N"))
         .transact()
         .await;
@@ -48,7 +49,7 @@ async fn storage_deposit() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn storage_withdraw() -> anyhow::Result<()> {
+async fn storage_withdraw() -> Result<()> {
     let worker = workspaces::sandbox().await?;
     let owner = worker.root_account();
     let nft = init_nft(&worker, owner.id()).await?;
@@ -61,7 +62,7 @@ async fn storage_withdraw() -> anyhow::Result<()> {
         .await?
         .unwrap();
     let outcome = user
-        .call(&worker, &market.id().clone(), "storage_deposit")
+        .call(&worker, &market.id(), "storage_deposit")
         .deposit(parse_near!("5 N"))
         .transact()
         .await;
@@ -73,29 +74,29 @@ async fn storage_withdraw() -> anyhow::Result<()> {
     );
     let series = create_series_raw(
         &worker,
-        nft.id().clone(),
+        nft.id(),
         &user,
         Some(4),
         HashMap::from([(user.id(), 500)]),
     )
     .await?;
-    let token = mint_token(&worker, nft.id().clone(), &user, user.id(), &series).await?;
+    let token = mint_token(&worker, nft.id(), &user, user.id(), &series).await?;
     let sale_conditions = HashMap::from([("near".parse().unwrap(), 42000.into())]);
     nft_approve(
         &worker,
-        nft.id().clone(),
-        market.id().clone(),
+        nft.id(),
+        market.id(),
         &user,
-        token.clone(),
-        sale_conditions.clone(),
-        series.clone(),
+        &token,
+        &sale_conditions,
+        &series,
     )
     .await;
 
     // Negative
     // - requires 1 yocto
     let outcome = user
-        .call(&worker, &market.id().clone(), "storage_withdraw")
+        .call(&worker, &market.id(), "storage_withdraw")
         .transact()
         .await;
     outcome.assert_err("Requires attached deposit of exactly 1 yoctoNEAR").unwrap();
@@ -103,7 +104,7 @@ async fn storage_withdraw() -> anyhow::Result<()> {
     // Positive
     // - deposit refunded
     let outcome = user
-        .call(&worker, &market.id().clone(), "storage_withdraw")
+        .call(&worker, &market.id(), "storage_withdraw")
         .deposit(1)
         .transact()
         .await;

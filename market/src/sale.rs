@@ -282,12 +282,13 @@ impl Market {
         nft_contract_id: AccountId,
         token_id: String,
         ft_token_id: AccountId,
-        offered_price: Balance,
+        offered_price: U128,
         start: Option<U64>,
         duration: Option<U64>,
         origins: Option<Origins>,
     ) -> Option<u128> {
         assert_one_yocto();
+        let offered_price = offered_price.0;
         let contract_id: AccountId = nft_contract_id;
         let contract_and_token_id = format!("{}{}{}", contract_id, DELIMETER, token_id);
         let sale = self
