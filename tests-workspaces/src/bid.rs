@@ -545,6 +545,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
     let user2 = create_subaccount(&worker, &owner, "user2").await?;
     let user3 = create_subaccount(&worker, &owner, "user3").await?;
+    let user4 = create_subaccount(&worker, &owner, "user4").await?;
 
     let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
@@ -574,7 +575,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         &worker,
         nft.id(),
         market.id(),
-        &user2,
+        &user3,
         &token1,
         U128(950),
     )
@@ -583,7 +584,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         &worker,
         nft.id(),
         market.id(),
-        &user2,
+        &user4,
         &token1,
         U128(1000),
         U64(100000000),
@@ -591,12 +592,14 @@ async fn cancel_expired_bids_positive() -> Result<()> {
     .await?;
 
     // check that two bids are removed after `cancel_expired_bids`
-    let bids_by_owner: Vec<BidId> = market
+    let bids_by_nft_contract_and_token: Vec<BidId> = market
         .view(
             &worker,
-            "get_bids_id_by_account",
+            "get_bids_by_nft_and_token",
             json!({
-                "owner_id": user2.id()
+                "nft_contract_id": nft.id(),
+                "token_id": &token1,
+                "ft_token_id": "near",
             })
             .to_string()
             .into_bytes(),
@@ -604,8 +607,9 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         .await?
         .json()?;
     assert!(
-        bids_by_owner.len() == 3,
-        "There should be exactly three bids"
+        bids_by_nft_contract_and_token.len() == 3,
+        "There should be exactly three bids, not {}",
+        bids_by_nft_contract_and_token.len()
     );
 
     let outcome = user3
@@ -625,7 +629,26 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         outcome.err().unwrap()
     );
 
-    let bids_by_owner: Vec<BidId> = market
+    let bids_by_nft_contract_and_token: Vec<BidId> = market
+        .view(
+            &worker,
+            "get_bids_by_nft_and_token",
+            json!({
+                "nft_contract_id": nft.id(),
+                "token_id": &token1,
+                "ft_token_id": "near",
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        bids_by_nft_contract_and_token.len() == 1,
+        "There should be exactly one bid, not {}",
+        bids_by_nft_contract_and_token.len()
+    );
+    let bids_by_owner2: Vec<BidId> = market
         .view(
             &worker,
             "get_bids_id_by_account",
@@ -637,7 +660,45 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         )
         .await?
         .json()?;
-    assert!(bids_by_owner.len() == 1, "There should be exactly two bids");
+    assert!(
+        bids_by_owner2.len() == 0,
+        "There should be exactly zero bid, not {}", 
+        bids_by_owner2.len()
+    );
+    let bids_by_owner3: Vec<BidId> = market
+        .view(
+            &worker,
+            "get_bids_id_by_account",
+            json!({
+                "owner_id": user3.id()
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        bids_by_owner3.len() == 1,
+        "There should be exactly one bid, not {}", 
+        bids_by_owner3.len()
+    );
+    let bids_by_owner4: Vec<BidId> = market
+        .view(
+            &worker,
+            "get_bids_id_by_account",
+            json!({
+                "owner_id": user4.id()
+            })
+            .to_string()
+            .into_bytes(),
+        )
+        .await?
+        .json()?;
+    assert!(
+        bids_by_owner4.len() == 0,
+        "There should be exactly zero bid, not {}", 
+        bids_by_owner4.len()
+    );
 
     Ok(())
 }

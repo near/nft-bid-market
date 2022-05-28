@@ -373,10 +373,11 @@ impl Market {
             .market
             .bids
             .get(&contract_and_token_id)
-            .expect("Wrong contract or token id");
+            .expect("No bids for this contract and token id");
         let bids_tree = bids_for_contract_and_token_id
             .get(&ft_token_id)
             .expect("No token");
+
         let mut biggest_bid = u128::MAX;
         let mut price = 0;
         for (balance, equal_bids) in bids_tree.iter_rev() {
@@ -416,9 +417,9 @@ impl Market {
             .market
             .bids_by_index
             .get(&biggest_bid)
-            .expect("No bid wuth this id");
+            .expect("No bid with this id");
         //require!(bid.in_limits(), "Out of time limit of the bid");
-        self.market.sales.insert(&contract_and_token_id, &sale);
+        //self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
             contract_id,

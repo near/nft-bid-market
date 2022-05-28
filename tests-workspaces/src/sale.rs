@@ -591,7 +591,7 @@ async fn offer_positive() -> Result<()> {
             "ft_token_id": "near",
             "offered_price": initial_price.to_string(),
         }))?
-        .deposit(initial_price)
+        .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
@@ -744,12 +744,6 @@ async fn offer_positive() -> Result<()> {
     Ok(())
 }
 
-/*
-- Should panic if there is no sale with the given `nft_contract_id` and `token_id`
-- Should panic if there are no bids with given fungible token
-- Should panic if the sale is not in progress
-- Should panic if the last bid is out of time
- */
 #[tokio::test]
 async fn accept_bid_negative() -> Result<()> {
     let worker = workspaces::sandbox().await?;
@@ -779,6 +773,7 @@ async fn accept_bid_negative() -> Result<()> {
     )
     .await?;
     let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
+    let token2 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
     deposit(&worker, market.id(), &user1).await?;
 
     // No sale with the given `nft_contract_id` and `token_id`
@@ -804,10 +799,9 @@ async fn accept_bid_negative() -> Result<()> {
 
     let msg = json!({"Sale": {
         "sale_conditions": &sale_conditions,
-        "token_type": Some(series),
+        "token_type": Some(series.clone()),
         "start": Some(U64(epoch_plus_waiting_time as u64)),
-    }});
-    
+    }});  
     user1
         .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
@@ -819,6 +813,23 @@ async fn accept_bid_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
+
+    let msg = json!({"Sale": {
+        "sale_conditions": &sale_conditions,
+        "token_type": Some(series),
+    }});
+    user1
+        .call(&worker, nft.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": token2,
+            "account_id": market.id(),
+            "msg": msg.to_string()
+        }))?
+        .deposit(parse_near!("1 N"))
+        .gas(parse_gas!("200 Tgas") as u64)
+        .transact()
+        .await?;
+
     let outcome = user1
         .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
@@ -829,49 +840,58 @@ async fn accept_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bids").unwrap();
+    outcome.assert_err("Either the sale is finished or it hasn't started yet").unwrap();
 
-    // last bid is out of time
+    // no bids
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token2,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("No bids for this contract and token id").unwrap();
+
+    // wrong ft token
     user2
         .call(&worker, market.id(), "offer")
         .args_json(json!({
             "nft_contract_id": nft.id(),
-            "token_id": token1,
+            "token_id": token2,
             "ft_token_id": "near",
             "offered_price": "200",
-            "duration": "1",
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await?;
-    tokio::time::sleep(Duration::from_nanos(1)).await;
     let outcome = user1
         .call(&worker, market.id(), "accept_bid")
         .args_json(json!({
             "nft_contract_id": nft.id(),
-            "token_id": token1,
+            "token_id": token2,
+            "ft_token_id": "not_near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("No token").unwrap();
+
+    // there is no valid bids
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token2,
             "ft_token_id": "near",
         }))?
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Out of time limit of the bid").unwrap();
-    // Sale is not in progress
-    tokio::time::sleep(waiting_time).await;
-    let outcome = user1
-        .call(&worker, market.id(), "accept_bid")
-        .args_json(json!({
-            "nft_contract_id": nft.id(),
-            "token_id": token1,
-            "ft_token_id": "near",
-        }))?
-        .gas(parse_gas!("300 Tgas") as u64)
-        .transact()
-        .await;
-    outcome
-        .assert_err("Either the sale is finished or it hasn't started yet")
-        .unwrap();
+    outcome.assert_err("There are no active non-finished bids").unwrap();
     Ok(())
 }
 
@@ -957,6 +977,7 @@ async fn accept_bid_positive() -> Result<()> {
     assert_eq!(token_data.owner_id.as_ref(), user2.id().as_ref());
     Ok(())
 }
+
 
 /*
 - Should panic unless 1 yoctoNEAR is attached

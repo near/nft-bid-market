@@ -209,6 +209,13 @@ async fn sale_views() -> Result<()> {
             .await?
             .json()?;
         assert!(sale_json.is_some());
+        user2
+            .call(&worker, market.id(), "bid_deposit")
+            .args_json(json!({}))?
+            .deposit(100_000_000)
+            .gas(parse_gas!("300 Tgas") as u64)
+            .transact()
+            .await?;
         offer(
             &worker,
             nft.id(),
