@@ -72,14 +72,17 @@ impl Market {
         bid_id: BidId,
     ) -> Option<Bid> {
         let contract_and_token_id = format!("{}{}{}", &nft_contract_id, DELIMETER, token_id);
-        let bids_by_ft = self
+        let mut bids_by_ft = self
             .market
             .bids
             .get(&contract_and_token_id)
             .expect("No bid for this nft contract and ft token");
-        let bids_tree = bids_by_ft.get(ft_token_id).expect("No token");
+        let mut bids_tree = bids_by_ft.remove(ft_token_id).expect("No token");
         let mut equal_bids = bids_tree.get(&price.0).expect("No bid with this balance");
         assert!(equal_bids.remove(&bid_id), "No bid with this price and id");
+        bids_tree.insert(&price.0, &equal_bids);
+        bids_by_ft.insert(ft_token_id.clone(), bids_tree);
+        self.market.bids.insert(&contract_and_token_id, &bids_by_ft);
 
         let mut bids_by_owner = self
             .market

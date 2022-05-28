@@ -419,7 +419,7 @@ impl Market {
             .get(&biggest_bid)
             .expect("No bid with this id");
         //require!(bid.in_limits(), "Out of time limit of the bid");
-        //self.market.sales.insert(&contract_and_token_id, &sale);
+        // self.market.sales.insert(&contract_and_token_id, &sale);
         // panics at `self.internal_remove_sale` and reverts above if predecessor is not sale.owner_id
         self.process_purchase(
             contract_id,
@@ -441,6 +441,7 @@ impl Market {
         buyer_id: AccountId,
         origins: Origins,
     ) -> Promise {
+        // TODO: better to remove this sale at callback, so we don't pass this huge struct
         let sale = self.internal_remove_sale(nft_contract_id.clone(), token_id.clone());
 
         // Decrease account balance
@@ -507,7 +508,6 @@ impl Market {
         //TODO: should take ContractAndTokenId instead of Sale
         let contract_and_token_id: ContractAndTokenId =
             format!("{}{}{}", &sale.nft_contract_id, DELIMETER, sale.token_id);
-        let bids_for_contract_and_token_id = self.market.bids.get(&contract_and_token_id).unwrap();
         // checking for payout information
         let payout_option = promise_result_as_success().and_then(|value| {
             // None means a bad payout from bad NFT contract
@@ -515,9 +515,7 @@ impl Market {
                 .ok()
                 .and_then(|payout| {
                     // gas to do 10 FT transfers (and definitely 10 NEAR transfers)
-                    if payout.payout.len() + bids_for_contract_and_token_id.len() > 10
-                        || payout.payout.is_empty()
-                    {
+                    if payout.payout.len() > 10 || payout.payout.is_empty() {
                         env::log_str("Cannot have more than 10 royalties and sale.bids refunds");
                         None
                     } else {

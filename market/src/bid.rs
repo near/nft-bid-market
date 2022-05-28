@@ -284,11 +284,10 @@ impl Market {
             }
             bids_tree.insert(&balance, &equal_bids);
         }
+        bids_for_contract_and_token_id.insert(ft_token_id, bids_tree);
         self.market
             .bids
-            .get(&contract_and_token_id)
-            .expect("No nft_contract_id or ft_token_id")
-            .insert(ft_token_id, bids_tree);
+            .insert(&contract_and_token_id, &bids_for_contract_and_token_id);
         // let mut bids = self.market.bids.get(&contract_and_token_id).unwrap();
         // let bid_vec = bids.get(&ft_token_id).expect("No token").clone();
         // bid_vec.to_vec().retain(|bid_from_vec| {

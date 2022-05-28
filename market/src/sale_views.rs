@@ -177,6 +177,7 @@ impl Market {
         self.market.bids_by_owner.get(&owner_id).expect("No bid with this id").keys_as_vector().to_vec()
     }*/
 
+    // TODO: add pagination
     pub fn get_bids_by_nft_and_token(
         &self,
         nft_contract_id: AccountId,
@@ -201,17 +202,15 @@ impl Market {
         vec
     }
 
+    // TODO: pagination
     pub fn get_bids_id_by_account(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
         let owner_id = owner_id.unwrap_or_else(env::predecessor_account_id);
-        let mut vec = Vec::new();
         let lookup_map = &self.market.bids_by_owner;
         let unordered_map = lookup_map.get(&owner_id).expect("No bid for this owner");
-        let iter = unordered_map.values_as_vector().iter();
-
-        for bid in iter {
-            vec.push(bid.2);
-        }
-        vec
+        unordered_map
+            .values()
+            .map(|(_ft, _balance, bid_id)| bid_id)
+            .collect()
     }
 
     pub(crate) fn json_from_sale(&self, sale: Sale) -> SaleJson {
