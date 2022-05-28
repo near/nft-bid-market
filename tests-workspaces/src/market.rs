@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use anyhow::Result;
+use std::collections::HashMap;
 
 use near_units::parse_near;
 use serde_json::json;

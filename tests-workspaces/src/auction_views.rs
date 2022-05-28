@@ -1,6 +1,6 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use anyhow::Result;
 use serde_json::json;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::utils::{
     check_outcome_success, create_series, create_subaccount, deposit, init_market, init_nft,
@@ -9,8 +9,8 @@ use crate::utils::{
 
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
-use workspaces::AccountId;
 use nft_contract::common::{U128, U64};
+use workspaces::AccountId;
 
 #[tokio::test]
 async fn view_auction_get_auction() -> Result<()> {
@@ -21,8 +21,12 @@ async fn view_auction_get_auction() -> Result<()> {
 
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
-    let series = create_series(&worker, nft.id(), &user1, owner.id()).await.unwrap();
-    let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await.unwrap();
+    let series = create_series(&worker, nft.id(), &user1, owner.id())
+        .await
+        .unwrap();
+    let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series)
+        .await
+        .unwrap();
 
     deposit(&worker, market.id(), &user1).await?;
     user1
@@ -79,15 +83,9 @@ async fn view_auction_get_auction() -> Result<()> {
         .await?
         .json()?;
 
-    assert_eq!(
-        auction.owner_id,
-        "user1.test.near".parse().unwrap()
-    );
+    assert_eq!(auction.owner_id, "user1.test.near".parse().unwrap());
     assert_eq!(auction.token_id, "1:1".to_string());
-    assert_eq!(
-        auction.ft_token_id,
-        "near".parse().unwrap()
-    );
+    assert_eq!(auction.ft_token_id, "near".parse().unwrap());
     assert_eq!(auction.minimal_step.0, 100);
     assert_eq!(auction.start_price.0, 10000);
     assert_eq!(auction.buy_out_price.unwrap().0, 10000000000);
@@ -167,28 +165,16 @@ async fn view_auction_get_auctions() -> Result<()> {
     let auction1 = &auctions[0];
     let auction2 = &auctions[1];
 
-    assert_eq!(
-        auction1.owner_id,
-        "user1.test.near".parse().unwrap()
-    );
+    assert_eq!(auction1.owner_id, "user1.test.near".parse().unwrap());
     assert_eq!(auction1.token_id, "1:1".to_string());
-    assert_eq!(
-        auction1.ft_token_id,
-        "near".parse().unwrap()
-    );
+    assert_eq!(auction1.ft_token_id, "near".parse().unwrap());
     assert_eq!(auction1.minimal_step.0, 100);
     assert_eq!(auction1.start_price.0, 10000);
     assert_eq!(auction1.buy_out_price.unwrap().0, 10000000000);
 
-    assert_eq!(
-        auction2.owner_id,
-        "user2.test.near".parse().unwrap()
-    );
+    assert_eq!(auction2.owner_id, "user2.test.near".parse().unwrap());
     assert_eq!(auction2.token_id, "2:1".to_string());
-    assert_eq!(
-        auction2.ft_token_id,
-        "near".parse().unwrap()
-    );
+    assert_eq!(auction2.ft_token_id, "near".parse().unwrap());
     assert_eq!(auction2.minimal_step.0, 110);
     assert_eq!(auction2.start_price.0, 100000);
     assert_eq!(auction2.buy_out_price.unwrap().0, 1000000000);

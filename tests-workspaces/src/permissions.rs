@@ -1,7 +1,7 @@
-use workspaces::network::Sandbox;
-use workspaces::{Account, AccountId, Contract, Worker};
 use anyhow::Result;
 use serde_json::json;
+use workspaces::network::Sandbox;
+use workspaces::{Account, AccountId, Contract, Worker};
 
 use crate::utils::{create_subaccount, init_nft};
 
@@ -141,13 +141,7 @@ async fn permissions_deny() -> Result<()> {
     let user1 = create_subaccount(&worker, &owner, "user1").await?;
 
     set_private_minting(&worker, nft.id(), &owner, true).await;
-    grant(
-        &worker,
-        nft.id(),
-        &owner,
-        "user1",
-    )
-    .await?;
+    grant(&worker, nft.id(), &owner, "user1").await?;
 
     // Can only be called by the owner
     let outcome = user1
@@ -288,13 +282,7 @@ async fn permissions_is_allowed() -> Result<()> {
     assert!(!result, "Not authorized");
 
     // If private minting is enabled and `user1` authorized, returns true
-    grant(
-        &worker,
-        nft.id(),
-        &owner,
-        "user1",
-    )
-    .await?;
+    grant(&worker, nft.id(), &owner, "user1").await?;
     let result = is_allowed(&worker, &nft, "user1").await?;
     assert!(result, "Authorized");
 

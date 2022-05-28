@@ -119,9 +119,7 @@ async fn nft_on_approve_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await;
-    outcome
-        .assert_err("Token not found")
-        .unwrap();
+    outcome.assert_err("Token not found").unwrap();
 
     // bad message, sale/auction shouldn't be added
     let outcome = user1
@@ -801,7 +799,7 @@ async fn accept_bid_negative() -> Result<()> {
         "sale_conditions": &sale_conditions,
         "token_type": Some(series.clone()),
         "start": Some(U64(epoch_plus_waiting_time as u64)),
-    }});  
+    }});
     user1
         .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
@@ -840,7 +838,9 @@ async fn accept_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("Either the sale is finished or it hasn't started yet").unwrap();
+    outcome
+        .assert_err("Either the sale is finished or it hasn't started yet")
+        .unwrap();
 
     // no bids
     let outcome = user1
@@ -853,7 +853,9 @@ async fn accept_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bids for this contract and token id").unwrap();
+    outcome
+        .assert_err("No bids for this contract and token id")
+        .unwrap();
 
     // wrong ft token
     user2
@@ -891,7 +893,9 @@ async fn accept_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("There are no active non-finished bids").unwrap();
+    outcome
+        .assert_err("There are no active non-finished bids")
+        .unwrap();
     Ok(())
 }
 
@@ -977,7 +981,6 @@ async fn accept_bid_positive() -> Result<()> {
     assert_eq!(token_data.owner_id.as_ref(), user2.id().as_ref());
     Ok(())
 }
-
 
 /*
 - Should panic unless 1 yoctoNEAR is attached

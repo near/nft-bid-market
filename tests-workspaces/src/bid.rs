@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use anyhow::Result;
 use serde_json::json;
+use std::collections::HashMap;
 
 use crate::utils::{
     check_outcome_fail, check_outcome_success, create_series, create_subaccount, deposit,
@@ -40,15 +40,7 @@ async fn remove_bid_positive() -> Result<()> {
     )
     .await?;
     let price: U128 = 900.into();
-    offer(
-        &worker,
-        nft.id(),
-        market.id(),
-        &user2,
-        &token1,
-        price,
-    )
-    .await?;
+    offer(&worker, nft.id(), market.id(), &user2, &token1, price).await?;
 
     // Check that one bid is removed after `remove_bid`
     let bids_by_owner: Vec<BidId> = market
@@ -133,15 +125,7 @@ async fn remove_bid_negative() -> Result<()> {
     )
     .await?;
     let price: U128 = 900.into();
-    offer(
-        &worker,
-        nft.id(),
-        market.id(),
-        &user2,
-        &token1,
-        price,
-    )
-    .await?;
+    offer(&worker, nft.id(), market.id(), &user2, &token1, price).await?;
 
     // Should panic unless 1 yoctoNEAR is attached
     let outcome = user2
@@ -370,15 +354,7 @@ async fn cancel_bid_negative() -> Result<()> {
 
     // Should panic if the bid doesn't have end time
     let price: U128 = 950.into();
-    offer(
-        &worker,
-        nft.id(),
-        market.id(),
-        &user2,
-        &token1,
-        price,
-    )
-    .await?;
+    offer(&worker, nft.id(), market.id(), &user2, &token1, price).await?;
 
     let outcome = user3
         .call(&worker, market.id(), "cancel_bid")
@@ -449,7 +425,9 @@ async fn cancel_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
+    outcome
+        .assert_err("No bid for this nft contract and ft token")
+        .unwrap();
 
     let outcome = user3
         .call(&worker, market.id(), "cancel_bid")
@@ -464,7 +442,9 @@ async fn cancel_bid_negative() -> Result<()> {
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
         .await;
-    outcome.assert_err("No bid for this nft contract and ft token").unwrap();
+    outcome
+        .assert_err("No bid for this nft contract and ft token")
+        .unwrap();
 
     // Should panic if there is no bids with `ft_token_id`
     let outcome = user3
@@ -571,15 +551,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         U64(100000000),
     )
     .await?;
-    offer(
-        &worker,
-        nft.id(),
-        market.id(),
-        &user3,
-        &token1,
-        U128(950),
-    )
-    .await?;
+    offer(&worker, nft.id(), market.id(), &user3, &token1, U128(950)).await?;
     offer_with_duration(
         &worker,
         nft.id(),
@@ -662,7 +634,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         .json()?;
     assert!(
         bids_by_owner2.len() == 0,
-        "There should be exactly zero bid, not {}", 
+        "There should be exactly zero bid, not {}",
         bids_by_owner2.len()
     );
     let bids_by_owner3: Vec<BidId> = market
@@ -679,7 +651,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         .json()?;
     assert!(
         bids_by_owner3.len() == 1,
-        "There should be exactly one bid, not {}", 
+        "There should be exactly one bid, not {}",
         bids_by_owner3.len()
     );
     let bids_by_owner4: Vec<BidId> = market
@@ -696,7 +668,7 @@ async fn cancel_expired_bids_positive() -> Result<()> {
         .json()?;
     assert!(
         bids_by_owner4.len() == 0,
-        "There should be exactly zero bid, not {}", 
+        "There should be exactly zero bid, not {}",
         bids_by_owner4.len()
     );
 
@@ -742,15 +714,7 @@ async fn cancel_expired_bids_negative() -> Result<()> {
         U64(100000000),
     )
     .await?;
-    offer(
-        &worker,
-        nft.id(),
-        market.id(),
-        &user2,
-        &token1,
-        U128(950),
-    )
-    .await?;
+    offer(&worker, nft.id(), market.id(), &user2, &token1, U128(950)).await?;
     offer_with_duration(
         &worker,
         nft.id(),

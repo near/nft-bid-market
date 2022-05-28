@@ -174,7 +174,6 @@ pub async fn nft_approve(
     sale_conditions: &HashMap<AccountId, U128>,
     series: &str,
 ) -> Result<CallExecutionDetails> {
-
     let msg = json!({"Sale": {
         "sale_conditions": sale_conditions,
         "token_type": Some(series),
@@ -326,9 +325,7 @@ pub async fn nft_transfer_payout_helper(
             .view(
                 worker,
                 "nft_token",
-                json!({ "token_id": token_id })
-                    .to_string()
-                    .into_bytes(),
+                json!({ "token_id": token_id }).to_string().into_bytes(),
             )
             .await
             .unwrap()

@@ -218,12 +218,7 @@ mod tests {
         let owner_id = &bob();
         let token_ids = vec!["0", "1"];
         let log = NearEvent::nft_burn(vec![
-            NftBurnData::new(
-                &alice(),
-                vec!["2", "3"],
-                Some(&bob()),
-                Some("has memo"),
-            ),
+            NftBurnData::new(&alice(), vec!["2", "3"], Some(&bob()), Some("has memo")),
             NftBurnData::new(owner_id, token_ids, None, None),
         ])
         .to_json_string();

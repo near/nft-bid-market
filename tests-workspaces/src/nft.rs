@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use anyhow::Result;
 use serde_json::json;
+use std::collections::HashMap;
 
 use crate::utils::{
     check_outcome_fail, create_series_raw, init_nft, mint_token, nft_transfer_payout_helper,
@@ -124,9 +124,7 @@ async fn nft_create_series_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
-    outcome
-        .assert_err("maximum royalty cap exceeded")
-        .unwrap();
+    outcome.assert_err("maximum royalty cap exceeded").unwrap();
     Ok(())
 }
 
@@ -336,9 +334,7 @@ async fn nft_mint_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
-    outcome
-        .assert_err("Token series does not exist")
-        .unwrap();
+    outcome.assert_err("Token series does not exist").unwrap();
 
     // only owner can mint
     let outcome = user3
@@ -355,9 +351,7 @@ async fn nft_mint_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
-    outcome
-        .assert_err("permission denied")
-        .unwrap();
+    outcome.assert_err("permission denied").unwrap();
 
     // Exceed max tokens
     user1
@@ -383,9 +377,7 @@ async fn nft_mint_negative() -> Result<()> {
     // } else {
     //     panic!("Expected failure")
     // };
-    outcome
-        .assert_err("Max token minted")
-        .unwrap();
+    outcome.assert_err("Max token minted").unwrap();
     Ok(())
 }
 
@@ -450,9 +442,7 @@ async fn nft_mint_positive() -> Result<()> {
         .view(
             &worker,
             "nft_token",
-            json!({ "token_id": token_id })
-                .to_string()
-                .into_bytes(),
+            json!({ "token_id": token_id }).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -536,9 +526,7 @@ async fn nft_transfer_payout_negative() -> Result<()> {
             .view(
                 &worker,
                 "nft_token",
-                json!({ "token_id": token1 })
-                    .to_string()
-                    .into_bytes(),
+                json!({ "token_id": token1 }).to_string().into_bytes(),
             )
             .await?
             .json()?;

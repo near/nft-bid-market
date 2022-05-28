@@ -1,12 +1,12 @@
-use std::collections::HashMap;
 use anyhow::Result;
 use serde_json::json;
+use std::collections::HashMap;
 
+use crate::utils::init_market;
 use near_units::parse_near;
 use nft_bid_market::{PAYOUT_TOTAL_VALUE, PROTOCOL_FEE};
 use nft_contract::common::U128;
 use workspaces::AccountId;
-use crate::utils::init_market;
 
 #[tokio::test]
 async fn price_with_fees() -> Result<()> {

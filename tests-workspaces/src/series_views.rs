@@ -1,7 +1,7 @@
 use crate::utils::{create_series, create_subaccount, init_nft, mint_token};
+use anyhow::Result;
 use nft_contract::common::U128;
 use nft_contract::TokenSeriesJson;
-use anyhow::Result;
 use serde_json::json;
 /*
 - Panics if the series wasn't found
@@ -45,10 +45,7 @@ async fn series_views_nft_get_series() -> Result<()> {
         .await?
         .json()?;
 
-    assert_eq!(
-        token_series.owner_id,
-        "user1.test.near".parse().unwrap()
-    );
+    assert_eq!(token_series.owner_id, "user1.test.near".parse().unwrap());
     assert_eq!(token_series.metadata.title, Some("some title".to_string()));
     assert_eq!(
         token_series.metadata.media,
@@ -109,18 +106,12 @@ async fn series_views_nft_series() -> Result<()> {
     };
 
     let vec_token_series: Vec<TokenSeriesJson> = nft
-        .view(
-            &worker,
-            "nft_series",
-            json!({}).to_string().into_bytes(),
-        )
+        .view(&worker, "nft_series", json!({}).to_string().into_bytes())
         .await?
         .json()?;
     assert_eq!(vec_token_series.len(), 1);
     let token = &vec_token_series[0];
-    assert_eq!(
-        token.owner_id,
-        "user1.test.near".parse().unwrap());
+    assert_eq!(token.owner_id, "user1.test.near".parse().unwrap());
     assert_eq!(token.metadata.title, Some("some title".to_string()));
     assert_eq!(
         token.metadata.media,
@@ -132,11 +123,7 @@ async fn series_views_nft_series() -> Result<()> {
     let _series3 = create_series(&worker, nft.id(), &user2, owner.id()).await?;
 
     let vec_token_series: Vec<TokenSeriesJson> = nft
-        .view(
-            &worker,
-            "nft_series",
-            json!({}).to_string().into_bytes(),
-        )
+        .view(&worker, "nft_series", json!({}).to_string().into_bytes())
         .await?
         .json()?;
     assert_eq!(vec_token_series.len(), 3);

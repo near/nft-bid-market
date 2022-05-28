@@ -342,10 +342,7 @@ impl Market {
             .expect("No bid with this id");
         let owner_id = bid.owner_id;
 
-        let bid_account = self
-            .market
-            .bid_accounts
-            .get(&owner_id);
+        let bid_account = self.market.bid_accounts.get(&owner_id);
 
         if let Some(bid_account) = bid_account {
             let bid_balance = bid_account.total_balance.get(&ft);

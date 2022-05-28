@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use anyhow::Result;
 use serde_json::json;
+use std::collections::HashMap;
 
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::SaleJson;
@@ -32,14 +32,12 @@ async fn sale_views() -> Result<()> {
     let series1 = create_series(&worker, nft.id(), &user1, owner.id()).await?;
     let mut tokens_series1 = vec![];
     for _ in 0..3 {
-        tokens_series1
-            .push(mint_token(&worker, nft.id(), &user1, user1.id(), &series1).await?);
+        tokens_series1.push(mint_token(&worker, nft.id(), &user1, user1.id(), &series1).await?);
     }
     let series2 = create_series(&worker, nft.id(), &user2, owner.id()).await?;
     let mut tokens_series2 = vec![];
     for _ in 0..2 {
-        tokens_series2
-            .push(mint_token(&worker, nft.id(), &user2, user2.id(), &series2).await?);
+        tokens_series2.push(mint_token(&worker, nft.id(), &user2, user2.id(), &series2).await?);
     }
     deposit(&worker, market.id(), &user1).await?;
     deposit(&worker, market.id(), &user2).await?;
@@ -79,11 +77,7 @@ async fn sale_views() -> Result<()> {
     );
 
     let sales: Vec<SaleJson> = market
-        .view(
-            &worker,
-            "get_sales",
-            json!({}).to_string().into_bytes(),
-        )
+        .view(&worker, "get_sales", json!({}).to_string().into_bytes())
         .await?
         .json()?;
     assert_eq!(sales.len(), tokens_series1.len() + tokens_series2.len());
@@ -166,9 +160,7 @@ async fn sale_views() -> Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_token_type",
-            json!({ "token_type": series1 })
-                .to_string()
-                .into_bytes(),
+            json!({ "token_type": series1 }).to_string().into_bytes(),
         )
         .await?
         .json()?;
@@ -274,11 +266,7 @@ async fn sale_views() -> Result<()> {
     );
 
     let sales: Vec<SaleJson> = market
-        .view(
-            &worker,
-            "get_sales",
-            json!({}).to_string().into_bytes(),
-        )
+        .view(&worker, "get_sales", json!({}).to_string().into_bytes())
         .await?
         .json()?;
     assert_eq!(sales.len(), tokens_series1.len() + tokens_series2.len());
@@ -361,9 +349,7 @@ async fn sale_views() -> Result<()> {
         .view(
             &worker,
             "get_supply_by_nft_token_type",
-            json!({ "token_type": series1 })
-                .to_string()
-                .into_bytes(),
+            json!({ "token_type": series1 }).to_string().into_bytes(),
         )
         .await?
         .json()?;
