@@ -766,3 +766,221 @@ async fn cancel_expired_bids_negative() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn bid_withdraw_and_bid_deposit() -> Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let owner = worker.root_account();
+    let nft = init_nft(&worker, owner.id()).await?;
+    let market = init_market(&worker, worker.root_account().id(), vec![nft.id()]).await?;
+
+    let user1 = create_subaccount(&worker, &owner, "user1").await?;
+    let user2 = create_subaccount(&worker, &owner, "user2").await?;
+
+    let series = create_series(&worker, nft.id(), &user1, owner.id()).await?;
+    let token1 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
+    let token2 = mint_token(&worker, nft.id(), &user1, user1.id(), &series).await?;
+    deposit(&worker, market.id(), &user1).await?;
+    let sale_conditions = HashMap::from([("near".parse().unwrap(), 10000.into())]);
+    nft_approve(
+        &worker,
+        nft.id(),
+        market.id(),
+        &user1,
+        &token1,
+        &sale_conditions,
+        &series,
+    )
+    .await?;
+    nft_approve(
+        &worker,
+        nft.id(),
+        market.id(),
+        &user1,
+        &token2,
+        &sale_conditions,
+        &series,
+    )
+    .await?;
+
+    // should have bid account in order to withdraw
+    let outcome = user1
+        .call(&worker, market.id(), "bid_withdraw")
+        .args_json(json!({
+            "amount": 150,
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("Bid account not found").unwrap();
+
+    // the bid can't be accepted until the user deposits sufficient amount of money
+    offer(&worker, nft.id(), market.id(), &user2, &token1, U128(100)).await?;
+
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome
+        .assert_err("There are no active non-finished bids")
+        .unwrap();
+
+    user2
+        .call(&worker, market.id(), "bid_deposit")
+        .args_json(json!({}))?
+        .deposit(250)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+    let bid_deposit: u128 = user2
+        .call(&worker, market.id(), "view_deposit")
+        .args_json(json!({}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(bid_deposit, 250, "Deposit should be 250, not {}", bid_deposit);
+
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token1,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
+    let bid_deposit: u128 = user2
+        .call(&worker, market.id(), "view_deposit")
+        .args_json(json!({}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(bid_deposit, 150, "Deposit should be 0, not {}", bid_deposit);
+
+    // must attach exactly 1 yoctoNEAR to bid_withdraw
+    let outcome = user2
+        .call(&worker, market.id(), "bid_withdraw")
+        .args_json(json!({
+            "amount": 150,
+        }))?
+        .deposit(2)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome
+        .assert_err("Requires attached deposit of exactly 1 yoctoNEAR")
+        .unwrap();
+
+    // can't withdraw more than you have
+    let outcome = user2
+        .call(&worker, market.id(), "bid_withdraw")
+        .args_json(json!({
+            "amount": 160,
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome
+        .assert_err("Can't withdraw more than you have")
+        .unwrap();
+
+    // the specified token must be correct
+    let outcome = user2
+        .call(&worker, market.id(), "bid_withdraw")
+        .args_json(json!({
+            "amount": 150,
+            "ft_token_id": "not_near",
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome.assert_err("No token").unwrap();
+
+    // correct call to bid_withdrow
+    let outcome = user2
+        .call(&worker, market.id(), "bid_withdraw")
+        .args_json(json!({
+            "amount": 100,
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
+    let bid_deposit: u128 = user2
+        .call(&worker, market.id(), "view_deposit")
+        .args_json(json!({}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(bid_deposit, 50, "Deposit should be 50, not {}", bid_deposit);
+
+    // the second bid can't be accepted because user2 has only 50 yoctoNEAR deposit
+    offer(&worker, nft.id(), market.id(), &user2, &token2, U128(100)).await?;
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token2,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    outcome
+        .assert_err("There are no active non-finished bids")
+        .unwrap();
+
+    user2
+        .call(&worker, market.id(), "bid_deposit")
+        .args_json(json!({}))?
+        .deposit(50)
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await?;
+
+    // after bid_deposit the bid can be accepted
+    let outcome = user1
+        .call(&worker, market.id(), "accept_bid")
+        .args_json(json!({
+            "nft_contract_id": nft.id(),
+            "token_id": token2,
+            "ft_token_id": "near",
+        }))?
+        .gas(parse_gas!("300 Tgas") as u64)
+        .transact()
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
+    let bid_deposit: u128 = user2
+        .call(&worker, market.id(), "view_deposit")
+        .args_json(json!({}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(bid_deposit, 0, "Deposit should be 0, not {}", bid_deposit);
+
+    Ok(())
+}
