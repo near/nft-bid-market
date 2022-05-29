@@ -170,24 +170,21 @@ impl Market {
     pub fn bid_withdraw(&mut self, amount: Option<Balance>, ft_token_id: Option<AccountId>) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
+        let balance = self.view_deposit(ft_token_id.clone());
+        let amount = amount.unwrap_or(balance);
+        assert!(amount <= balance, "Can't withdraw more than you have");
         let bid_ft = match ft_token_id {
             Some(ft) => ft,
             None => "near".parse().unwrap(),
         };
-        let balance = self
+        self.refund_bid(bid_ft.clone(), owner_id.clone(), amount.into());
+        self
             .market
             .bid_accounts
             .get(&owner_id)
             .expect("Bid account not found")
             .total_balance
-            .remove(&bid_ft)
-            .expect("No token");
-        let amount = amount.unwrap_or(balance);
-        assert!(
-            amount <= balance,
-            "Can't withdraw more than you have deposited"
-        );
-        self.refund_bid(bid_ft, owner_id, amount.into());
+            .insert(&bid_ft, &(balance - amount));
     }
 
     #[payable]
@@ -219,5 +216,16 @@ impl Market {
             }
             Some(_ft) => (),
         };
+    }
+
+    pub fn view_deposit(&self, ft_token_id: Option<AccountId>) -> Balance {
+        let ft = ft_token_id.unwrap_or(AccountId::new_unchecked("near".to_string()));
+        self.market
+            .bid_accounts
+            .get(&env::predecessor_account_id())
+            .expect("Bid account not found")
+            .total_balance
+            .get(&ft)
+            .expect("No token")
     }
 }
