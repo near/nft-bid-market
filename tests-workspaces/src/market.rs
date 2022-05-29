@@ -4,10 +4,7 @@ use std::collections::HashMap;
 use near_units::parse_near;
 use serde_json::json;
 
-use crate::utils::{
-    check_outcome_fail, check_outcome_success, create_series_raw, init_market, init_nft,
-    mint_token, nft_approve,
-};
+use crate::utils::{create_series_raw, init_market, init_nft, mint_token, nft_approve};
 
 use crate::transaction_status::StatusCheck;
 pub use workspaces::result::CallExecutionDetails;

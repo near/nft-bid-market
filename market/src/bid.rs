@@ -48,11 +48,6 @@ pub type BidId = u128;
 pub type BidsForContractAndTokenId =
     HashMap<FungibleTokenId, TreeMap<Balance, UnorderedSet<BidId>>>;
 
-pub type BidsForContractAndTokenIdJson =
-    HashMap<FungibleTokenId, TreeMap<BalanceJson, UnorderedSet<BidIdJson>>>;
-pub type BalanceJson = U128;
-pub type BidIdJson = U128;
-
 #[near_bindgen]
 impl Market {
     // Adds a bid if it is higher than the last bid of this ft_token_id

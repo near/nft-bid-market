@@ -1,7 +1,6 @@
 use crate::common::*;
 use crate::*;
 
-use crate::bid::BidsForContractAndTokenIdJson;
 use crate::sale::{SaleJson, DELIMETER};
 use std::cmp::min;
 

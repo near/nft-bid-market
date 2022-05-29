@@ -4,15 +4,13 @@ use std::{
 };
 
 use crate::utils::{
-    check_outcome_fail, check_outcome_success, create_series, create_series_raw, deposit,
-    init_market, init_nft, mint_token, nft_approve, offer,
+    create_series, create_series_raw, deposit, init_market, init_nft, mint_token, nft_approve,
+    offer,
 };
 use anyhow::Result;
 use near_contract_standards::non_fungible_token::Token;
 use near_units::{parse_gas, parse_near};
-use nft_bid_market::{
-    ArgsKind, BidId, BidsForContractAndTokenId, SaleArgs, SaleJson, BID_HISTORY_LENGTH_DEFAULT,
-};
+use nft_bid_market::{BidId, SaleJson};
 use nft_contract::common::{U128, U64};
 
 use crate::transaction_status::StatusCheck;

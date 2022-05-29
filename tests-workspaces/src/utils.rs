@@ -2,7 +2,6 @@ use near_contract_standards::non_fungible_token::Token;
 use near_units::parse_gas;
 use near_units::parse_near;
 use nft_bid_market::Fees;
-use nft_bid_market::{ArgsKind, SaleArgs};
 use nft_contract::common::TokenMetadata;
 use nft_contract::common::{U128, U64};
 use nft_contract::Payout;
@@ -14,10 +13,6 @@ use workspaces::result::CallExecutionDetails;
 use workspaces::{Account, AccountId, Contract, Worker};
 
 use anyhow::Result;
-
-use near_primitives::views::FinalExecutionStatus;
-
-use crate::transaction_status::StatusCheck;
 
 const NFT_WASM_FILEPATH: &str = "../res/nft_contract.wasm";
 const MARKET_WASM_FILEPATH: &str = "../res/nft_bid_market.wasm";
@@ -32,11 +27,12 @@ pub async fn init_nft(worker: &Worker<Sandbox>, root_id: &AccountId) -> Result<C
         }))?
         .gas(parse_gas!("150 Tgas") as u64)
         .transact()
-        .await?;
-    // match outcome.status {
-    //     near_primitives::views::FinalExecutionStatus::SuccessValue(_) => (),
-    //     _ => panic!(),
-    // };
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
     Ok(contract)
 }
 
@@ -86,30 +82,6 @@ pub async fn mint_token(
         .await?
         .json()?;
     Ok(token_id)
-}
-
-pub async fn check_outcome_success(status: FinalExecutionStatus) {
-    assert!(
-        matches!(
-            status,
-            near_primitives::views::FinalExecutionStatus::SuccessValue(_)
-        ),
-        "Panic: {:?}",
-        status
-    );
-}
-
-pub async fn check_outcome_fail(status: FinalExecutionStatus, expected_err: &str) {
-    if let near_primitives::views::FinalExecutionStatus::Failure(err) = status {
-        assert!(
-            err.to_string().contains(expected_err),
-            "actual error: {}, instead of {}",
-            err,
-            expected_err
-        )
-    } else {
-        panic!("Expected failure {:?}, got: {:?}", expected_err, status);
-    };
 }
 
 pub async fn create_subaccount(
@@ -190,26 +162,6 @@ pub async fn nft_approve(
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await
-}
-
-pub async fn price_with_fees(
-    worker: &Worker<Sandbox>,
-    market: &Contract,
-    sale_conditions: HashMap<AccountId, U128>,
-) -> Result<U128> {
-    let price: U128 = market
-        .view(
-            worker,
-            "price_with_fees",
-            json!({
-                "price": sale_conditions.get(&"near".parse::<AccountId>().unwrap()).unwrap(),
-            })
-            .to_string()
-            .into_bytes(),
-        )
-        .await?
-        .json()?;
-    Ok(price)
 }
 
 pub async fn offer(

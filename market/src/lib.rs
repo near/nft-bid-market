@@ -178,8 +178,7 @@ impl Market {
             None => "near".parse().unwrap(),
         };
         self.refund_bid(bid_ft.clone(), owner_id.clone(), amount.into());
-        self
-            .market
+        self.market
             .bid_accounts
             .get(&owner_id)
             .expect("Bid account not found")

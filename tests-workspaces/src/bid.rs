@@ -3,11 +3,11 @@ use serde_json::json;
 use std::collections::HashMap;
 
 use crate::utils::{
-    check_outcome_fail, check_outcome_success, create_series, create_subaccount, deposit,
-    init_market, init_nft, mint_token, nft_approve, offer, offer_with_duration,
+    create_series, create_subaccount, deposit, init_market, init_nft, mint_token, nft_approve,
+    offer, offer_with_duration,
 };
 use near_units::parse_gas;
-use nft_bid_market::{BidId, SaleJson};
+use nft_bid_market::BidId;
 use nft_contract::common::{U128, U64};
 
 use crate::transaction_status::StatusCheck;
@@ -55,10 +55,7 @@ async fn remove_bid_positive() -> Result<()> {
         )
         .await?
         .json()?;
-    /*assert!(
-        bids_by_owner.len() == 1,
-        "There should be exactly one bid"
-    );
+    assert!(bids_by_owner.len() == 1, "There should be exactly one bid");
 
     let outcome = user2
         .call(&worker, market.id(), "remove_bid")
@@ -72,8 +69,12 @@ async fn remove_bid_positive() -> Result<()> {
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
         .transact()
-        .await?;
-    /heck_outcome_success(outcome.status).await;
+        .await;
+    assert!(
+        outcome.is_ok(),
+        "Failed with error {}",
+        outcome.err().unwrap()
+    );
 
     let bids_by_owner: Vec<BidId> = market
         .view(
@@ -87,10 +88,7 @@ async fn remove_bid_positive() -> Result<()> {
         )
         .await?
         .json()?;
-    assert!(
-        bids_by_owner.len() == 0,
-        "Bid was not removed"
-    );*/
+    assert!(bids_by_owner.len() == 0, "Bid was not removed");
 
     Ok(())
 }
@@ -845,7 +843,11 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
         .transact()
         .await?
         .json()?;
-    assert_eq!(bid_deposit, 250, "Deposit should be 250, not {}", bid_deposit);
+    assert_eq!(
+        bid_deposit, 250,
+        "Deposit should be 250, not {}",
+        bid_deposit
+    );
 
     let outcome = user1
         .call(&worker, market.id(), "accept_bid")

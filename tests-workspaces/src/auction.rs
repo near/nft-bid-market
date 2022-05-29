@@ -3,10 +3,7 @@ use serde_json::json;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 //use crate::utils::{init_market, init_nft, mint_token, check_outcome_success, check_outcome_fail};
-use crate::utils::{
-    check_outcome_fail, check_outcome_success, create_series, create_subaccount, deposit,
-    init_market, init_nft, mint_token,
-};
+use crate::utils::{create_series, create_subaccount, deposit, init_market, init_nft, mint_token};
 use near_units::{parse_gas, parse_near};
 use nft_bid_market::{ArgsKind, AuctionArgs, AuctionJson};
 //use workspaces::{Contract, Account, Worker};
