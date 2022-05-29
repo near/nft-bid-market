@@ -310,7 +310,13 @@ impl Market {
         //let deposit = env::attached_deposit();
         require!(offered_price.0 > 0, "Offered price must be greater than 0");
 
-        if offered_price.0 == calculate_price_with_fees(price, origins.as_ref()) {
+        let balance = self
+            .get_bid_balance(&buyer_id, &ft_token_id)
+            .unwrap_or_default();
+
+        if offered_price.0 == calculate_price_with_fees(price, origins.as_ref())
+            && balance >= offered_price.0
+        {
             self.process_purchase(
                 contract_id,
                 token_id,
@@ -610,6 +616,17 @@ impl Market {
             Promise::new(receiver_id).transfer(amount.0);
         }
         price
+    }
+
+    fn get_bid_balance(&self, owner_id: &AccountId, ft: &AccountId) -> Option<Balance> {
+        let bid_account = self.market.bid_accounts.get(&owner_id);
+        if let Some(bid_account) = bid_account {
+            let ft_balance = bid_account.total_balance.get(&ft);
+            if let Some(ft_balance) = ft_balance {
+                return Some(ft_balance);
+            }
+        }
+        None
     }
 }
 
