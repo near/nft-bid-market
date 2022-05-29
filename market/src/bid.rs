@@ -183,7 +183,7 @@ impl Market {
         token_id: TokenId,
         ft_token_id: AccountId,
         price: U128,
-        bid_id: BidId,
+        bid_id: U128,
     ) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
@@ -193,7 +193,7 @@ impl Market {
             token_id,
             &owner_id,
             price,
-            bid_id,
+            bid_id.0,
         );
         //self.refund_bid(ft_token_id, owner_id, price); //TODO: remove it and use bidding account
     }
@@ -207,7 +207,7 @@ impl Market {
         ft_token_id: AccountId,
         owner_id: AccountId,
         price: U128,
-        bid_id: BidId,
+        bid_id: U128,
     ) {
         let bid = self
             .internal_remove_bid(
@@ -216,7 +216,7 @@ impl Market {
                 token_id,
                 &owner_id,
                 price,
-                bid_id,
+                bid_id.0,
             )
             .expect("No such bid");
         if let Some(end) = bid.end {

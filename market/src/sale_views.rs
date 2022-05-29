@@ -155,10 +155,10 @@ impl Market {
             .expect("No token for this account")
     }
 
-    pub fn get_bid_by_index(&self, bid_id: BidId) -> Bid {
+    pub fn get_bid_by_index(&self, bid_id: U128) -> Bid {
         self.market
             .bids_by_index
-            .get(&bid_id)
+            .get(&bid_id.0)
             .expect("No bid with this id")
     }
 
