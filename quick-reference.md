@@ -189,6 +189,7 @@ near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 near call $MARKET_CONTRACT_ID accept_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 ```
+Note that `offer` returns bid id, i.e. the number of the bid, corresponding to this offer. It will be needed if you want to call `remove_bid` or `cancel_bid`.
 
 `ALICE` can attach an origin fee to her offer:
 ```bash
