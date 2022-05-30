@@ -1,5 +1,5 @@
-use crate::*;
 use crate::sale::DELIMETER;
+use crate::*;
 
 #[near_bindgen]
 impl Market {
