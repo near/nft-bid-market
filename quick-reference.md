@@ -124,6 +124,16 @@ near call $NFT_CONTRACT_ID nft_approve '{"token_id": "1:5", "account_id": "'$MAR
 near view $MARKET_CONTRACT_ID get_sales
 ```
 
+`CONTRACT_PARENT` could have set the specific start time, since he hadn't done it, the sale started as soon as the command was complete.
+Only the last sale has end time.
+Only the first sale has origin fee. It will be paid by `CONTRACT_PARENT` to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
+
+
+Seller can withdraw the unused storage deposit:
+```bash
+near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
+```
+
 #### Bid account
 
 To buy NFTs `ALICE` needs to deposit some amount of NEAR.
@@ -138,13 +148,13 @@ near call $MARKET_CONTRACT_ID bid_deposit --accountId $ALICE --depositYocto 1000
 near call $MARKET_CONTRACT_ID bid_deposit '{"account_id": "'$NFT_CONTRACT_ID'", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 100
 ```
 
-Later she can withdraw her deposit:
+Later she can take back her deposit. 
+The first command withdraws the given amount in `ft_token_id` (by default - the full balance in NEAR).
 ```bash
 near call $MARKET_CONTRACT_ID bid_withdraw '{"amount": "100", "ft_token_id": "near"}' --accountId $ALICE  --depositYocto 1
 
 near call $MARKET_CONTRACT_ID bid_withdraw --accountId $ALICE --depositYocto 1
 ```
-The first command withdraws the given amount from `ft_token_id` amount. By default `bid_withdraw` returns the full balance in NEAR.
 
 To see the balance (the default `ft_token_id` is NEAR):
 ```bash
@@ -152,28 +162,19 @@ near call $MARKET_CONTRACT_ID view_deposit '{"ft_token_id": "near"}' --accountId
 
 near call $MARKET_CONTRACT_ID view_deposit --accountId $ALICE
 ```
-The default `ft_token_id` is NEAR.
 
-In the following section `ALICE` will buy some NFTs, that is why we top up her bid account
+In the following section `ALICE` will buy some NFTs, that is why we top up her bid account:
 ```bash
 near call $MARKET_CONTRACT_ID bid_deposit --accountId $ALICE --depositYocto 1000000
 ```
 
 #### Methods for sales and bids 
 
-`CONTRACT_PARENT` could have set the specific start time, since he hadn't done it, the auction started as soon as the command was complete.
-Only the last sale has end time.
-Only the first sale has origin fee. It will be paid by `CONTRACT_PARENT` to `NFT_CONTRACT_ID` after the NFT is sold. The number `100` in the method corresponds to 1% origin fee.
-`CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. It doesn't include protocol and origin fees. To see the full price you can call `price_with_fees`:
+Let's return to the sales. `CONTRACT_PARENT` specified the price to be `10000` yoctoNEAR for each token. It doesn't include protocol and origin fees. To see the full price you can call `price_with_fees`:
 ```bash
 near view $MARKET_CONTRACT_ID price_with_fees '{"price": "10000", "origins": null}'
 ```
 Here `price` is the amount you want to pay and `origins` you want to add to your bid.
-
-Seller can withdraw the unused storage deposit:
-```bash
-near call $MARKET_CONTRACT_ID storage_withdraw --accountId $CONTRACT_PARENT --depositYocto 1
-```
 
 Any other account (in our case it is `ALICE`) can buy or offer to buy any of these NFTs. 
 The difference is in the deposit which she specifies in `offer`. 
@@ -189,7 +190,11 @@ near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 near call $MARKET_CONTRACT_ID accept_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:2", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:2"}'
 ```
-Note that `offer` returns bid id, i.e. the number of the bid, corresponding to this offer. It will be needed if you want to call `remove_bid` or `cancel_bid`.
+Note that `offer` returns `bid_id` if a new bid has been created, i.e. the number of the bid, corresponding to this offer.
+Otherwise it returns `None`. 
+`bid_id` will be needed if you want to call `remove_bid` or `cancel_bid`.
+
+A user can create only one bid per specific sale (i.e. `nft_contract_id` and `token_id`).
 
 `ALICE` can attach an origin fee to her offer:
 ```bash
@@ -209,36 +214,34 @@ near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'"
 
 Bids for sales can be deleted. If `ALICE` adds a bid and then decides to remove it, she could call `remove_bid`. This would remove her bid and return her money, even before the bid ends:
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "10000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "9000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 
-near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "price": "10000", "bid_id": "3"}' --accountId $ALICE --depositYocto 1
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near call $MARKET_CONTRACT_ID remove_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "price": "9000", "bid_id": "1"}' --accountId $ALICE --depositYocto 1
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 ```
 
 Suppose some purchasers had added some bids and later they expired.
 After this anyone can refund them:
 ```bash
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "500", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
-near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "600", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "800", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 
 near call $MARKET_CONTRACT_ID cancel_expired_bids '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}' --accountId $NFT_CONTRACT_ID
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 ```
-For this example we created bids with duration equal to 0.1 second and canceled them.
+For this example we created a bid with duration equal to 0.1 second and canceled it.
 
 It is possible to refund a specific bid (if it is ended):
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "offered_price": "700","start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 
-near call $MARKET_CONTRACT_ID cancel_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "owner_id": "'$ALICE'", "price": "700", "bid_id": "7"}' --accountId $NFT_CONTRACT_ID
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}'
+near call $MARKET_CONTRACT_ID cancel_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near", "owner_id": "'$ALICE'", "price": "700", "bid_id": "3"}' --accountId $NFT_CONTRACT_ID
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4", "ft_token_id": "near"}'
 ```
 
-`CONTRACT_PARENT` can call `remove_sale` to remove his sale and refund all the bids:
+`CONTRACT_PARENT` can call `remove_sale` to remove his sale:
 ```bash
 near call $MARKET_CONTRACT_ID remove_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:4"}' --accountId $CONTRACT_PARENT --depositYocto 1
 
@@ -247,19 +250,19 @@ near view $MARKET_CONTRACT_ID get_sales
 When the sale is in progress, only `CONTRACT_PARENT` can call it. 
 If the sale ends and no bid is accepted, anyone can call `remove_sale`.
 
-If the sale is finished, you cannot call `offer` or `accept_bid`.
-> `offer` and `accept_bid` should fail after `hack_finish_sale`.
+If the sale is finished, you cannot call `accept_bid`, though you still can call `offer`.
+> `accept_bid` should fail after `hack_finish_sale`.
 ```bash
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near", "offered_price": "300", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5"}'
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}'
 
-near call $MARKET_CONTRACT_ID hack_finish_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'" "token_id": "1:5"}' --accountId $ALICE
+near call $MARKET_CONTRACT_ID hack_finish_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5"}' --accountId $ALICE
 
 near call $MARKET_CONTRACT_ID offer '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near", "offered_price": "400", "start": null, "duration": "100000000"}' --accountId $ALICE --depositYocto 1 --gas 200000000000000
 near call $MARKET_CONTRACT_ID accept_bid '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}' --accountId $CONTRACT_PARENT --gas 200000000000000
 
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}'
 near view $NFT_CONTRACT_ID nft_token '{"token_id": "1:5"}'
-near view $MARKET_CONTRACT_ID get_sale '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5"}'
 ```
 > Here we called `hack_finish_sale` in order to finish the sale ahead of time. It is done for demonstration purposes. All content of `hack.rs` should be deleted later.
 
@@ -327,17 +330,15 @@ To get bid by its index:
 near view $MARKET_CONTRACT_ID get_bid_by_index '{"bid_id": "0"}'
 ```
 
-To get all bids for the given nft contract, id of the token and fungible token.
+To get all bid ids for the given nft contract, id of the token and fungible token.
 ```bash
-near call $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:1", "ft_token_id": "near"}' --accountId $ALICE --depositYocto 10300 --gas 200000000000000
+near view $MARKET_CONTRACT_ID get_bids_by_nft_and_token '{"nft_contract_id": "'$NFT_CONTRACT_ID'", "token_id": "1:5", "ft_token_id": "near"}'
 ```
 
 To get bids created by the given account (by default `owner_id` is the caller):
 ```bash
-near view $MARKET_CONTRACT_ID get_bids_id_by_account '{"owner_id": "'$NFT_CONTRACT_ID'"}'
-near view $MARKET_CONTRACT_ID get_bids_id_by_account
+near view $MARKET_CONTRACT_ID get_bids_id_by_account '{"owner_id": "'$ALICE'"}'
 ```
-
 
 To get the full price with a protocol and origins fee:
 ```bash

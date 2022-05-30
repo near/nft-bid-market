@@ -1,8 +1,10 @@
 use crate::*;
+use crate::sale::DELIMETER;
 
 #[near_bindgen]
 impl Market {
-    pub fn hack_finish_sale(&mut self, nft_contract_token: ContractAndTokenId) {
+    pub fn hack_finish_sale(&mut self, nft_contract_id: AccountId, token_id: TokenId) {
+        let nft_contract_token = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
         let mut sale = self.market.sales.get(&nft_contract_token).expect("no sale");
         sale.end = Some(env::block_timestamp());
         self.market.sales.insert(&nft_contract_token, &sale);

@@ -140,7 +140,7 @@ impl Market {
             .map(|sale| self.json_from_sale(sale))
     }
 
-    pub fn get_total_bid_balance(&self, ft_token_id: Option<AccountId>) -> Balance {
+    /*pub fn get_total_bid_balance(&self, ft_token_id: Option<AccountId>) -> Balance {
         let owner_id: AccountId = env::predecessor_account_id();
         let ft = match ft_token_id {
             Some(ft) => ft,
@@ -153,7 +153,7 @@ impl Market {
             .total_balance
             .get(&ft)
             .expect("No token for this account")
-    }
+    }*/
 
     pub fn get_bid_by_index(&self, bid_id: U128) -> Bid {
         self.market
@@ -202,8 +202,7 @@ impl Market {
     }
 
     // TODO: pagination
-    pub fn get_bids_id_by_account(&self, owner_id: Option<AccountId>) -> Vec<BidId> {
-        let owner_id = owner_id.unwrap_or_else(env::predecessor_account_id);
+    pub fn get_bids_id_by_account(&self, owner_id: AccountId) -> Vec<BidId> {
         let lookup_map = &self.market.bids_by_owner;
         let unordered_map = lookup_map.get(&owner_id).expect("No bid for this owner");
         unordered_map

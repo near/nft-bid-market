@@ -295,10 +295,10 @@ impl Market {
             .get(&contract_and_token_id)
             .expect("No sale");
         // Check that the sale is in progress
-        require!(
-            sale.in_limits(),
-            "Either the sale is finished or it hasn't started yet"
-        );
+        // require!(
+        //     sale.in_limits(),
+        //     "Either the sale is finished or it hasn't started yet"
+        // );
 
         let buyer_id = env::predecessor_account_id();
         require!(sale.owner_id != buyer_id, "Cannot bid on your own sale.");

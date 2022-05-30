@@ -285,6 +285,7 @@ async fn offer_negative() -> Result<()> {
         "start": Some(U64(epoch_plus_waiting_time as u64)),
     }});
 
+    // Depricated: now contract allows to create a bid, even if the sale hasn't started
     user1
         .call(&worker, nft.id(), "nft_approve")
         .args_json(json!({
@@ -296,20 +297,21 @@ async fn offer_negative() -> Result<()> {
         .gas(parse_gas!("200 Tgas") as u64)
         .transact()
         .await?;
-    let outcome = user2
-        .call(&worker, market.id(), "offer")
-        .args_json(json!({
-            "nft_contract_id": nft.id(),
-            "token_id": token1,
-            "ft_token_id": "near",
-            "offered_price": "500",
-        }))?
-        .deposit(1)
-        .transact()
-        .await;
-    outcome
-        .assert_err("Either the sale is finished or it hasn't started yet")
-        .unwrap();
+    // Depricated: now contract allows to create a bid, even if the sale hasn't started
+    // let outcome = user2
+    //     .call(&worker, market.id(), "offer")
+    //     .args_json(json!({
+    //         "nft_contract_id": nft.id(),
+    //         "token_id": token1,
+    //         "ft_token_id": "near",
+    //         "offered_price": "500",
+    //     }))?
+    //     .deposit(1)
+    //     .transact()
+    //     .await;
+    // outcome
+    //     .assert_err("Either the sale is finished or it hasn't started yet")
+    //     .unwrap();
 
     tokio::time::sleep(waiting_time).await;
     let price: U128 = market
