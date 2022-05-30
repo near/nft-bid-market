@@ -805,7 +805,7 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
     let outcome = user1
         .call(&worker, market.id(), "bid_withdraw")
         .args_json(json!({
-            "amount": 150,
+            "amount": "150",
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -876,7 +876,7 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
     let outcome = user2
         .call(&worker, market.id(), "bid_withdraw")
         .args_json(json!({
-            "amount": 150,
+            "amount": "150",
         }))?
         .deposit(2)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -890,7 +890,7 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
     let outcome = user2
         .call(&worker, market.id(), "bid_withdraw")
         .args_json(json!({
-            "amount": 160,
+            "amount": "160",
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)
@@ -904,7 +904,7 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
     let outcome = user2
         .call(&worker, market.id(), "bid_withdraw")
         .args_json(json!({
-            "amount": 150,
+            "amount": "150",
             "ft_token_id": "not_near",
         }))?
         .deposit(1)
@@ -917,7 +917,7 @@ async fn bid_withdraw_and_bid_deposit() -> Result<()> {
     let outcome = user2
         .call(&worker, market.id(), "bid_withdraw")
         .args_json(json!({
-            "amount": 100,
+            "amount": "100",
         }))?
         .deposit(1)
         .gas(parse_gas!("300 Tgas") as u64)

@@ -167,11 +167,11 @@ impl Market {
     }
 
     #[payable]
-    pub fn bid_withdraw(&mut self, amount: Option<Balance>, ft_token_id: Option<AccountId>) {
+    pub fn bid_withdraw(&mut self, amount: Option<U128>, ft_token_id: Option<AccountId>) {
         assert_one_yocto();
         let owner_id = env::predecessor_account_id();
         let balance = self.view_deposit(ft_token_id.clone());
-        let amount = amount.unwrap_or(balance);
+        let amount = amount.map(|b| b.0).unwrap_or(balance);
         assert!(amount <= balance, "Can't withdraw more than you have");
         let bid_ft = match ft_token_id {
             Some(ft) => ft,
